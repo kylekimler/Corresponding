@@ -31,6 +31,10 @@ import {
   authorsNeedingAttention,
   readyAuthorCount,
 } from '@/popup/authorAttention';
+import {
+  chooseSelectedRosterId,
+  createPopupPreferences,
+} from '@/popup/preferences';
 import { summarizePreview } from '@/popup/previewSummary';
 import { sendToActiveTab } from './tabBridge';
 import {
@@ -44,6 +48,7 @@ import {
 const store = createRosterStore();
 const sheetsClient = createChromeGoogleSheetsClient();
 const auditLog = createMemoryAuditLog();
+const popupPreferences = createPopupPreferences();
 
 type View = 'main' | 'import' | 'manage' | 'advanced';
 type ImportMode = 'chooser' | 'paste' | 'csv' | 'mapping';
@@ -110,14 +115,16 @@ export function App() {
   async function refreshRosters(preferId?: string) {
     const list = await store.list();
     setRosters(list);
-    const nextId = preferId ?? selectedId;
-    if (nextId && list.some((r) => r.id === nextId)) {
-      setSelectedId(nextId);
-    } else if (list[0]) {
-      setSelectedId(list[0].id);
-    } else {
-      setSelectedId('');
-    }
+    const explicitId = preferId ?? selectedId;
+    const rememberedId = await popupPreferences.getSelectedRosterId();
+    const nextId =
+      chooseSelectedRosterId(
+        list.map((roster) => roster.id),
+        explicitId,
+        rememberedId,
+      ) ?? '';
+    setSelectedId(nextId);
+    await popupPreferences.setSelectedRosterId(nextId || undefined);
   }
 
   async function runDetect() {
@@ -614,7 +621,11 @@ export function App() {
               <select
                 className="roster-select"
                 value={selectedId}
-                onChange={(e) => setSelectedId(e.target.value)}
+              onChange={(e) => {
+                const id = e.target.value;
+                setSelectedId(id);
+                void popupPreferences.setSelectedRosterId(id || undefined);
+              }}
                 aria-label="Saved roster"
               >
                 {rosters.map((r) => (
