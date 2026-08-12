@@ -20,15 +20,33 @@ export interface SheetTable {
   rows: string[][];
 }
 
+/**
+ * Target: Google Picker + chrome.identity + drive.file.
+ * Scientists never paste API keys or OAuth client IDs.
+ */
+export interface PickedSpreadsheet {
+  spreadsheetId: string;
+  name: string;
+  url?: string;
+}
+
 export interface GoogleSheetsClient {
-  /** Parse a user-pasted Google Sheets URL. */
+  /** Parse a developer/test URL (not the primary product UX). */
   parseUrl(url: string): SheetRef;
   /** List tabs/sheets in the spreadsheet (requires auth). */
   listTabs(spreadsheetId: string): Promise<SheetTab[]>;
   /** Read values from a tab as a rectangular table. */
   readTable(spreadsheetId: string, tab: SheetTab | string): Promise<SheetTable>;
-  /** Whether production OAuth credentials are configured. */
+  /**
+   * Whether developer OAuth credentials are configured for this build.
+   * Must never surface as a user-facing error on the main screen.
+   */
   isConfigured(): boolean;
+  /**
+   * Product path: open Google Picker and return the user-selected file.
+   * Optional until Picker + chrome.identity are wired.
+   */
+  pickSpreadsheet?(): Promise<PickedSpreadsheet>;
 }
 
 export class SheetsNotConfiguredError extends Error {
@@ -49,5 +67,25 @@ export function parseGoogleSheetUrl(url: string): SheetRef {
     spreadsheetId: idMatch[1]!,
     gid: gidMatch?.[1],
     url: trimmed,
+  };
+}
+
+/** Scientist-facing availability — never mentions credentials. */
+export function sheetsChooserAvailability(configured: boolean): {
+  enabled: boolean;
+  label: string;
+  hint: string;
+} {
+  if (configured) {
+    return {
+      enabled: true,
+      label: 'Choose Google Sheet',
+      hint: 'Sign in with Google and pick a spreadsheet.',
+    };
+  }
+  return {
+    enabled: false,
+    label: 'Choose Google Sheet',
+    hint: 'Coming soon — use Paste or Upload CSV for now.',
   };
 }

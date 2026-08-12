@@ -4,6 +4,13 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-12 15:15 UTC
+- commit: (pending)
+- changed: First-use UX — compact main popup; Preview result card (exact/semantic/preserved/unresolved/conflicts) with dry-run safety; detection error recovery; Manage roster secondary view; unified Import authors (paste TSV, CSV drag-drop, Excel stub, Sheets “Choose Google Sheet” coming-soon); attention-first author list; Advanced diagnostics; Sheets/Excel architecture docs. No package dependency changes.
+- tests: `npm test` (128 passed), `npm run typecheck`, `npm run build`. New: pasteTable, previewSummary, authorAttention, fileKinds, first-use journey (3/75/500).
+- limitations: Excel parse deferred (docs/EXCEL_IMPORT.md); Google Picker + OAuth credentials still blocked for live Sheets; no sample-roster one-click yet.
+- next: Persist selected roster; sample import; live Sheets when credentials arrive.
+
 ### 2026-08-12 04:28 UTC
 - commit: `aa054cb924ee04dd6f32258dcbc128c5639d0745`
 - changed: Greenfield scaffold of journal-autofill as WXT + React + TS MV3 extension; canonical Zod author schema; adapter interface + Nature MTS adapter with synthetic fixture; CSV import + column mapping; local roster storage; Google Sheets read-only abstraction/mocks; diagnostics probe; adapter registry + stubs; popup Preview/Fill UX; commercial docs (privacy, threat model, CWS permissions, release checklist, Sheets setup). Manifest ships without automatic `content_scripts` (activeTab inject only).

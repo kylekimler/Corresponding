@@ -34,12 +34,15 @@ Status key: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked (exte
 
 ## Local remaining (not blocked)
 
-- [ ] Empty-state CTA + one-click sample roster import
-- [ ] CSV mapping data preview (3 rows)
-- [ ] Confidence badges in Preview (exact vs semantic)
+- [x] Compact first-use popup + Import authors (paste/CSV) + Manage roster
+- [x] Preview result card with mapping breakdown (exact/semantic/…)
+- [x] CSV mapping data preview
+- [ ] Empty-state one-click sample roster import
+- [ ] Confidence badges per author block in Preview
 - [ ] Persist last-selected roster id
 - [ ] Wire audit log to chrome.storage in popup (memory log exists)
 - [ ] Optional visual regression for popup tokens
+- [ ] Excel parse enablement after dependency decision (`docs/EXCEL_IMPORT.md`)
 
 ## External validation (true blockers)
 

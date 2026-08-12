@@ -50,7 +50,7 @@ export interface InspectReport {
 export interface FillOptions {
   /** When false (default), non-empty existing fields are preserved. */
   overwrite: boolean;
-  /** When true, mutate DOM; when false, only produce a plan. */
+  /** When true, plan only — never mutate the DOM. When false, apply fills. */
   dryRun: boolean;
 }
 

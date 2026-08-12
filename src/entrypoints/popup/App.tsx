@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { DetectResult, FillReport, ValidateReport } from '@/adapters/types';
 import { parseCsv } from '@/import/csv';
 import {
@@ -7,6 +7,8 @@ import {
   type CanonicalColumn,
   type ColumnMapping,
 } from '@/import/columnMap';
+import { detectImportFileKind, excelImportStatus } from '@/import/fileKinds';
+import { parsePastedTable } from '@/import/pasteTable';
 import { rowsToRoster } from '@/import/rosterFromTable';
 import {
   addAuthor,
@@ -19,86 +21,69 @@ import {
 } from '@/roster/mutations';
 import { normalizeOrcid } from '@/schema/orcid';
 import { createRosterStore } from '@/roster/storage';
-import type { Author, Roster } from '@/schema/author';
+import type { Author, Roster, RosterSource } from '@/schema/author';
 import { previewCapture } from '@/diagnostics/capture';
 import { createChromeGoogleSheetsClient } from '@/sheets/chromeClient';
-import {
-  loadSheetPreview,
-  rosterFromSheetPreview,
-  type SheetsImportPreview,
-} from '@/sheets/importFlow';
-import { SheetsNotConfiguredError } from '@/sheets/types';
-import { failureState, formatFailure } from '@/failure/states';
+import { sheetsChooserAvailability } from '@/sheets/types';
 import { createMemoryAuditLog } from '@/audit/localLog';
+import {
+  authorsNeedingAttention,
+  readyAuthorCount,
+} from '@/popup/authorAttention';
+import { summarizePreview } from '@/popup/previewSummary';
 import { sendToActiveTab } from './tabBridge';
+import {
+  AttentionList,
+  ColumnSelect,
+  PortalBadge,
+  PreviewResultCard,
+  downloadText,
+} from './components';
 
 const store = createRosterStore();
 const sheetsClient = createChromeGoogleSheetsClient();
 const auditLog = createMemoryAuditLog();
 
-function ColumnSelect(props: {
-  value: CanonicalColumn | '';
-  onChange: (v: CanonicalColumn) => void;
-}) {
-  return (
-    <select
-      value={props.value}
-      onChange={(e) =>
-        props.onChange((e.target.value || 'ignore') as CanonicalColumn)
-      }
-    >
-      <option value="">— select —</option>
-      <option value="givenName">Given / first name</option>
-      <option value="middleName">Middle name</option>
-      <option value="familyName">Family / last name</option>
-      <option value="email">Email</option>
-      <option value="orcid">ORCID</option>
-      <option value="institution">Institution</option>
-      <option value="department">Department</option>
-      <option value="city">City</option>
-      <option value="state">State</option>
-      <option value="country">Country</option>
-      <option value="isCorresponding">Corresponding?</option>
-      <option value="sequence">Sequence</option>
-      <option value="ignore">Ignore</option>
-    </select>
-  );
-}
+type View = 'main' | 'import' | 'manage' | 'advanced';
+type ImportMode = 'chooser' | 'paste' | 'csv' | 'mapping';
 
-function downloadText(filename: string, contents: string, mime: string) {
-  const blob = new Blob([contents], { type: mime });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
-}
+type PendingImport = {
+  headers: string[];
+  rows: string[][];
+  mapping: ColumnMapping;
+  name: string;
+  source: RosterSource;
+  fileName?: string;
+};
 
 export function App() {
+  const [view, setView] = useState<View>('main');
+  const [importMode, setImportMode] = useState<ImportMode>('chooser');
   const [rosters, setRosters] = useState<Roster[]>([]);
   const [selectedId, setSelectedId] = useState<string>('');
   const [overwrite, setOverwrite] = useState(false);
+  const [detectStatus, setDetectStatus] = useState<
+    'loading' | 'ready' | 'unknown' | 'error'
+  >('loading');
   const [detected, setDetected] = useState<DetectResult | null>(null);
+  const [detectError, setDetectError] = useState('');
   const [preview, setPreview] = useState<FillReport | null>(null);
   const [validation, setValidation] = useState<ValidateReport | null>(null);
-  const [status, setStatus] = useState<string>('');
-  const [error, setError] = useState<string>('');
-  const [pendingMapping, setPendingMapping] = useState<{
-    headers: string[];
-    rows: string[][];
-    mapping: ColumnMapping;
-    name: string;
-    source: 'csv' | 'google_sheets';
-  } | null>(null);
-  const [diagText, setDiagText] = useState('');
-  const [renameValue, setRenameValue] = useState('');
-  const [editingAuthorId, setEditingAuthorId] = useState<string>('');
-  const [authorDraft, setAuthorDraft] = useState<Partial<Author>>({});
-  const [sheetUrl, setSheetUrl] = useState('');
-  const [sheetPreview, setSheetPreview] = useState<SheetsImportPreview | null>(
+  const [status, setStatus] = useState('');
+  const [error, setError] = useState('');
+  const [pending, setPending] = useState<PendingImport | null>(null);
+  const [pasteText, setPasteText] = useState('');
+  const [csvMeta, setCsvMeta] = useState<{ name: string; rows: number } | null>(
     null,
   );
+  const [dragOver, setDragOver] = useState(false);
+  const [diagText, setDiagText] = useState('');
+  const [renameValue, setRenameValue] = useState('');
+  const [editingAuthorId, setEditingAuthorId] = useState('');
+  const [authorDraft, setAuthorDraft] = useState<Partial<Author>>({});
+  const [menuOpen, setMenuOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const selected = rosters.find((r) => r.id === selectedId) ?? null;
   const sortedAuthors = useMemo(
@@ -108,6 +93,17 @@ export function App() {
         : [],
     [selected],
   );
+  const attention = useMemo(
+    () => (selected ? authorsNeedingAttention(selected.authors) : []),
+    [selected],
+  );
+  const readyCount = selected ? readyAuthorCount(selected.authors) : 0;
+  const previewSummary = useMemo(
+    () => (preview ? summarizePreview(preview, detected) : null),
+    [preview, detected],
+  );
+  const sheetsUi = sheetsChooserAvailability(sheetsClient.isConfigured());
+  const excelStatus = excelImportStatus();
 
   async function refreshRosters(preferId?: string) {
     const list = await store.list();
@@ -122,12 +118,37 @@ export function App() {
     }
   }
 
+  async function runDetect() {
+    setDetectStatus('loading');
+    setDetectError('');
+    try {
+      const res = await sendToActiveTab({ type: 'DETECT' });
+      if (res.type === 'DETECT_RESULT') {
+        setDetected(res.result);
+        setDetectStatus(
+          res.result.platformId === 'unknown' ? 'unknown' : 'ready',
+        );
+        return;
+      }
+      if (res.type === 'ERROR') {
+        setDetected(null);
+        setDetectStatus('error');
+        setDetectError(res.message);
+        return;
+      }
+      setDetected(null);
+      setDetectStatus('error');
+      setDetectError('Could not detect the active tab.');
+    } catch (err) {
+      setDetected(null);
+      setDetectStatus('error');
+      setDetectError(err instanceof Error ? err.message : String(err));
+    }
+  }
+
   useEffect(() => {
     void refreshRosters();
-    void (async () => {
-      const res = await sendToActiveTab({ type: 'DETECT' });
-      if (res.type === 'DETECT_RESULT') setDetected(res.result);
-    })();
+    void runDetect();
   }, []);
 
   useEffect(() => {
@@ -135,64 +156,131 @@ export function App() {
     setEditingAuthorId('');
   }, [selected?.id]);
 
-  async function onCsvFile(file: File) {
-    setError('');
-    const text = await file.text();
-    const { headers, rows } = parseCsv(text);
-    const mapping = suggestColumnMapping(headers);
-    const name = file.name.replace(/\.csv$/i, '') || 'Imported roster';
-    if (mapping.requiresConfirmation || !mappingIsComplete(mapping.map)) {
-      setPendingMapping({ headers, rows, mapping, name, source: 'csv' });
-      setStatus('Confirm column mapping before import.');
-      return;
+  useEffect(() => {
+    if (!menuOpen) return;
+    function onDoc(e: MouseEvent) {
+      if (!menuRef.current?.contains(e.target as Node)) setMenuOpen(false);
     }
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, [menuOpen]);
+
+  function openImport() {
+    setError('');
+    setStatus('');
+    setImportMode('chooser');
+    setPasteText('');
+    setCsvMeta(null);
+    setPending(null);
+    setView('import');
+  }
+
+  function beginMapping(input: PendingImport) {
+    if (input.mapping.requiresConfirmation || !mappingIsComplete(input.mapping.map)) {
+      setPending(input);
+      setImportMode('mapping');
+      setStatus('Confirm column mapping before import.');
+      return false;
+    }
+    return true;
+  }
+
+  async function importTable(input: PendingImport) {
+    if (!beginMapping(input)) return;
     const roster = rowsToRoster({
-      name,
-      headers,
-      rows,
-      mapping: mapping.map,
-      source: 'csv',
+      name: input.name,
+      headers: input.headers,
+      rows: input.rows,
+      mapping: input.mapping.map,
+      source: input.source,
     });
     await store.importRoster(roster);
-    setPendingMapping(null);
+    setPending(null);
+    setCsvMeta(null);
+    setPasteText('');
     await refreshRosters(roster.id);
+    setView('main');
     setStatus(`Imported ${roster.authors.length} authors.`);
   }
 
   async function confirmMapping() {
-    if (!pendingMapping) return;
-    if (!mappingIsComplete(pendingMapping.mapping.map)) {
+    if (!pending) return;
+    if (!mappingIsComplete(pending.mapping.map)) {
       setError('Map at least First/Given name and Last/Family name.');
       return;
     }
-    const roster = rowsToRoster({
-      name: pendingMapping.name,
-      headers: pendingMapping.headers,
-      rows: pendingMapping.rows,
-      mapping: pendingMapping.mapping.map,
-      source: pendingMapping.source,
+    await importTable({
+      ...pending,
+      mapping: { ...pending.mapping, requiresConfirmation: false },
     });
-    await store.importRoster(roster);
-    setPendingMapping(null);
-    setSheetPreview(null);
-    await refreshRosters(roster.id);
-    setStatus(`Imported ${roster.authors.length} authors.`);
   }
 
   function updateMapping(columnIndex: number, value: CanonicalColumn) {
-    if (!pendingMapping) return;
-    const map = { ...pendingMapping.mapping.map, [columnIndex]: value };
-    setPendingMapping({
-      ...pendingMapping,
-      mapping: { ...pendingMapping.mapping, map },
+    if (!pending) return;
+    const map = { ...pending.mapping.map, [columnIndex]: value };
+    setPending({
+      ...pending,
+      mapping: { ...pending.mapping, map },
     });
+  }
+
+  async function handlePasteImport() {
+    setError('');
+    const parsed = parsePastedTable(pasteText);
+    if (!parsed.headers.length || parsed.rowCount === 0) {
+      setError('Paste a table with a header row and at least one author.');
+      return;
+    }
+    const mapping = suggestColumnMapping(parsed.headers);
+    await importTable({
+      headers: parsed.headers,
+      rows: parsed.rows,
+      mapping,
+      name: 'Pasted authors',
+      source: 'csv',
+    });
+  }
+
+  async function handleCsvFile(file: File) {
+    setError('');
+    const kind = detectImportFileKind(file);
+    if (kind === 'excel') {
+      setError(excelStatus.reason);
+      return;
+    }
+    if (kind === 'unknown') {
+      setError('Use a .csv file, or paste from your spreadsheet.');
+      return;
+    }
+    try {
+      const text = await file.text();
+      const { headers, rows } = parseCsv(text);
+      if (!headers.length || rows.length === 0) {
+        setError('That CSV has no author rows.');
+        return;
+      }
+      const mapping = suggestColumnMapping(headers);
+      const name = file.name.replace(/\.csv$/i, '') || 'Imported roster';
+      setCsvMeta({ name: file.name, rows: rows.length });
+      setImportMode('csv');
+      await importTable({
+        headers,
+        rows,
+        mapping,
+        name,
+        source: 'csv',
+        fileName: file.name,
+      });
+    } catch {
+      setError('Could not read that file. Try CSV or paste instead.');
+    }
   }
 
   async function createRoster() {
     const roster = createEmptyRoster(`Roster ${rosters.length + 1}`);
     await store.save(roster);
     await refreshRosters(roster.id);
-    setStatus('Created empty roster. Import CSV/Sheets or edit authors.');
+    setStatus('Empty roster created.');
   }
 
   async function saveRename() {
@@ -219,7 +307,8 @@ export function App() {
     if (!confirm(`Delete local roster “${selected.name}”?`)) return;
     await store.remove(selected.id);
     await refreshRosters();
-    setStatus('Roster deleted from local storage.');
+    setView('main');
+    setStatus('Roster deleted.');
   }
 
   async function exportSelected(kind: 'json' | 'csv') {
@@ -237,7 +326,7 @@ export function App() {
         'text/csv',
       );
     }
-    setStatus(`Exported ${kind.toUpperCase()} (local download only).`);
+    setStatus(`Exported ${kind.toUpperCase()}.`);
   }
 
   async function moveAuthor(fromIndex: number, toIndex: number) {
@@ -262,7 +351,7 @@ export function App() {
     await store.save(next);
     setEditingAuthorId('');
     await refreshRosters(next.id);
-    setStatus('Author updated locally.');
+    setStatus('Author updated.');
   }
 
   async function addBlankAuthor() {
@@ -273,7 +362,6 @@ export function App() {
     setEditingAuthorId(created.id);
     setAuthorDraft(created);
     await refreshRosters(next.id);
-    setStatus('Added author row. Edit name/email before filling.');
   }
 
   async function deleteAuthor(authorId: string) {
@@ -282,564 +370,745 @@ export function App() {
     await store.save(next);
     if (editingAuthorId === authorId) setEditingAuthorId('');
     await refreshRosters(next.id);
-    setStatus('Author removed from local roster.');
-  }
-
-  async function loadSheets() {
-    setError('');
-    try {
-      const preview = await loadSheetPreview(sheetsClient, sheetUrl);
-      setSheetPreview(preview);
-      if (preview.mapping.requiresConfirmation || !mappingIsComplete(preview.mapping.map)) {
-        setPendingMapping({
-          headers: preview.headers,
-          rows: preview.rows,
-          mapping: preview.mapping,
-          name: preview.selectedTab.title || 'Google Sheet',
-          source: 'google_sheets',
-        });
-        setStatus('Confirm column mapping for Google Sheet.');
-      } else {
-        setStatus(
-          `Loaded tab “${preview.selectedTab.title}” (${preview.rows.length} rows). Import when ready.`,
-        );
-      }
-    } catch (err) {
-      if (err instanceof SheetsNotConfiguredError) {
-        setError(
-          'Google Sheets OAuth is not configured. See docs/GOOGLE_SHEETS_SETUP.md (blocked on Kyle credentials). CSV import still works.',
-        );
-      } else {
-        setError(err instanceof Error ? err.message : String(err));
-      }
-    }
-  }
-
-  async function importSheetPreview() {
-    if (!sheetPreview) return;
-    try {
-      if (
-        sheetPreview.mapping.requiresConfirmation ||
-        !mappingIsComplete(sheetPreview.mapping.map)
-      ) {
-        setPendingMapping({
-          headers: sheetPreview.headers,
-          rows: sheetPreview.rows,
-          mapping: sheetPreview.mapping,
-          name: sheetPreview.selectedTab.title || 'Google Sheet',
-          source: 'google_sheets',
-        });
-        return;
-      }
-      const roster = rosterFromSheetPreview(
-        sheetPreview,
-        sheetPreview.selectedTab.title || 'Google Sheet',
-      );
-      await store.importRoster(roster);
-      setSheetPreview(null);
-      await refreshRosters(roster.id);
-      setStatus(`Imported ${roster.authors.length} authors from Google Sheets.`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    }
-  }
-
-  async function selectSheetTab(title: string) {
-    setError('');
-    try {
-      const preview = await loadSheetPreview(sheetsClient, sheetUrl, title);
-      setSheetPreview(preview);
-      setPendingMapping(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    }
   }
 
   async function runPreview() {
     if (!selected) return;
     setError('');
-    const res = await sendToActiveTab({
-      type: 'PREVIEW',
-      roster: selected,
-      overwrite,
-    });
-    if (res.type === 'ERROR') {
-      setError(res.message);
-      return;
-    }
-    if (res.type === 'FILL_RESULT') {
-      setPreview(res.result);
-      setValidation(null);
-      setStatus('Dry-run preview ready. Nothing was written to the form.');
-      void auditLog.append({
-        portalFamily: res.result.platformId,
-        rosterId: selected.id,
-        fieldsProposed: res.result.plans.length,
-        filled: res.result.filled,
-        preserved: res.result.preserved,
-        unresolved: res.result.missingSource + res.result.unmapped,
-        conflicts: res.result.skippedConflicts,
+    setStatus('Running preview…');
+    try {
+      const res = await sendToActiveTab({
+        type: 'PREVIEW',
+        roster: selected,
+        overwrite,
       });
+      if (res.type === 'ERROR') {
+        setError(res.message);
+        setStatus('');
+        return;
+      }
+      if (res.type === 'FILL_RESULT') {
+        setPreview(res.result);
+        setValidation(null);
+        const summary = summarizePreview(res.result, detected);
+        setStatus(summary.headline);
+        void auditLog.append({
+          portalFamily: res.result.platformId,
+          rosterId: selected.id,
+          fieldsProposed: res.result.plans.length,
+          filled: res.result.filled,
+          preserved: res.result.preserved,
+          unresolved: res.result.missingSource + res.result.unmapped,
+          conflicts: res.result.skippedConflicts,
+        });
+        // Refresh detect if it was stuck/error — preview proves the tab works.
+        if (detectStatus !== 'ready' && res.result.platformId !== 'unknown') {
+          void runDetect();
+        }
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+      setStatus('');
     }
   }
 
   async function runFill() {
     if (!selected) return;
     setError('');
-    const res = await sendToActiveTab({
-      type: 'FILL',
-      roster: selected,
-      overwrite,
-    });
-    if (res.type === 'ERROR') {
-      setError(res.message);
-      return;
-    }
-    if (res.type === 'FILL_RESULT') {
-      setPreview(res.result);
-      const v = await sendToActiveTab({ type: 'VALIDATE', roster: selected });
-      if (v.type === 'VALIDATE_RESULT') setValidation(v.result);
-      setStatus('Fill complete. Manuscript was NOT submitted.');
+    setStatus('Filling…');
+    try {
+      const res = await sendToActiveTab({
+        type: 'FILL',
+        roster: selected,
+        overwrite,
+      });
+      if (res.type === 'ERROR') {
+        setError(res.message);
+        setStatus('');
+        return;
+      }
+      if (res.type === 'FILL_RESULT') {
+        setPreview(res.result);
+        const v = await sendToActiveTab({ type: 'VALIDATE', roster: selected });
+        if (v.type === 'VALIDATE_RESULT') setValidation(v.result);
+        setStatus('Fill complete. You review and submit.');
+        if (detectStatus !== 'ready') void runDetect();
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+      setStatus('');
     }
   }
 
   async function runDiagnostic() {
+    setError('');
     const res = await sendToActiveTab({ type: 'DIAGNOSTIC' });
     if (res.type === 'DIAGNOSTIC_RESULT') {
       setDiagText(previewCapture(res.result));
       setStatus(
         res.result.redactionComplete
-          ? 'Compatibility capture exported (structural only, values redacted).'
-          : 'Diagnostic captured.',
+          ? 'Compatibility capture ready (values redacted).'
+          : 'Capture generated — review carefully before sharing.',
       );
     } else if (res.type === 'ERROR') {
       setError(res.message);
     }
   }
 
-  const corresponding = selected?.authors.find((a) => a.isCorresponding);
-  const missingRequired = preview?.plans.filter((p) => p.action === 'missing_source') ?? [];
-  const conflictPlans = preview?.plans.filter((p) => p.action === 'skip_conflict') ?? [];
-  const readyCount = selected
-    ? selected.authors.filter((a) => a.givenName && a.familyName && a.email).length
-    : 0;
-  const attentionCount = selected
-    ? selected.authors.filter((a) => !a.email || !a.givenName || !a.familyName).length
-    : 0;
-  const conflictCount = preview?.skippedConflicts ?? 0;
-  const unknownPortalFailure =
-    detected && detected.platformId === 'unknown'
-      ? failureState('unknown_portal')
-      : null;
+  const portalLabel =
+    detectStatus === 'loading'
+      ? 'Checking active tab…'
+      : detectStatus === 'error'
+        ? 'Tab unavailable'
+        : detected?.label || 'Unknown portal';
 
-  return (
-    <div>
-      <h1>Corresponding</h1>
-      <p className="tagline">
-        One scientific identity, filled carefully. You always submit and certify yourself.
-      </p>
+  const portalDetail =
+    detectStatus === 'error'
+      ? detectError || 'Open a submission form, then retry.'
+      : detectStatus === 'unknown'
+        ? 'Unsupported on this page'
+        : detectStatus === 'ready' && detected
+          ? `${Math.round(detected.confidence * 100)}% · ${detected.platformId}`
+          : undefined;
 
-      <section className="panel">
-        <h2>Detected portal</h2>
-        <div className="stat">
-          {detected ? (
-            <>
-              <strong>{detected.label}</strong>
-              {' · '}
-              {(detected.confidence * 100).toFixed(0)}% confidence
-            </>
-          ) : (
-            'Checking active tab…'
-          )}
-        </div>
-        {unknownPortalFailure && (
-          <pre className="warn" style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit' }}>
-            {formatFailure(unknownPortalFailure)}
-          </pre>
-        )}
-      </section>
+  /* ---------------- MAIN VIEW ---------------- */
+  if (view === 'main') {
+    return (
+      <div className="app compact-app">
+        <header className="app-header">
+          <h1>Corresponding</h1>
+          <p className="brand-line">One scientific identity, everywhere.</p>
+        </header>
 
-      <section className="panel">
-        <h2>Current roster</h2>
-        <div className="row">
-          <select
-            value={selectedId}
-            onChange={(e) => setSelectedId(e.target.value)}
-            aria-label="Saved roster"
-          >
-            <option value="">Select roster…</option>
-            {rosters.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.name} ({r.authors.length})
-              </option>
-            ))}
-          </select>
-          <button type="button" className="secondary" onClick={() => void createRoster()}>
-            New
+        <PortalBadge
+          status={detectStatus}
+          label={portalLabel}
+          detail={portalDetail}
+        />
+        {detectStatus === 'error' && (
+          <button type="button" className="linkish" onClick={() => void runDetect()}>
+            Retry detection
           </button>
-        </div>
-        <div className="row" style={{ marginTop: 8 }}>
-          <label className="secondary" style={{ fontSize: '0.85rem' }}>
-            CSV
-            <input
-              type="file"
-              accept=".csv,text/csv"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) void onCsvFile(f);
-              }}
-            />
-          </label>
-        </div>
-        {selected && (
-          <>
-            <div className="row" style={{ marginTop: 8 }}>
-              <input
-                aria-label="Rename roster"
-                value={renameValue}
-                onChange={(e) => setRenameValue(e.target.value)}
-                style={{ flex: 1, padding: '6px 8px' }}
-              />
-              <button type="button" className="secondary" onClick={() => void saveRename()}>
-                Rename
-              </button>
-            </div>
-            <div className="row" style={{ marginTop: 8 }}>
-              <button type="button" className="secondary" onClick={() => void duplicateSelected()}>
-                Duplicate
-              </button>
-              <button type="button" className="secondary" onClick={() => void exportSelected('json')}>
-                Export JSON
-              </button>
-              <button type="button" className="secondary" onClick={() => void exportSelected('csv')}>
-                Export CSV
-              </button>
-              <button type="button" className="secondary" onClick={() => void deleteSelected()}>
-                Delete
-              </button>
-            </div>
-            <div className="counts" aria-label="Roster status counts">
-              <div className="count ready">
-                <span className="n">{readyCount}</span>
-                <span className="l">Ready</span>
-              </div>
-              <div className="count attention">
-                <span className="n">{attentionCount}</span>
-                <span className="l">Needs attention</span>
-              </div>
-              <div className="count conflict">
-                <span className="n">{conflictCount}</span>
-                <span className="l">Conflicts</span>
-              </div>
-            </div>
-            <ul className="compact">
-              <li>
-                Authors: <strong>{selected.authors.length}</strong>
-              </li>
-              <li>
-                Corresponding:{' '}
-                <strong>
-                  {corresponding
-                    ? `${corresponding.givenName} ${corresponding.familyName}`
-                    : '—'}
-                </strong>
-              </li>
-            </ul>
-          </>
         )}
-      </section>
 
-      {selected && (
-        <section className="panel">
-          <h2>Authors</h2>
-          <div className="row" style={{ marginBottom: 8 }}>
-            <button type="button" className="secondary" onClick={() => void addBlankAuthor()}>
-              Add author
+        {!selected ? (
+          <section className="panel empty-state">
+            <p className="stat">
+              Import your author list to get started.
+            </p>
+            <button type="button" onClick={openImport}>
+              Import authors
             </button>
-          </div>
-          {sortedAuthors.length === 0 && (
-            <p className="warn">No authors yet. Add a row or import CSV/Sheets.</p>
-          )}
-          <ul className="compact author-list">
-            {sortedAuthors.map((author, index) => (
-              <li key={author.id}>
-                <div className="row">
-                  <span style={{ flex: 1 }}>
-                    {author.sequence}. {author.givenName} {author.familyName}
-                    {author.isCorresponding ? ' (corr)' : ''}{' '}
-                    {!author.email ? (
-                      <span className="pill attention">email</span>
-                    ) : (
-                      <span className="pill ready">ready</span>
-                    )}
-                  </span>
-                  <button
-                    type="button"
-                    className="secondary"
-                    disabled={index === 0}
-                    onClick={() => void moveAuthor(index, index - 1)}
-                  >
-                    Up
-                  </button>
-                  <button
-                    type="button"
-                    className="secondary"
-                    disabled={index === sortedAuthors.length - 1}
-                    onClick={() => void moveAuthor(index, index + 1)}
-                  >
-                    Down
-                  </button>
-                  <button
-                    type="button"
-                    className="secondary"
-                    onClick={() => {
-                      setEditingAuthorId(author.id);
-                      setAuthorDraft(author);
-                    }}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    type="button"
-                    className="secondary"
-                    onClick={() => void deleteAuthor(author.id)}
-                  >
-                    Remove
-                  </button>
+            <button
+              type="button"
+              className="secondary"
+              onClick={() => void createRoster()}
+            >
+              Start empty roster
+            </button>
+          </section>
+        ) : (
+          <>
+            <section className="panel roster-summary">
+              <div className="roster-title-row">
+                <div>
+                  <div className="roster-name">{selected.name}</div>
+                  <div className="muted">
+                    {selected.authors.length} authors
+                  </div>
                 </div>
-              </li>
-            ))}
-          </ul>
-          {editingAuthorId && (
-            <div style={{ marginTop: 8 }}>
-              <div className="row" style={{ marginBottom: 6 }}>
-                <input
-                  placeholder="Given"
-                  value={authorDraft.givenName ?? ''}
-                  onChange={(e) =>
-                    setAuthorDraft((d) => ({ ...d, givenName: e.target.value }))
-                  }
-                />
-                <input
-                  placeholder="Family"
-                  value={authorDraft.familyName ?? ''}
-                  onChange={(e) =>
-                    setAuthorDraft((d) => ({ ...d, familyName: e.target.value }))
-                  }
-                />
+                <div className="menu-wrap" ref={menuRef}>
+                  <button
+                    type="button"
+                    className="icon-btn"
+                    aria-haspopup="menu"
+                    aria-expanded={menuOpen}
+                    aria-label="Roster menu"
+                    onClick={() => setMenuOpen((o) => !o)}
+                  >
+                    ⋯
+                  </button>
+                  {menuOpen && (
+                    <div className="menu" role="menu">
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                          setMenuOpen(false);
+                          openImport();
+                        }}
+                      >
+                        Import authors
+                      </button>
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                          setMenuOpen(false);
+                          setView('manage');
+                        }}
+                      >
+                        Manage roster
+                      </button>
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                          setMenuOpen(false);
+                          void createRoster();
+                        }}
+                      >
+                        New roster
+                      </button>
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                          setMenuOpen(false);
+                          setView('advanced');
+                        }}
+                      >
+                        Advanced
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="row" style={{ marginBottom: 6 }}>
-                <input
-                  placeholder="Email"
-                  value={authorDraft.email ?? ''}
-                  onChange={(e) =>
-                    setAuthorDraft((d) => ({ ...d, email: e.target.value }))
-                  }
-                  style={{ flex: 1 }}
-                />
-              </div>
-              <label className="checkbox">
+
+              <select
+                className="roster-select"
+                value={selectedId}
+                onChange={(e) => setSelectedId(e.target.value)}
+                aria-label="Saved roster"
+              >
+                {rosters.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.name} ({r.authors.length})
+                  </option>
+                ))}
+              </select>
+
+              <p className="status-line">
+                <span className="ready-text">{readyCount} ready</span>
+                {' · '}
+                <span className="attention-text">
+                  {attention.length} need attention
+                </span>
+                {preview && preview.skippedConflicts > 0 ? (
+                  <>
+                    {' · '}
+                    <span className="conflict-text">
+                      {preview.skippedConflicts} conflicts
+                    </span>
+                  </>
+                ) : null}
+              </p>
+            </section>
+
+            <AttentionList
+              items={attention}
+              totalAuthors={selected.authors.length}
+              onManage={() => setView('manage')}
+            />
+
+            <section className="panel actions-panel">
+              <label className="checkbox overwrite">
                 <input
                   type="checkbox"
-                  checked={Boolean(authorDraft.isCorresponding)}
-                  onChange={(e) =>
-                    setAuthorDraft((d) => ({
-                      ...d,
-                      isCorresponding: e.target.checked,
-                    }))
-                  }
+                  checked={overwrite}
+                  onChange={(e) => setOverwrite(e.target.checked)}
                 />
-                Corresponding author
+                Overwrite non-empty fields
               </label>
-              <div className="row" style={{ marginTop: 8 }}>
-                <button type="button" onClick={() => void saveAuthorEdit()}>
-                  Save author
-                </button>
+              <div className="primary-actions">
                 <button
                   type="button"
                   className="secondary"
-                  onClick={() => setEditingAuthorId('')}
+                  disabled={!selected}
+                  onClick={() => void runPreview()}
                 >
-                  Cancel
+                  Preview
+                </button>
+                <button
+                  type="button"
+                  disabled={
+                    !selected ||
+                    detectStatus === 'unknown' ||
+                    detectStatus === 'loading'
+                  }
+                  onClick={() => void runFill()}
+                >
+                  Fill
                 </button>
               </div>
-            </div>
-          )}
-        </section>
-      )}
+              <p className="safety-near-fill">
+                Corresponding fills. You review and submit.
+              </p>
+            </section>
 
-      <section className="panel">
-        <h2>Google Sheets (read-only)</h2>
-        {!sheetsClient.isConfigured() ? (
-          <p className="warn">
-            OAuth client ID not configured. CSV works now; Sheets blocked until Kyle adds credentials
-            (`docs/GOOGLE_SHEETS_SETUP.md`).
-          </p>
-        ) : (
-          <>
-            <input
-              aria-label="Google Sheet URL"
-              placeholder="https://docs.google.com/spreadsheets/d/…"
-              value={sheetUrl}
-              onChange={(e) => setSheetUrl(e.target.value)}
-              style={{ width: '100%', padding: '6px 8px', marginBottom: 8 }}
-            />
-            <div className="row">
-              <button type="button" className="secondary" onClick={() => void loadSheets()}>
-                Load sheet
-              </button>
-              {sheetPreview && (
-                <>
-                  <select
-                    aria-label="Sheet tab"
-                    value={sheetPreview.selectedTab.title}
-                    onChange={(e) => void selectSheetTab(e.target.value)}
-                  >
-                    {sheetPreview.tabs.map((t) => (
-                      <option key={t.sheetId} value={t.title}>
-                        {t.title}
-                      </option>
-                    ))}
-                  </select>
-                  <button type="button" onClick={() => void importSheetPreview()}>
-                    Import tab
-                  </button>
-                </>
-              )}
-            </div>
+            {previewSummary && <PreviewResultCard summary={previewSummary} />}
+
+            {validation && (
+              <section className="panel">
+                <h2>After fill</h2>
+                <ul className="compact">
+                  <li>{validation.summary.filledLike} authors look filled</li>
+                  <li>{validation.summary.missingEmail} missing email</li>
+                  <li>{validation.summary.conflicts} conflicts</li>
+                </ul>
+                <p className="ok tight">Manuscript was not submitted.</p>
+              </section>
+            )}
+
+            <button
+              type="button"
+              className="linkish manage-link"
+              onClick={() => setView('manage')}
+            >
+              Manage roster →
+            </button>
           </>
         )}
-      </section>
 
-      {pendingMapping && (
-        <section className="panel">
-          <h2>Confirm column mapping</h2>
-          <p className="warn">
-            Ambiguous or unrecognized columns must be confirmed. Nothing is imported until you approve.
-          </p>
-          {pendingMapping.headers.map((header, idx) => (
-            <div className="row" key={`${header}-${idx}`} style={{ marginBottom: 6 }}>
-              <span style={{ flex: 1, fontSize: '0.85rem' }}>{header || '(empty)'}</span>
-              <ColumnSelect
-                value={pendingMapping.mapping.map[idx] ?? ''}
-                onChange={(v) => updateMapping(idx, v)}
-              />
-            </div>
-          ))}
-          <button type="button" onClick={() => void confirmMapping()}>
-            Import with this mapping
+        {status && <p className="ok">{status}</p>}
+        {error && <p className="danger">{error}</p>}
+      </div>
+    );
+  }
+
+  /* ---------------- IMPORT VIEW ---------------- */
+  if (view === 'import') {
+    return (
+      <div className="app">
+        <header className="subview-header">
+          <button
+            type="button"
+            className="linkish"
+            onClick={() => {
+              setView('main');
+              setImportMode('chooser');
+              setPending(null);
+            }}
+          >
+            ← Back
           </button>
-        </section>
-      )}
+          <h1>Import authors</h1>
+        </header>
 
-      <section className="panel">
-        <h2>Fill safely</h2>
-        <div className="row">
-          <label className="checkbox">
-            <input
-              type="checkbox"
-              checked={overwrite}
-              onChange={(e) => setOverwrite(e.target.checked)}
-            />
-            Overwrite non-empty fields
-          </label>
-        </div>
-        <div className="primary-actions">
-          <button type="button" className="secondary" disabled={!selected} onClick={() => void runPreview()}>
-            Preview
-          </button>
-          <button type="button" disabled={!selected || detected?.platformId === 'unknown'} onClick={() => void runFill()}>
-            Fill
-          </button>
-        </div>
-        <p className="footnote" style={{ marginTop: 10, border: 'none', paddingTop: 0 }}>
-          Preview first. Fill never submits the manuscript.
-        </p>
-      </section>
-
-      {preview && (
-        <section className="panel">
-          <h2>{preview.dryRun ? 'Preview plan' : 'Fill result'}</h2>
-          <ul className="compact">
-            <li>{preview.filled} filled</li>
-            <li>{preview.preserved} preserved</li>
-            <li>{preview.overwritten} overwritten</li>
-            <li>{preview.skippedConflicts} conflicts skipped</li>
-            <li>{preview.missingSource} missing source</li>
-            <li>{preview.unmapped} unmapped</li>
-          </ul>
-          {conflictPlans.length > 0 && (
-            <>
-              <p className="danger">Linked-account conflicts (not overwritten):</p>
-              <ul className="compact">
-                {conflictPlans.slice(0, 8).map((p) => (
-                  <li key={p.fieldId}>{p.label}</li>
-                ))}
-              </ul>
-            </>
-          )}
-          {missingRequired.length > 0 && (
-            <>
-              <p className="warn">Missing source values:</p>
-              <ul className="compact">
-                {missingRequired.slice(0, 8).map((p) => (
-                  <li key={p.fieldId}>{p.label}</li>
-                ))}
-              </ul>
-            </>
-          )}
-          {preview.warnings.map((w) => (
-            <p className="warn" key={w}>
-              {w}
-            </p>
-          ))}
-        </section>
-      )}
-
-      {validation && (
-        <section className="panel">
-          <h2>Validation</h2>
-          <ul className="compact">
-            <li>{validation.summary.filledLike} authors look filled</li>
-            <li>{validation.summary.missingEmail} missing email</li>
-            <li>{validation.summary.conflicts} conflicts</li>
-            <li>{validation.summary.mismatchedCount} count mismatches</li>
-          </ul>
-          {validation.issues.slice(0, 10).map((issue) => (
-            <p
-              key={`${issue.code}-${issue.fieldId}-${issue.message}`}
-              className={issue.severity === 'error' ? 'danger' : 'warn'}
+        {importMode === 'chooser' && (
+          <section className="panel import-chooser">
+            <button
+              type="button"
+              className="import-option"
+              onClick={() => setImportMode('paste')}
             >
-              {issue.message}
-            </p>
-          ))}
-          <p className="ok">Manuscript was not submitted.</p>
-        </section>
-      )}
+              <strong>Paste from spreadsheet</strong>
+              <span>Copy a table from Sheets, Excel, or Numbers</span>
+            </button>
+            <button
+              type="button"
+              className="import-option"
+              onClick={() => {
+                setImportMode('csv');
+                fileInputRef.current?.click();
+              }}
+            >
+              <strong>Upload CSV</strong>
+              <span>Drag and drop or choose a file</span>
+            </button>
+            <button type="button" className="import-option" disabled>
+              <strong>Upload Excel</strong>
+              <span>{excelStatus.reason}</span>
+            </button>
+            <button type="button" className="import-option" disabled={!sheetsUi.enabled}>
+              <strong>{sheetsUi.label}</strong>
+              <span>{sheetsUi.hint}</span>
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".csv,text/csv"
+              hidden
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) void handleCsvFile(f);
+                e.target.value = '';
+              }}
+            />
+          </section>
+        )}
 
-      <details className="secondary-panel">
-        <summary>Diagnostics (advanced)</summary>
-        <p className="warn">
-          Captures structural field metadata only. Values are redacted. Preview the payload before copying.
+        {importMode === 'paste' && (
+          <section className="panel">
+            <p className="muted">
+              Paste a header row and author rows. Tabs from spreadsheet copy work best.
+            </p>
+            <textarea
+              className="paste-target"
+              aria-label="Paste spreadsheet table"
+              placeholder={
+                'First name\tLast name\tEmail\tAffiliation 1\nAda\tLovelace\tada@example.org\tAnalytical Engine'
+              }
+              value={pasteText}
+              onChange={(e) => setPasteText(e.target.value)}
+            />
+            <div className="row">
+              <button type="button" onClick={() => void handlePasteImport()}>
+                Continue
+              </button>
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => setImportMode('chooser')}
+              >
+                Cancel
+              </button>
+            </div>
+          </section>
+        )}
+
+        {importMode === 'csv' && (
+          <section className="panel">
+            <div
+              className={`dropzone ${dragOver ? 'drag-over' : ''}`}
+              onDragEnter={(e) => {
+                e.preventDefault();
+                setDragOver(true);
+              }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragOver(true);
+              }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragOver(false);
+                const f = e.dataTransfer.files?.[0];
+                if (f) void handleCsvFile(f);
+              }}
+            >
+              <p>
+                Drop a CSV here, or{' '}
+                <button
+                  type="button"
+                  className="linkish inline"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  choose a file
+                </button>
+              </p>
+              {csvMeta && (
+                <p className="ok">
+                  {csvMeta.name} · {csvMeta.rows} rows
+                </p>
+              )}
+            </div>
+            <button
+              type="button"
+              className="secondary"
+              onClick={() => setImportMode('chooser')}
+            >
+              Back
+            </button>
+          </section>
+        )}
+
+        {importMode === 'mapping' && pending && (
+          <section className="panel">
+            <h2>Confirm columns</h2>
+            <p className="warn">
+              Ambiguous columns need your call. Nothing imports until you approve.
+            </p>
+            {pending.fileName && (
+              <p className="muted">
+                {pending.fileName}
+                {pending.rows.length ? ` · ${pending.rows.length} rows` : ''}
+              </p>
+            )}
+            <div className="table-preview" role="region" aria-label="Parsed rows">
+              <table>
+                <thead>
+                  <tr>
+                    {pending.headers.map((h, i) => (
+                      <th key={`${h}-${i}`}>{h || '(empty)'}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {pending.rows.slice(0, 5).map((row, ri) => (
+                    <tr key={ri}>
+                      {pending.headers.map((_, ci) => (
+                        <td key={ci}>{row[ci] ?? ''}</td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {pending.headers.map((header, idx) => (
+              <div className="row map-row" key={`${header}-${idx}`}>
+                <span className="map-header">{header || '(empty)'}</span>
+                <ColumnSelect
+                  value={pending.mapping.map[idx] ?? ''}
+                  onChange={(v) => updateMapping(idx, v)}
+                />
+              </div>
+            ))}
+            <div className="row">
+              <button type="button" onClick={() => void confirmMapping()}>
+                Import
+              </button>
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => {
+                  setPending(null);
+                  setImportMode('chooser');
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </section>
+        )}
+
+        {status && <p className="ok">{status}</p>}
+        {error && <p className="danger">{error}</p>}
+      </div>
+    );
+  }
+
+  /* ---------------- MANAGE ROSTER ---------------- */
+  if (view === 'manage') {
+    return (
+      <div className="app">
+        <header className="subview-header">
+          <button type="button" className="linkish" onClick={() => setView('main')}>
+            ← Back
+          </button>
+          <h1>Manage roster</h1>
+        </header>
+
+        {!selected ? (
+          <p className="warn">No roster selected.</p>
+        ) : (
+          <>
+            <section className="panel">
+              <div className="row">
+                <input
+                  aria-label="Rename roster"
+                  value={renameValue}
+                  onChange={(e) => setRenameValue(e.target.value)}
+                  style={{ flex: 1 }}
+                />
+                <button type="button" className="secondary" onClick={() => void saveRename()}>
+                  Rename
+                </button>
+              </div>
+              <div className="row" style={{ marginTop: 8 }}>
+                <button type="button" className="secondary" onClick={() => void duplicateSelected()}>
+                  Duplicate
+                </button>
+                <button type="button" className="secondary" onClick={() => void exportSelected('json')}>
+                  Export JSON
+                </button>
+                <button type="button" className="secondary" onClick={() => void exportSelected('csv')}>
+                  Export CSV
+                </button>
+                <button type="button" className="secondary" onClick={() => void deleteSelected()}>
+                  Delete
+                </button>
+              </div>
+            </section>
+
+            <section className="panel">
+              <div className="row" style={{ marginBottom: 8 }}>
+                <button type="button" className="secondary" onClick={() => void addBlankAuthor()}>
+                  Add author
+                </button>
+                <button type="button" className="secondary" onClick={openImport}>
+                  Import authors
+                </button>
+              </div>
+
+              {attention.length > 0 && (
+                <>
+                  <h2>Needs attention</h2>
+                  <ul className="attention-list">
+                    {attention.map(({ author, reasons }) => (
+                        <li key={author.id}>
+                          <div className="attention-name">
+                            {author.sequence}. {author.givenName} {author.familyName}
+                          </div>
+                          <div className="attention-reasons">{reasons.join(' · ')}</div>
+                          <button
+                            type="button"
+                            className="linkish"
+                            onClick={() => {
+                              setEditingAuthorId(author.id);
+                              setAuthorDraft(author);
+                            }}
+                          >
+                            Edit
+                          </button>
+                        </li>
+                      ))}
+                  </ul>
+                </>
+              )}
+
+              <details className="author-all">
+                <summary>
+                  All authors ({sortedAuthors.length})
+                </summary>
+                <ul className="compact author-list">
+                  {sortedAuthors.map((author, index) => (
+                    <li key={author.id}>
+                      <div className="row">
+                        <span style={{ flex: 1 }}>
+                          {author.sequence}. {author.givenName} {author.familyName}
+                          {author.isCorresponding ? ' (corr)' : ''}
+                        </span>
+                        <button
+                          type="button"
+                          className="secondary"
+                          disabled={index === 0}
+                          onClick={() => void moveAuthor(index, index - 1)}
+                        >
+                          Up
+                        </button>
+                        <button
+                          type="button"
+                          className="secondary"
+                          disabled={index === sortedAuthors.length - 1}
+                          onClick={() => void moveAuthor(index, index + 1)}
+                        >
+                          Down
+                        </button>
+                        <button
+                          type="button"
+                          className="secondary"
+                          onClick={() => {
+                            setEditingAuthorId(author.id);
+                            setAuthorDraft(author);
+                          }}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          className="secondary"
+                          onClick={() => void deleteAuthor(author.id)}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </details>
+
+              {editingAuthorId && (
+                <div className="edit-author">
+                  <div className="row" style={{ marginBottom: 6 }}>
+                    <input
+                      placeholder="Given"
+                      value={authorDraft.givenName ?? ''}
+                      onChange={(e) =>
+                        setAuthorDraft((d) => ({ ...d, givenName: e.target.value }))
+                      }
+                    />
+                    <input
+                      placeholder="Family"
+                      value={authorDraft.familyName ?? ''}
+                      onChange={(e) =>
+                        setAuthorDraft((d) => ({ ...d, familyName: e.target.value }))
+                      }
+                    />
+                  </div>
+                  <div className="row" style={{ marginBottom: 6 }}>
+                    <input
+                      placeholder="Email"
+                      value={authorDraft.email ?? ''}
+                      onChange={(e) =>
+                        setAuthorDraft((d) => ({ ...d, email: e.target.value }))
+                      }
+                      style={{ flex: 1 }}
+                    />
+                  </div>
+                  <div className="row" style={{ marginBottom: 6 }}>
+                    <input
+                      placeholder="ORCID"
+                      value={authorDraft.orcid ?? ''}
+                      onChange={(e) =>
+                        setAuthorDraft((d) => ({ ...d, orcid: e.target.value }))
+                      }
+                      style={{ flex: 1 }}
+                    />
+                  </div>
+                  <label className="checkbox">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(authorDraft.isCorresponding)}
+                      onChange={(e) =>
+                        setAuthorDraft((d) => ({
+                          ...d,
+                          isCorresponding: e.target.checked,
+                        }))
+                      }
+                    />
+                    Corresponding author
+                  </label>
+                  <div className="row" style={{ marginTop: 8 }}>
+                    <button type="button" onClick={() => void saveAuthorEdit()}>
+                      Save author
+                    </button>
+                    <button
+                      type="button"
+                      className="secondary"
+                      onClick={() => setEditingAuthorId('')}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+            </section>
+          </>
+        )}
+
+        {status && <p className="ok">{status}</p>}
+        {error && <p className="danger">{error}</p>}
+      </div>
+    );
+  }
+
+  /* ---------------- ADVANCED ---------------- */
+  return (
+    <div className="app">
+      <header className="subview-header">
+        <button type="button" className="linkish" onClick={() => setView('main')}>
+          ← Back
+        </button>
+        <h1>Advanced</h1>
+      </header>
+      <section className="panel">
+        <h2>Compatibility capture</h2>
+        <p className="muted">
+          Structural field metadata only. Values are redacted. Review before sharing.
         </p>
         <button type="button" className="secondary" onClick={() => void runDiagnostic()}>
           Capture diagnostic
         </button>
         {diagText && (
           <>
-            <p className="ok">Preview — confirm no names/emails/passwords appear before sharing:</p>
+            <p className="ok">Confirm no names/emails/passwords appear:</p>
             <textarea className="mapping" readOnly value={diagText} />
           </>
         )}
-      </details>
-
+      </section>
       {status && <p className="ok">{status}</p>}
       {error && <p className="danger">{error}</p>}
-
-      <p className="footnote">
-        Local-first: rosters stay on this device. Corresponding never clicks final submission,
-        certification, copyright, payment, or signature controls.
-      </p>
     </div>
   );
 }

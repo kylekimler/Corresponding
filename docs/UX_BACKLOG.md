@@ -5,49 +5,57 @@ Prioritized friction for a first-time scientist. Status: `[ ]` open · `[x]` fix
 ## First install / open
 
 - [x] Rename user-facing product to **Corresponding** (popup, manifest, error boundary)
-- [x] Lead with calm brand + one-sentence promise (no README required)
-- [ ] Onboarding empty-state illustration / sample roster one-click import
+- [x] Lead with calm brand line: “One scientific identity, everywhere.”
+- [x] Compact primary popup (portal → roster → Preview/Fill)
+- [ ] Onboarding sample roster one-click import
 
 ## First roster import
 
-- [x] CSV file picker remains visible near roster selector
+- [x] Unified **Import authors** flow (paste / CSV / Excel stub / Sheets chooser)
+- [x] Paste from spreadsheet (TSV) with mapping confirmation
+- [x] Drag-and-drop CSV + filename / row count
 - [x] Ambiguous columns require explicit confirmation
-- [ ] Show a 3-row data preview beside mapping selects
-- [ ] Friendlier empty roster CTA: “Import CSV to begin”
+- [x] Show a data preview beside mapping selects
+- [x] Friendlier empty roster CTA: “Import authors”
+- [x] No OAuth / client-ID errors on the scientist-facing UI
 
 ## Selecting a saved roster
 
-- [x] Counts: Ready / Needs attention / Conflicts
-- [x] Author status pills (ready / email)
+- [x] Status: ready · need attention · conflicts
+- [x] Attention-first list (ready authors collapsed)
+- [x] Manage roster secondary screen (CRUD / export / full list)
 - [ ] Persist last-selected roster id across popup opens
 
 ## Preview
 
-- [x] Preview is primary and explained as dry-run
-- [x] Conflict and missing-source lists after preview
-- [ ] Group preview by author block with confidence badges (exact vs semantic)
+- [x] Preview is primary and shows a clear result card
+- [x] Exact / semantic / preserved / unresolved / conflicts counts
+- [x] Dry-run never mutates the form (tested)
+- [x] Detection errors no longer stick forever on “Checking…”
+- [ ] Group preview by author block with confidence badges
 
 ## Unresolved fields
 
-- [x] Unknown portal shows structured failure state (understood / not / next)
+- [x] Unknown portal shows structured failure / unsupported state
 - [ ] Inline “why unresolved” tooltips from evidence array
 
 ## Fill / validation
 
 - [x] Fill disabled on unknown portal
+- [x] Safety near Fill: “Corresponding fills. You review and submit.”
 - [x] Post-fill validation summary + “not submitted” message
 - [ ] Toast-style confirmation with counts only (no PII)
 
-## Diagnostics
+## Advanced
 
-- [x] Moved under secondary disclosure; not visually dominant
-- [x] Preview payload before share copy
-- [ ] One-click copy button after preview acknowledgment checkbox
+- [x] Diagnostics moved under Advanced (not in main fill workflow)
+- [x] Redaction safeguards preserved
 
-## Priority for next polish pass
+## Scientist review checklist (2026-08-12)
 
-1. Empty-state CTA + sample import
-2. Mapping screen data preview
-3. Confidence badges in Preview
-4. Persist selected roster
-5. Diagnostics copy acknowledgment
+| Question | Result |
+|----------|--------|
+| Obvious first action with no roster? | Yes — Import authors |
+| Developer details exposed? | No OAuth/API keys in product UI |
+| Spreadsheet → filled form without docs? | Paste or CSV → Preview → Fill |
+| Popup feels small? | Compact main view; manage/import secondary |
