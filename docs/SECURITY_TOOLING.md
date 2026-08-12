@@ -21,6 +21,12 @@ For this Chrome MV3 / TypeScript extension, the best open-source stack is:
 ## Commands
 
 ```bash
+# Always install from the repository root (not `.output/`).
+git pull origin main
+rm -rf node_modules
+npm install
+npm audit                 # expect: found 0 vulnerabilities (WXT >= 0.21.4)
+
 npm test
 npm run typecheck
 npm run build
@@ -29,3 +35,7 @@ npm run semgrep
 npm run security          # lint + semgrep + npm audit
 gitleaks detect --source . --no-git
 ```
+
+## Dependency baseline
+
+`wxt` is pinned to **0.21.4** (exact). Older trees (e.g. `0.19.29`) report multiple critical/high CVEs via transitive deps (`node-forge`, `happy-dom`, etc.). If `npm install` still prints `WXT 0.19.x`, the checkout is stale or `node_modules`/`package-lock.json` was not refreshed from `main`.
