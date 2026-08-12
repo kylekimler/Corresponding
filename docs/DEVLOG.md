@@ -10,7 +10,10 @@ Chronological overnight / autonomous iteration log.
 - architecture review: Current local-first canonical schema, deterministic adapter interface, confidence hierarchy, dry-run, and validation align with founder direction. No large redesign needed.
 - user-visible: Empty state now offers “Try a sample roster”; creates three canonical example authors, saves/selects locally, and leads directly to Preview → Fill → validate on the synthetic Nature fixture.
 - tests: canonical sample/storage/fresh-ID coverage; first-use sample journey proves Preview does not mutate, then Fill and validation succeed; full suite 155 passed, typecheck and build passed.
-- next: Persist last-selected roster id, then add author-block Preview confidence.
+- follow-up commits: `163fba4` persists the selected roster in local extension storage; `3cc1990` tightens storage-backend typing.
+- repeated-use workflow: reopening the popup restores a valid remembered roster, falls back safely after deletion, and clears the preference when no rosters remain.
+- verification: preference unit tests + full suite 158 passed, typecheck and build passed.
+- next: Add author-block Preview confidence.
 
 ### 2026-08-12 16:15 UTC
 - commit: `c7e2fdc` `npm run dev` opens Nature fixture via `webExt.startUrls`

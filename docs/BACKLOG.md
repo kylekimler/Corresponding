@@ -39,7 +39,7 @@ Status key: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked (exte
 - [x] CSV mapping data preview
 - [x] Empty-state one-click sample roster import
 - [ ] Confidence badges per author block in Preview
-- [ ] Persist last-selected roster id
+- [x] Persist last-selected roster id
 - [ ] Wire audit log to chrome.storage in popup (memory log exists)
 - [ ] Optional visual regression for popup tokens
 - [ ] Excel parse enablement after dependency decision (`docs/EXCEL_IMPORT.md`)
@@ -60,18 +60,18 @@ Status key: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked (exte
 
 ## Next five highest-value tasks
 
-1. Persist last-selected roster id
-2. Preview confidence badges (exact / semantic / unresolved)
-3. Wire counts-only audit log to local extension storage
-4. Decide and enable safe local XLSX parsing
-5. bioRxiv/medRxiv + eLife fixture investigation (no selectors without evidence)
+1. Preview confidence badges (exact / semantic / unresolved)
+2. Wire counts-only audit log to local extension storage
+3. Decide and enable safe local XLSX parsing
+4. bioRxiv/medRxiv + eLife fixture investigation (no selectors without evidence)
+5. Raise coverage on migrate + capture redaction edge cases
 
 ## Founder-context opportunities
 
 ### Now — highest-value unblocked
 
 1. [x] One-click sample roster from the empty state; prove sample → Preview → Fill → validate.
-2. [ ] Persist last-selected roster id in local extension storage.
+2. [x] Persist last-selected roster id in local extension storage.
 3. [ ] Group Preview by author block with exact/structural/semantic/unresolved confidence.
 4. [ ] Persist the counts-only audit trail in `chrome.storage.local`; retain clear control and PII refusal.
 5. [ ] Enable local XLSX import after a dependency/security decision; reuse explicit column mapping.
