@@ -55,9 +55,9 @@ export function rowsToRoster(input: {
 
     return {
       id: crypto.randomUUID(),
-      givenName: cell(row, input.mapping, 'givenName'),
-      middleName: cell(row, input.mapping, 'middleName') || undefined,
-      familyName: cell(row, input.mapping, 'familyName'),
+      givenName: cell(row, input.mapping, 'givenName').trim(),
+      middleName: cell(row, input.mapping, 'middleName').trim() || undefined,
+      familyName: cell(row, input.mapping, 'familyName').trim(),
       email: email || undefined,
       orcid: normalizeOrcid(cell(row, input.mapping, 'orcid')),
       isCorresponding: truthy(cell(row, input.mapping, 'isCorresponding')),

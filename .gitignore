@@ -10,3 +10,5 @@ coverage
 !.env.example
 *.zip
 .chrome-profile
+reports
+coverage
