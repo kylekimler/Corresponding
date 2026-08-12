@@ -87,6 +87,7 @@ async function ensureContentScript(tabId: number): Promise<void> {
       err instanceof Error
         ? err.message
         : 'Could not inject content script into the active tab',
+      { cause: err },
     );
   }
 }
