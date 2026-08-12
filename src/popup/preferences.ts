@@ -21,6 +21,10 @@ export function chooseSelectedRosterId(
   return rosterIds[0];
 }
 
+function isStorageArea(area: PreferencesArea): area is chrome.storage.StorageArea {
+  return 'get' in area && typeof area.get === 'function';
+}
+
 export function createPopupPreferences(area?: PreferencesArea): PopupPreferences {
   const bucket: PreferencesArea =
     area ??
@@ -30,7 +34,7 @@ export function createPopupPreferences(area?: PreferencesArea): PopupPreferences
 
   return {
     async getSelectedRosterId() {
-      if ('get' in bucket && typeof bucket.get === 'function') {
+      if (isStorageArea(bucket)) {
         const data = await bucket.get(SELECTED_ROSTER_KEY);
         const value = data[SELECTED_ROSTER_KEY];
         return typeof value === 'string' && value ? value : undefined;
@@ -39,7 +43,7 @@ export function createPopupPreferences(area?: PreferencesArea): PopupPreferences
     },
 
     async setSelectedRosterId(id) {
-      if ('set' in bucket && typeof bucket.set === 'function') {
+      if (isStorageArea(bucket)) {
         if (id) {
           await bucket.set({ [SELECTED_ROSTER_KEY]: id });
         } else {
