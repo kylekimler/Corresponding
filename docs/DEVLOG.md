@@ -4,6 +4,12 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-12 16:15 UTC
+- commit: (pending) `npm run dev` opens Nature fixture via `webExt.startUrls`
+- changed: Pin WXT Vite port 3000 (`strictPort`); Vite middleware serves `fixtures/` at `/fixtures/*` on the existing server; `webExt.startUrls` → `http://localhost:3000/fixtures/nature-mts-sample.html`. Document that `--disable-blink-features=AutomationControlled` comes from web-ext (not our chromiumArgs). No production permission changes; no second server.
+- tests: typecheck, suite, build; verify Chrome opens fixture URL + `--load-extension=...chrome-mv3-dev`.
+- next: Kyle Preview/Fill against auto-opened fixture.
+
 ### 2026-08-12 16:00 UTC
 - commit: `898e41d` persistent Chromium profile for `npm run dev`
 - changed: `wxt.config.ts` `webExt.chromiumArgs` → `--user-data-dir=./.wxt/chrome-data` (official WXT Mac/Linux pattern). Added `web-ext` **10.6.0** as a devDependency so WXT auto-opens Chrome (without it, WXT falls back to “load unpacked manually”). README “Kyle's testing workflow”. `.wxt` already gitignored; no extension permission changes.

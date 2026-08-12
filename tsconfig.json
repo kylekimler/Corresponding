@@ -10,6 +10,7 @@
   "include": [
     "src",
     "tests",
+    "dev",
     "wxt.config.ts",
     "vitest.config.ts",
     ".wxt/wxt.d.ts"

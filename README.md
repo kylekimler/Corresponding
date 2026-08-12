@@ -41,10 +41,15 @@ npm run dev
 
 What happens:
 
-1. WXT builds Corresponding in development mode.
+1. WXT builds Corresponding in development mode (Vite server on `http://localhost:3000`).
 2. Chrome opens automatically with Corresponding already installed.
-3. That Chrome window uses a **dedicated test profile** at `.wxt/chrome-data` — not your normal Chrome.
-4. Rosters you import, cookies, and test-site logins in this window survive stopping and restarting `npm run dev`.
+3. Chrome opens the **synthetic Nature MTS fixture** at  
+   `http://localhost:3000/fixtures/nature-mts-sample.html`  
+   (served by the same WXT server — not a second process, not your everyday Chrome).
+4. That Chrome window uses a **dedicated test profile** at `.wxt/chrome-data`.
+5. Rosters you import, cookies, and test-site logins in this window survive stopping and restarting `npm run dev`.
+
+Then: click the Corresponding icon → import `fixtures/sample-authors.csv` (once) → **Preview** → **Fill**.
 
 Leave this terminal open while you test.
 
@@ -77,11 +82,13 @@ npm run dev
 - Your everyday Chrome profile is never used or modified by this workflow.
 - `.wxt/` (including the test profile at `.wxt/chrome-data`) stays on your machine and is gitignored.
 - `web-ext` is a development tool that launches Chrome; it is not part of the shipped extension.
+- If port **3000** is already in use, stop the other process (or free the port) before `npm run dev`. Corresponding pins that port so the fixture URL stays stable.
+- You may see Chrome launched with `--disable-blink-features=AutomationControlled`. That flag is injected by **web-ext** (not our config) so pages do not treat the debug browser as an automated bot. Leave it alone.
 
-### Manual smoke test
+### Manual smoke test (without `npm run dev`)
 
 1. `npm run build` then load `.output/chrome-mv3`.
-2. Open `fixtures/nature-mts-sample.html` in Chrome.
+2. Open `fixtures/nature-mts-sample.html` in Chrome (or serve it locally).
 3. Import `fixtures/sample-authors.csv` in the popup (confirm mapping if prompted).
 4. Click **Preview**, then **Fill**, then review validation. Confirm submit/certify controls were not touched.
 
@@ -89,7 +96,7 @@ npm run dev
 
 | Command | Purpose |
 |---------|---------|
-| `npm run dev` | WXT dev build + Chrome with persistent test profile (`.wxt/chrome-data`) |
+| `npm run dev` | WXT dev + Chrome (persistent `.wxt/chrome-data`) opens Nature fixture |
 | `npm run build` | Production Chrome MV3 build |
 | `npm test` / `npm run test:all` | Full Vitest suite |
 | `npm run test:adapters` | Adapter contract tests |
