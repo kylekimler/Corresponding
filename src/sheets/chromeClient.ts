@@ -49,7 +49,9 @@ export function createChromeGoogleSheetsClient(
       headers: { Authorization: `Bearer ${token}` },
     });
     if (!res.ok) {
-      throw new Error(`Sheets API ${res.status}: ${await res.text()}`);
+      // Do not attach response bodies — they may include tokens or cell PII.
+      void (await res.text().catch(() => ''));
+      throw new Error(`Sheets API ${res.status}`);
     }
     return res.json();
   }

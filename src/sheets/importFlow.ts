@@ -26,7 +26,7 @@ export async function loadSheetPreview(
   const tabs = await client.listTabs(ref.spreadsheetId);
   if (tabs.length === 0) throw new Error('Spreadsheet has no tabs');
 
-  let selected =
+  const selected =
     (tabTitle ? tabs.find((t) => t.title === tabTitle) : undefined) ??
     (ref.gid
       ? tabs.find((t) => String(t.sheetId) === ref.gid)

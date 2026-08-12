@@ -134,19 +134,23 @@ function authorConflict(
     familyName: readValue(doc, contribField(index, 'last_nm')),
     givenName: readValue(doc, contribField(index, 'first_nm')),
   };
-  // Empty portal identity with a PID still counts as linked; conflict if roster differs from any present portal fields.
+  // Linked PID with blank portal fields: prefer false negative — refuse overwrite
+  // of an account that may still be bound server-side.
   const hasPortalIdentity = Boolean(
     portal.email || portal.familyName || portal.givenName,
   );
   if (!hasPortalIdentity) {
-    // Linked but blank — allow fill (no conflicting identity data).
-    return false;
+    return true;
   }
-  return identitiesConflict(portal, {
-    email: author.email || '',
-    familyName: author.familyName,
-    givenName: author.givenName,
-  });
+  return identitiesConflict(
+    portal,
+    {
+      email: author.email || '',
+      familyName: author.familyName,
+      givenName: author.givenName,
+    },
+    { linkedPid: true },
+  );
 }
 
 function buildAuthorFieldPlans(
@@ -203,6 +207,7 @@ function buildAuthorFieldPlans(
 function buildCorrPlans(
   doc: Document,
   corresponding: Author | undefined,
+  contribIndex: number | undefined,
   options: FillOptions,
 ): FieldPlan[] {
   if (!corresponding) {
@@ -214,6 +219,13 @@ function buildCorrPlans(
       reason: 'No corresponding author in roster',
     }));
   }
+
+  // If the corresponding author maps to a linked contrib slot in conflict,
+  // refuse to fill the corresponding block as well (prefer false negative).
+  const conflict =
+    contribIndex !== undefined
+      ? authorConflict(doc, contribIndex, corresponding)
+      : false;
 
   const specs: Array<{ id: string; label: string; value: string | undefined }> =
     [
@@ -244,7 +256,6 @@ function buildCorrPlans(
       },
     ];
 
-  // Corresponding block is not a linked contrib PID conflict target.
   return specs.map((spec) =>
     planField(
       spec.id,
@@ -253,7 +264,7 @@ function buildCorrPlans(
       readValue(doc, spec.id),
       spec.value === '' ? undefined : spec.value,
       options,
-      false,
+      conflict,
     ),
   );
 }
@@ -317,17 +328,12 @@ export const natureMtsAdapter: PlatformAdapter = {
     const collect = (fieldId: string, label?: string) => {
       const el = doc.getElementById(fieldId);
       if (!el) return;
-      const value =
-        el instanceof HTMLInputElement ||
-        el instanceof HTMLTextAreaElement ||
-        el instanceof HTMLSelectElement
-          ? el.value
-          : '';
+      // Never return raw values over messaging — structure only.
       fields.push({
         fieldId,
         tag: el.tagName.toLowerCase(),
         type: el instanceof HTMLInputElement ? el.type : undefined,
-        value,
+        value: '',
         label,
       });
     };
@@ -384,8 +390,18 @@ export const natureMtsAdapter: PlatformAdapter = {
 
     const corresponding =
       authors.find((a) => a.isCorresponding) ?? authors[0];
+    const correspondingContribIndex = corresponding
+      ? authors.indexOf(corresponding) + 1
+      : undefined;
+    const corrSlotIndex =
+      correspondingContribIndex !== undefined &&
+      correspondingContribIndex <= slots
+        ? correspondingContribIndex
+        : undefined;
 
-    plans.push(...buildCorrPlans(doc, corresponding, options));
+    plans.push(
+      ...buildCorrPlans(doc, corresponding, corrSlotIndex, options),
+    );
 
     const limit = Math.min(authors.length, slots);
     for (let i = 0; i < limit; i += 1) {

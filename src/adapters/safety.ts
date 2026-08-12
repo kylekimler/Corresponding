@@ -1,6 +1,7 @@
 /**
  * Controls that must never be clicked or submitted by the extension.
  * Matching is case-insensitive against id, name, value, and visible text.
+ * Snake_case / kebab-case ids are normalized so `final_submit` matches `submit`.
  */
 const FORBIDDEN_PATTERNS: RegExp[] = [
   /\bsubmit\b/i,
@@ -12,24 +13,34 @@ const FORBIDDEN_PATTERNS: RegExp[] = [
   /\bpayment\b/i,
   /\bbilling\b/i,
   /\bsignature\b/i,
-  /\be-?sign/i,
+  /\be\s*sign/i,
   /\breviewer\s*invit/i,
   /\bagree\b/i,
   /\battest/i,
 ];
 
-export function isForbiddenControl(el: Element): boolean {
-  const attrs = [
-    el.id,
-    el.getAttribute('name') ?? '',
-    el.getAttribute('value') ?? '',
-    el.getAttribute('aria-label') ?? '',
-    el.textContent?.trim() ?? '',
-  ]
-    .join(' ')
+/** Normalize identifiers so word boundaries work on snake_case / camelCase. */
+export function normalizeControlText(raw: string): string {
+  return raw
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/[_\-.]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
     .toLowerCase();
+}
 
-  if (!attrs.trim()) return false;
+export function isForbiddenControl(el: Element): boolean {
+  const attrs = normalizeControlText(
+    [
+      el.id,
+      el.getAttribute('name') ?? '',
+      el.getAttribute('value') ?? '',
+      el.getAttribute('aria-label') ?? '',
+      el.textContent?.trim() ?? '',
+    ].join(' '),
+  );
+
+  if (!attrs) return false;
   return FORBIDDEN_PATTERNS.some((re) => re.test(attrs));
 }
 

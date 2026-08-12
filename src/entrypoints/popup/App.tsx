@@ -22,6 +22,7 @@ import { createRosterStore } from '@/roster/storage';
 import type { Author, Roster } from '@/schema/author';
 import { previewCapture } from '@/diagnostics/capture';
 import { createChromeGoogleSheetsClient } from '@/sheets/chromeClient';
+import { sanitizeSheetsError } from '@/sheets/errors';
 import {
   loadSheetPreview,
   rosterFromSheetPreview,
@@ -310,7 +311,7 @@ export function App() {
           'Google Sheets OAuth is not configured. See docs/GOOGLE_SHEETS_SETUP.md (blocked on Kyle credentials). CSV import still works.',
         );
       } else {
-        setError(err instanceof Error ? err.message : String(err));
+        setError(sanitizeSheetsError(err));
       }
     }
   }
@@ -340,7 +341,7 @@ export function App() {
       await refreshRosters(roster.id);
       setStatus(`Imported ${roster.authors.length} authors from Google Sheets.`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(sanitizeSheetsError(err));
     }
   }
 
@@ -351,7 +352,7 @@ export function App() {
       setSheetPreview(preview);
       setPendingMapping(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(sanitizeSheetsError(err));
     }
   }
 
@@ -404,13 +405,20 @@ export function App() {
   }
 
   async function runDiagnostic() {
+    setError('');
     const res = await sendToActiveTab({ type: 'DIAGNOSTIC' });
     if (res.type === 'DIAGNOSTIC_RESULT') {
+      if (!res.result.redactionComplete) {
+        setDiagText('');
+        setError(
+          'Diagnostic redaction incomplete — export blocked to protect page PII.',
+        );
+        setStatus('Diagnostic blocked (redaction incomplete).');
+        return;
+      }
       setDiagText(previewCapture(res.result));
       setStatus(
-        res.result.redactionComplete
-          ? 'Compatibility capture exported (structural only, values redacted).'
-          : 'Diagnostic captured.',
+        'Compatibility capture exported (structural only, values redacted).',
       );
     } else if (res.type === 'ERROR') {
       setError(res.message);

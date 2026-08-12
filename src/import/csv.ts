@@ -64,17 +64,40 @@ export function parseCsv(text: string): CsvParseResult {
     return { headers: [], rows: [] };
   }
 
-  const headers = rows[0]!.map((h) => h.trim());
-  const data = rows.slice(1).filter((r) => r.some((c) => c.trim() !== ''));
+  const headers = rows[0]!.map((h) => denatureCsvFormula(h.trim()));
+  const data = rows
+    .slice(1)
+    .filter((r) => r.some((c) => c.trim() !== ''))
+    .map((r) => r.map((c) => denatureCsvFormula(c)));
   return { headers, rows: data };
+}
+
+/**
+ * Neutralize spreadsheet formula injection when a cell is later opened in
+ * Excel/Sheets/LibreOffice. Prefixes leading =, +, -, @, tab, CR with a quote.
+ */
+export function neutralizeCsvFormula(value: string): string {
+  if (/^[=+\-@\t\r]/.test(value)) {
+    return `'${value}`;
+  }
+  return value;
+}
+
+/** Reverse neutralizeCsvFormula for round-trip import of our own exports. */
+export function denatureCsvFormula(value: string): string {
+  if (/^'[=+\-@\t\r]/.test(value)) {
+    return value.slice(1);
+  }
+  return value;
 }
 
 export function toCsv(headers: string[], rows: string[][]): string {
   const escape = (v: string) => {
-    if (/[",\n\r]/.test(v)) {
-      return `"${v.replace(/"/g, '""')}"`;
+    const neutralized = neutralizeCsvFormula(v);
+    if (/[",\n\r]/.test(neutralized) || neutralized.startsWith("'")) {
+      return `"${neutralized.replace(/"/g, '""')}"`;
     }
-    return v;
+    return neutralized;
   };
   const lines = [headers.map(escape).join(',')];
   for (const row of rows) {

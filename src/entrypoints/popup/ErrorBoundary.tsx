@@ -8,13 +8,13 @@ export class ErrorBoundary extends React.Component<
   { children: React.ReactNode },
   State
 > {
-  state: State = { error: null };
+  override state: State = { error: null };
 
   static getDerivedStateFromError(error: Error): State {
     return { error };
   }
 
-  render() {
+  override render() {
     if (this.state.error) {
       return (
         <div className="error-boundary">

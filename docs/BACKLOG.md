@@ -47,6 +47,14 @@ Status key: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked (exte
 - [!] Real Nature MTS HTML capture to validate synthetic IDs
 - [!] Real ScholarOne / Editorial Manager fixtures before selectors
 
+## Security / quality (post PR #1)
+
+- [x] Clear npm audit CVEs (WXT upgrade)
+- [x] Semgrep CE + ESLint security + Gitleaks baseline (0 findings)
+- [x] Roster wipe / linked-PID / corr-conflict / diagnostic redaction hardening
+- [ ] Optional CodeQL workflow on GitHub (if Advanced Security available)
+- [ ] Raise coverage on popup chrome bridges
+
 ## Next five highest-value tasks
 
 1. Empty-state + sample import (first-run UX)

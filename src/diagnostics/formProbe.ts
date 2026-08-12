@@ -11,6 +11,7 @@ import {
 import {
   normalizeIdPattern,
   normalizeNamePattern,
+  redactFreeText,
   shouldOmitFieldFromCapture,
 } from './redact';
 
@@ -126,6 +127,8 @@ function probeLegacyFields(
       el.hasAttribute('required') ||
       el.getAttribute('aria-required') === 'true';
 
+    const safeLabel = labelText ? redactFreeText(labelText) : undefined;
+
     if (
       category === 'auth_secret' ||
       shouldOmitFieldFromCapture(el, labelText)
@@ -137,7 +140,7 @@ function probeLegacyFields(
         name: name ? normalizeNamePattern(name) : undefined,
         idPattern: id ? normalizeIdPattern(id) : undefined,
         namePattern: name ? normalizeNamePattern(name) : undefined,
-        labelText,
+        labelText: safeLabel,
         category,
         required,
         redacted: true,
@@ -147,7 +150,9 @@ function probeLegacyFields(
 
     let optionTexts: string[] | undefined;
     if (el instanceof HTMLSelectElement) {
-      optionTexts = Array.from(el.options).map((o) => o.text.trim());
+      optionTexts = Array.from(el.options)
+        .map((o) => redactFreeText(o.text.trim()))
+        .filter(Boolean);
     }
 
     const rawValue =
@@ -164,7 +169,7 @@ function probeLegacyFields(
       name: name ? normalizeNamePattern(name) : undefined,
       idPattern: id ? normalizeIdPattern(id) : undefined,
       namePattern: name ? normalizeNamePattern(name) : undefined,
-      labelText,
+      labelText: safeLabel,
       optionTexts,
       category,
       required,

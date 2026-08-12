@@ -7,8 +7,10 @@ import { detectAuthorGroups } from '@/recognition/authorGroups';
 import { extractFieldFeatures } from '@/recognition/features';
 import type { FieldCategory } from './formProbe';
 import {
+  evaluateRedactionComplete,
   normalizeIdPattern,
   normalizeNamePattern,
+  redactFreeText,
   redactPageTitle,
   redactUrl,
   shouldOmitFieldFromCapture,
@@ -40,7 +42,8 @@ export interface CaptureStructure {
 
 export interface CompatibilityCapture {
   capturedAt: string;
-  redactionComplete: true;
+  /** Fail-closed: false if residual PII patterns remain after redaction. */
+  redactionComplete: boolean;
   notes: string[];
   fieldCount: number;
   /** Structural field descriptors (no values). */
@@ -159,8 +162,9 @@ export function captureForm(
     let optionLabels: string[] | undefined;
     if (el instanceof HTMLSelectElement) {
       optionLabels = Array.from(el.options)
-        .map((o) => o.text.trim())
-        .filter(Boolean);
+        .map((o) => redactFreeText(o.text.trim()))
+        .filter(Boolean)
+        .slice(0, 40);
     }
 
     const required =
@@ -183,7 +187,7 @@ export function captureForm(
       inputType,
       idPattern: id ? normalizeIdPattern(id) : undefined,
       namePattern: name ? normalizeNamePattern(name) : undefined,
-      labelText,
+      labelText: labelText ? redactFreeText(labelText) : undefined,
       optionLabels,
       category,
       required,
@@ -222,7 +226,7 @@ export function captureForm(
     }
   }
 
-  return {
+  const draft: CompatibilityCapture = {
     capturedAt: new Date().toISOString(),
     redactionComplete: true,
     notes: [...CAPTURE_NOTES],
@@ -239,6 +243,17 @@ export function captureForm(
     urlPattern: options.url ? redactUrl(options.url) : undefined,
     titleSafe: redactPageTitle(doc.title || ''),
   };
+
+  // Fail closed: if residual PII patterns remain in the export, mark incomplete.
+  const preview = previewCapture({ ...draft, redactionComplete: true });
+  draft.redactionComplete = evaluateRedactionComplete(preview);
+  if (!draft.redactionComplete) {
+    draft.notes = [
+      ...draft.notes,
+      'WARNING: residual sensitive patterns detected; treat export as incomplete.',
+    ];
+  }
+  return draft;
 }
 
 export function previewCapture(capture: CompatibilityCapture): string {

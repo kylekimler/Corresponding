@@ -14,10 +14,10 @@ export function normalizeNamePattern(value: string): string {
 }
 
 export const EMAIL_RE =
-  /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
+  /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
 
 export const ORCID_RE =
-  /\b\d{4}-\d{4}-\d{4}-\d{3}[\dX]\b/i;
+  /\b\d{4}-\d{4}-\d{4}-\d{3}[\dX]\b/gi;
 
 export const CSRF_NAME_RE =
   /(csrf|xsrf|authenticity|__requestverificationtoken|anti[-_]?forgery)/i;
@@ -26,7 +26,7 @@ export const SECRET_NAME_RE =
   /(password|passwd|pwd|auth[_-]?token|access[_-]?token|bearer|session[_-]?id|api[_-]?key|cookie)/i;
 
 export const MANUSCRIPT_ID_RE =
-  /\b(ms|manuscript|article|paper)[-_ ]?(id|no|num|number)?[-_ ]?[:#]?\s*[a-z0-9]{6,}\b/i;
+  /\b(ms|manuscript|article|paper)[-_ ]?(id|no|num|number)?[-_ ]?[:#]?\s*[a-z0-9]{6,}\b/gi;
 
 const SECRET_INPUT_TYPES = new Set(['password', 'hidden']);
 
@@ -38,13 +38,21 @@ const FREE_TEXT_VALUE_CATEGORIES = new Set([
   'other',
 ]);
 
-/** Heuristic: page titles that embed manuscript names/ids. */
-export function redactPageTitle(title: string): string | undefined {
-  if (!title.trim()) return undefined;
-  let safe = title.trim();
+/** Redact emails/ORCIDs/manuscript ids from free-text labels and options. */
+export function redactFreeText(text: string): string {
+  let safe = text;
   safe = safe.replace(EMAIL_RE, '[REDACTED_EMAIL]');
   safe = safe.replace(ORCID_RE, '[REDACTED_ORCID]');
   safe = safe.replace(MANUSCRIPT_ID_RE, '[REDACTED_MANUSCRIPT_ID]');
+  // Person-like "First Last" pairs in labels/options (not generic UI words).
+  safe = safe.replace(/\b[A-Z][a-z]{1,30} [A-Z][a-z]{1,30}\b/g, '[REDACTED_NAME]');
+  return safe;
+}
+
+/** Heuristic: page titles that embed manuscript names/ids. */
+export function redactPageTitle(title: string): string | undefined {
+  if (!title.trim()) return undefined;
+  let safe = redactFreeText(title.trim());
   // Portal titles often embed manuscript names after a separator.
   safe = safe.replace(/^(.*[|:/–—-]\s*).{8,}$/u, '$1[REDACTED_TITLE]');
   if (containsSensitiveValue(safe)) {
@@ -53,11 +61,14 @@ export function redactPageTitle(title: string): string | undefined {
   return safe;
 }
 
-/** Strip query tokens, session ids, and manuscript ids from URLs. */
+/** Strip query tokens, hash fragments, userinfo, and manuscript ids from URLs. */
 export function redactUrl(url: string): string | undefined {
   if (!url.trim()) return undefined;
   try {
     const parsed = new URL(url);
+    parsed.username = '';
+    parsed.password = '';
+    parsed.hash = '';
     const sensitiveParams =
       /^(token|csrf|xsrf|session|sid|auth|key|code|state|manuscript|msid|article)/i;
     for (const key of [...parsed.searchParams.keys()]) {
@@ -112,9 +123,15 @@ export function shouldOmitFieldFromCapture(
 /** Returns true when a string likely contains user-provided PII or secrets. */
 export function containsSensitiveValue(text: string): boolean {
   if (!text) return false;
+  EMAIL_RE.lastIndex = 0;
+  ORCID_RE.lastIndex = 0;
+  MANUSCRIPT_ID_RE.lastIndex = 0;
   if (EMAIL_RE.test(text)) return true;
+  EMAIL_RE.lastIndex = 0;
   if (ORCID_RE.test(text)) return true;
+  ORCID_RE.lastIndex = 0;
   if (MANUSCRIPT_ID_RE.test(text)) return true;
+  MANUSCRIPT_ID_RE.lastIndex = 0;
   if (/^[A-Za-z0-9+/=_-]{32,}$/.test(text.trim())) return true;
   return false;
 }
@@ -145,6 +162,7 @@ export function assertNoLeakedSecrets(
 
 /** Scan payload for common PII patterns (email, password-like tokens). */
 export function assertNoLeakedPii(payload: string): void {
+  EMAIL_RE.lastIndex = 0;
   if (EMAIL_RE.test(payload)) {
     throw new Error('PII leak: email-like string in diagnostic payload');
   }
@@ -172,4 +190,16 @@ export function valueLooksLikeFreeTextPii(value: string): boolean {
     if (value.trim().length >= 24 && /\s/.test(value)) return true;
   }
   return false;
+}
+
+/**
+ * Fail-closed redaction gate: if export still looks sensitive, mark incomplete.
+ */
+export function evaluateRedactionComplete(exported: string): boolean {
+  try {
+    assertNoLeakedPii(exported);
+    return true;
+  } catch {
+    return false;
+  }
 }

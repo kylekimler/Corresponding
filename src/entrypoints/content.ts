@@ -1,6 +1,7 @@
 import { defaultRegistry } from '@/adapters/registry';
 import { probeForm } from '@/diagnostics/formProbe';
-import type { ExtensionRequest, ExtensionResponse } from '@/messaging/protocol';
+import type { ExtensionResponse } from '@/messaging/protocol';
+import { parseExtensionRequest } from '@/messaging/validate';
 
 export default defineContentScript({
   // Built as a file for on-demand injection via activeTab + scripting.executeScript.
@@ -12,7 +13,11 @@ export default defineContentScript({
   main() {
     browser.runtime.onMessage.addListener(
       (message: unknown): ExtensionResponse | undefined => {
-        const msg = message as ExtensionRequest;
+        const parsed = parseExtensionRequest(message);
+        if (!parsed.ok) {
+          return { type: 'ERROR', message: parsed.error };
+        }
+        const msg = parsed.request;
         try {
           switch (msg.type) {
             case 'PING':

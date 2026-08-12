@@ -18,15 +18,20 @@
 
 | Threat | Mitigation |
 |--------|------------|
-| Extension submits manuscript | Hard forbid list; adapters never click submit/certify/pay/sign; tests spy on `click` |
-| Overwriting linked portal identity | Detect `author_pid`; refuse fill on identity conflict |
+| Extension submits manuscript | Hard forbid list (normalized snake/camel case); adapters never click submit/certify/pay/sign; tests spy on `click` |
+| Overwriting linked portal identity | Detect linked PID; refuse fill on identity conflict including missing roster email; corresponding block also skipped |
+| Silent roster wipe on bad data | `migrateRosterSafe` salvages/quarantines; `save` validates and throws |
 | Silent wrong column mapping | Mapping UI; ambiguous headers require confirmation |
-| Broad page data exfiltration | `activeTab` only; diagnostics redact values; no unrelated history |
+| Broad page data exfiltration | `activeTab` only; inject only http(s); diagnostics redact labels/options/URL hash; fail-closed `redactionComplete` |
 | Credential theft | Never read password fields; diagnostics categorize as `auth_secret` |
+| Malicious extension messages | Zod-validated `ExtensionRequest` in content script before fill |
+| CSV formula injection on export | Neutralize leading `=+-@` on export; denature on import for round-trip |
+| Sheets error PII leak | Sanitize API status to safe UI strings; never surface response bodies |
+| Writing disabled portal fields | `setValue` skips `disabled` / `readOnly` |
 | Remote code compromise | No remotely hosted executable fill logic |
 | Sheets write / over-scope | Read-only scope only; write APIs absent |
 | PII to analytics | No PII analytics pipeline |
-| Supply-chain / dependency | Pin versions; review permissions on each change |
+| Supply-chain / dependency | `npm audit`; Semgrep CE; ESLint security; Gitleaks; pin/review permissions |
 
 ## Out of scope (v0)
 
