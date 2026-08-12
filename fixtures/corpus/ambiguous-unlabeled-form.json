@@ -1,0 +1,13 @@
+{
+  "id": "ambiguous-unlabeled-form",
+  "platformFamily": "generic",
+  "sourceDate": "2026-02-10",
+  "description": "Minimal inputs without labels — recognition should stay low-confidence / unresolved.",
+  "sanitizedHtml": "<form id=\"misc_form\"><input name=\"field_a\" type=\"text\" /><input name=\"field_b\" type=\"text\" /><input name=\"field_c\" type=\"text\" /><input name=\"misc_token\" type=\"hidden\" value=\"placeholder\" /><textarea name=\"notes_block\"></textarea></form>",
+  "expectedDetection": {
+    "platformId": "unknown",
+    "minConfidence": 0
+  },
+  "expectedMappings": [],
+  "expectedUnsupportedFields": ["field_a", "field_b", "field_c", "notes_block"]
+}

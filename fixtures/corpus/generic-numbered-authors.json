@@ -1,0 +1,18 @@
+{
+  "id": "generic-numbered-authors",
+  "platformFamily": "generic",
+  "sourceDate": "2026-02-01",
+  "description": "Repeated author blocks with numbered id/name patterns (3 authors).",
+  "sanitizedHtml": "<form><div data-author=\"1\"><label for=\"author_1_first\">First Name</label><input id=\"author_1_first\" name=\"author_1_first\" /><label for=\"author_1_middle\">Middle Name</label><input id=\"author_1_middle\" name=\"author_1_middle\" /><label for=\"author_1_last\">Last Name</label><input id=\"author_1_last\" name=\"author_1_last\" /><label for=\"author_1_email\">Email</label><input id=\"author_1_email\" name=\"author_1_email\" type=\"email\" /><label for=\"author_1_org\">Institution</label><input id=\"author_1_org\" name=\"author_1_org\" /><label for=\"author_1_city\">City</label><input id=\"author_1_city\" name=\"author_1_city\" /><label for=\"author_1_country\">Country</label><select id=\"author_1_country\" name=\"author_1_country\"><option></option><option>United States</option><option>Germany</option><option>Japan</option></select></div><div data-author=\"2\"><label for=\"author_2_first\">First Name</label><input id=\"author_2_first\" name=\"author_2_first\" /><label for=\"author_2_middle\">Middle Name</label><input id=\"author_2_middle\" name=\"author_2_middle\" /><label for=\"author_2_last\">Last Name</label><input id=\"author_2_last\" name=\"author_2_last\" /><label for=\"author_2_email\">Email</label><input id=\"author_2_email\" name=\"author_2_email\" type=\"email\" /><label for=\"author_2_org\">Institution</label><input id=\"author_2_org\" name=\"author_2_org\" /><label for=\"author_2_city\">City</label><input id=\"author_2_city\" name=\"author_2_city\" /><label for=\"author_2_country\">Country</label><select id=\"author_2_country\" name=\"author_2_country\"><option></option><option>United States</option><option>Germany</option><option>Japan</option></select></div><div data-author=\"3\"><label for=\"author_3_first\">First Name</label><input id=\"author_3_first\" name=\"author_3_first\" /><label for=\"author_3_middle\">Middle Name</label><input id=\"author_3_middle\" name=\"author_3_middle\" /><label for=\"author_3_last\">Last Name</label><input id=\"author_3_last\" name=\"author_3_last\" /><label for=\"author_3_email\">Email</label><input id=\"author_3_email\" name=\"author_3_email\" type=\"email\" /><label for=\"author_3_org\">Institution</label><input id=\"author_3_org\" name=\"author_3_org\" /><label for=\"author_3_city\">City</label><input id=\"author_3_city\" name=\"author_3_city\" /><label for=\"author_3_country\">Country</label><select id=\"author_3_country\" name=\"author_3_country\"><option></option><option>United States</option><option>Germany</option><option>Japan</option></select></div></form>",
+  "expectedDetection": {
+    "platformId": "unknown",
+    "minConfidence": 0
+  },
+  "expectedMappings": [
+    { "idPattern": "author_#_first", "canonicalField": "givenName", "authorGroupIndex": 1, "minConfidence": 0.5 },
+    { "idPattern": "author_#_last", "canonicalField": "familyName", "authorGroupIndex": 1, "minConfidence": 0.5 },
+    { "idPattern": "author_#_email", "canonicalField": "email", "authorGroupIndex": 1, "minConfidence": 0.5 },
+    { "idPattern": "author_#_org", "canonicalField": "institution", "authorGroupIndex": 1, "minConfidence": 0.4 }
+  ],
+  "expectedUnsupportedFields": []
+}

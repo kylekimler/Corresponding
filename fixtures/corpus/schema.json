@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://journal-autofill.local/fixtures/corpus/schema.json",
+  "title": "Journal Autofill Fixture Corpus",
+  "description": "Community-contributed sanitized HTML fixtures for adapter compatibility replay.",
+  "type": "object",
+  "required": ["schemaVersion", "fixtures"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "fixtures": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "platformFamily",
+          "sourceDate",
+          "sanitizedHtml",
+          "expectedDetection",
+          "expectedMappings"
+        ],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+          "platformFamily": { "type": "string" },
+          "journalId": { "type": "string" },
+          "sourceDate": { "type": "string", "format": "date" },
+          "description": { "type": "string" },
+          "sanitizedHtml": { "type": "string", "minLength": 1 },
+          "expectedDetection": {
+            "type": "object",
+            "required": ["platformId"],
+            "properties": {
+              "platformId": { "type": "string" },
+              "minConfidence": { "type": "number", "minimum": 0, "maximum": 1 }
+            }
+          },
+          "expectedMappings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["canonicalField"],
+              "properties": {
+                "idPattern": { "type": "string" },
+                "namePattern": { "type": "string" },
+                "canonicalField": { "type": "string" },
+                "minConfidence": { "type": "number", "minimum": 0, "maximum": 1 },
+                "authorGroupIndex": { "type": "integer", "minimum": 1 }
+              }
+            }
+          },
+          "expectedUnsupportedFields": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}

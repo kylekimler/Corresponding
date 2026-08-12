@@ -1,0 +1,14 @@
+node_modules
+.output
+.wxt
+dist
+*.log
+.DS_Store
+coverage
+.env
+.env.*
+!.env.example
+*.zip
+.chrome-profile
+reports
+coverage
