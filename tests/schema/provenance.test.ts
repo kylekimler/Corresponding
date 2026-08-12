@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   ProvenanceAssertionSchema,
   defaultProvenance,
+  declareProvenance,
 } from '@/schema/provenance';
 
 describe('provenance defaults', () => {

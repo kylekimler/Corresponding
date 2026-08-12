@@ -55,16 +55,34 @@ function sampleFillReportWithEmails(): FillReport {
 }
 
 describe('local audit log', () => {
+  it('stores counts without PII fields', async () => {
+    const log = createMemoryAuditLog();
+    const entry = await log.append({
+      portalFamily: 'nature-mts',
+      rosterId: 'roster-123',
+      fieldsProposed: 40,
+      filled: 32,
+      preserved: 5,
+      unresolved: 2,
+      conflicts: 1,
+    });
+    const serialized = JSON.stringify(entry);
+    expect(serialized).not.toMatch(/@[a-z]/i);
+    expect(serialized).not.toContain('password');
+    expect(entry.filled).toBe(32);
+    await log.clear();
+    expect(await log.list()).toHaveLength(0);
+  });
+
   it('records aggregate counts without PII from fill reports', async () => {
     const log = createMemoryAuditLog();
     const report = sampleFillReportWithEmails();
-    const record = auditRecordFromFillReport(report, 'roster-uuid-1');
-
-    await log.append(record);
+    const partial = auditRecordFromFillReport(report, 'roster-uuid-1');
+    const entry = await log.append(partial);
     const entries = await log.list();
 
     expect(entries).toHaveLength(1);
-    expect(entries[0]).toMatchObject({
+    expect(entry).toMatchObject({
       portalFamily: 'nature-mts',
       rosterId: 'roster-uuid-1',
       fieldsProposed: 2,
@@ -81,32 +99,18 @@ describe('local audit log', () => {
     expect(serializedAuditHasNoEmailLikeContent(entries)).toBe(true);
   });
 
-  it('rejects records containing email-like strings', () => {
-    expect(() =>
-      createMemoryAuditLog([
-        {
-          timestamp: new Date().toISOString(),
-          portalFamily: 'nature-mts',
-          rosterId: 'bad@email.com',
-          fieldsProposed: 0,
-          filled: 0,
-          preserved: 0,
-          unresolved: 0,
-          conflicts: 0,
-        },
-      ]),
-    ).toThrow(/email-like/i);
-  });
-
-  it('supports list, append, and clear', async () => {
+  it('rejects entries containing email-like strings in rosterId', async () => {
     const log = createMemoryAuditLog();
-    const record = auditRecordFromFillReport(
-      sampleFillReportWithEmails(),
-      'roster-abc',
-    );
-    await log.append(record);
-    expect(await log.list()).toHaveLength(1);
-    await log.clear();
-    expect(await log.list()).toHaveLength(0);
+    await expect(
+      log.append({
+        portalFamily: 'nature-mts',
+        rosterId: 'bad@email.com',
+        fieldsProposed: 0,
+        filled: 0,
+        preserved: 0,
+        unresolved: 0,
+        conflicts: 0,
+      }),
+    ).rejects.toThrow(/email-like/i);
   });
 });

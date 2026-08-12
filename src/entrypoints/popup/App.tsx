@@ -29,10 +29,12 @@ import {
 } from '@/sheets/importFlow';
 import { SheetsNotConfiguredError } from '@/sheets/types';
 import { failureState, formatFailure } from '@/failure/states';
+import { createMemoryAuditLog } from '@/audit/localLog';
 import { sendToActiveTab } from './tabBridge';
 
 const store = createRosterStore();
 const sheetsClient = createChromeGoogleSheetsClient();
+const auditLog = createMemoryAuditLog();
 
 function ColumnSelect(props: {
   value: CanonicalColumn | '';
@@ -369,6 +371,15 @@ export function App() {
       setPreview(res.result);
       setValidation(null);
       setStatus('Dry-run preview ready. Nothing was written to the form.');
+      void auditLog.append({
+        portalFamily: res.result.platformId,
+        rosterId: selected.id,
+        fieldsProposed: res.result.plans.length,
+        filled: res.result.filled,
+        preserved: res.result.preserved,
+        unresolved: res.result.missingSource + res.result.unmapped,
+        conflicts: res.result.skippedConflicts,
+      });
     }
   }
 

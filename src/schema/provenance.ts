@@ -28,13 +28,22 @@ export type SourceKind = z.infer<typeof SourceKindSchema>;
 export type VerificationStatus = z.infer<typeof VerificationStatusSchema>;
 export type ProvenanceAssertion = z.infer<typeof ProvenanceAssertionSchema>;
 
-/** Default provenance for locally entered data — never externally verified. */
-export function defaultProvenance(
-  source: SourceKind = 'self_declared',
+/** Never claim external verification unless explicitly set by caller. */
+export function declareProvenance(
+  source: SourceKind,
+  options?: {
+    verificationStatus?: VerificationStatus;
+    note?: string;
+    timestamp?: string;
+  },
 ): ProvenanceAssertion {
-  return {
+  return ProvenanceAssertionSchema.parse({
     source,
-    timestamp: new Date().toISOString(),
-    verificationStatus: 'unverified',
-  };
+    timestamp: options?.timestamp ?? new Date().toISOString(),
+    verificationStatus: options?.verificationStatus ?? 'unverified',
+    note: options?.note,
+  });
 }
+
+/** Alias for declareProvenance — default is always unverified. */
+export const defaultProvenance = declareProvenance;

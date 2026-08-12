@@ -9,7 +9,13 @@ export function loadFixtureCorpus(
   corpusDir: string = CORPUS_DIR,
 ): FixtureCorpusEntry[] {
   const files = readdirSync(corpusDir)
-    .filter((f) => f.endsWith('.json') && f !== 'schema.json')
+    .filter(
+      (f) =>
+        f.endsWith('.json') &&
+        f !== 'schema.json' &&
+        !f.startsWith('template') &&
+        !f.endsWith('.fixture.json'),
+    )
     .sort();
 
   return files.map((file) => {

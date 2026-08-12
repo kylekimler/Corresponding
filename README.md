@@ -1,6 +1,6 @@
-# journal-autofill
+# Corresponding
 
-Chrome Manifest V3 extension that fills scientific manuscript submission **author** forms from a canonical local roster.
+Local-first scientific identity and submission assistance. The Chrome Manifest V3 extension fills manuscript **author** forms from a canonical local roster — never the final submit.
 
 You import authors once (CSV, saved local roster, or future Google Sheets read-only), preview the fill plan on the active portal, then fill and validate. **Final submission, certification, copyright, payment, and signatures always stay with the human.**
 
@@ -33,8 +33,15 @@ Load the unpacked extension from `.output/chrome-mv3` (Chrome → Extensions →
 |---------|---------|
 | `npm run dev` | WXT development build |
 | `npm run build` | Production Chrome MV3 build |
-| `npm test` | Vitest (jsdom adapter + import tests) |
+| `npm test` / `npm run test:all` | Full Vitest suite |
+| `npm run test:adapters` | Adapter contract tests |
+| `npm run test:fuzz` | Chaos + property tests |
+| `npm run test:fixtures` | Corpus replay + recognition |
+| `npm run benchmark` | Synthetic perf thresholds |
+| `npm run test:coverage` | Coverage report |
 | `npm run typecheck` | TypeScript `--noEmit` |
+
+See `docs/ADDING_AN_ADAPTER.md` for the fixture → adapter workflow.
 
 ## Permissions (local-first)
 

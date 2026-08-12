@@ -1,20 +1,21 @@
 import { z } from 'zod';
 import {
-  AuthorSchema,
   ROSTER_SCHEMA_VERSION,
   RosterSchema,
-  type Affiliation,
-  type Author,
   type Roster,
 } from '@/schema/author';
 import {
   IDENTITY_SCHEMA_VERSION,
   IdentityDocumentSchema,
-  type AffiliationV2,
-  type IdentityAuthor,
+  fromSimpleRoster,
+  toSimpleRoster,
   type IdentityDocument,
 } from '@/schema/identityV2';
-import { defaultProvenance } from '@/schema/provenance';
+
+export {
+  fromSimpleRoster,
+  toSimpleRoster,
+} from '@/schema/identityV2';
 
 export const CompatibleIdentityDocumentSchema = z.union([
   IdentityDocumentSchema,
@@ -24,6 +25,10 @@ export const CompatibleIdentityDocumentSchema = z.union([
 export type CompatibleIdentityDocument = z.infer<
   typeof CompatibleIdentityDocumentSchema
 >;
+
+export type MigratedLocalData =
+  | { kind: 'roster'; roster: Roster }
+  | { kind: 'identity'; identity: IdentityDocument };
 
 export function isIdentityDocument(
   doc: CompatibleIdentityDocument,
@@ -37,94 +42,6 @@ export function isV1Roster(doc: CompatibleIdentityDocument): doc is Roster {
 
 export function migrateV1RosterToIdentity(roster: Roster): IdentityDocument {
   return fromSimpleRoster(roster);
-}
-
-export function fromSimpleRoster(roster: Roster): IdentityDocument {
-  return IdentityDocumentSchema.parse({
-    id: roster.id,
-    name: roster.name,
-    authors: roster.authors.map(authorToIdentityAuthor),
-    schemaVersion: IDENTITY_SCHEMA_VERSION,
-    createdAt: roster.createdAt,
-    updatedAt: roster.updatedAt,
-    source: roster.source,
-  });
-}
-
-function authorToIdentityAuthor(author: Author): IdentityAuthor {
-  const emails = author.email
-    ? [
-        {
-          address: author.email,
-          type: 'work' as const,
-          verificationStatus: 'unverified' as const,
-        },
-      ]
-    : undefined;
-
-  const externalIdentifiers = author.orcid
-    ? [{ scheme: 'orcid', value: author.orcid }]
-    : undefined;
-
-  return {
-    ...author,
-    affiliations: author.affiliations.map(affiliationToV2),
-    emails,
-    externalIdentifiers,
-  };
-}
-
-function affiliationToV2(aff: Affiliation): AffiliationV2 {
-  return { ...aff };
-}
-
-function identityAuthorToAuthor(author: IdentityAuthor): Author {
-  const email =
-    author.email ??
-    author.emails?.find((e) => e.type === 'work')?.address ??
-    author.emails?.[0]?.address;
-
-  const orcid =
-    author.orcid ??
-    author.externalIdentifiers?.find((id) => id.scheme === 'orcid')?.value;
-
-  const affiliations: Affiliation[] = author.affiliations.map(
-    ({ institution, department, city, state, country, isPrimary }) => ({
-      institution,
-      department,
-      city,
-      state,
-      country,
-      isPrimary,
-    }),
-  );
-
-  return AuthorSchema.parse({
-    id: author.id,
-    givenName: author.givenName,
-    middleName: author.middleName,
-    familyName: author.familyName,
-    email,
-    orcid,
-    isCorresponding: author.isCorresponding,
-    affiliations,
-    sequence: author.sequence,
-  });
-}
-
-export function toSimpleRoster(
-  doc: IdentityDocument | CompatibleIdentityDocument,
-): Roster {
-  const identity = isV1Roster(doc) ? migrateV1RosterToIdentity(doc) : doc;
-  return RosterSchema.parse({
-    id: identity.id,
-    name: identity.name,
-    authors: identity.authors.map(identityAuthorToAuthor),
-    schemaVersion: ROSTER_SCHEMA_VERSION,
-    createdAt: identity.createdAt,
-    updatedAt: identity.updatedAt,
-    source: identity.source,
-  });
 }
 
 export function parseCompatibleIdentity(raw: unknown): CompatibleIdentityDocument {
@@ -153,13 +70,24 @@ export function importIdentityV2Json(json: string): IdentityDocument {
   return IdentityDocumentSchema.parse(raw);
 }
 
-/** Attach default provenance to externally sourced fields when importing. */
-export function withImportedProvenance<T extends { provenance?: unknown }>(
-  record: T,
-  source: Parameters<typeof defaultProvenance>[0],
-): T & { provenance: ReturnType<typeof defaultProvenance> } {
-  return {
-    ...record,
-    provenance: record.provenance ?? defaultProvenance(source),
-  };
+/**
+ * Load unknown local JSON into a usable roster/identity.
+ * v1 rosters keep working; v2 identity docs convert to simple rosters for adapters.
+ */
+export function migrateLocalDocument(raw: unknown): MigratedLocalData {
+  const parsed = parseCompatibleIdentity(raw);
+  if (isIdentityDocument(parsed)) {
+    return { kind: 'identity', identity: parsed };
+  }
+  return { kind: 'roster', roster: parsed };
+}
+
+export function ensureRoster(raw: unknown): Roster {
+  const migrated = migrateLocalDocument(raw);
+  if (migrated.kind === 'roster') return migrated.roster;
+  return toSimpleRoster(migrated.identity);
+}
+
+export function upgradeRosterToIdentity(roster: Roster): IdentityDocument {
+  return fromSimpleRoster(roster);
 }

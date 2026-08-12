@@ -36,7 +36,7 @@ const emailArb = fc.option(
 
 const affiliationArb: fc.Arbitrary<Affiliation> = fc.record({
   institution: fc.oneof(
-    fc.string({ minLength: 1, maxLength: 80 }).filter((s) => s.trim()),
+    fc.string({ minLength: 1, maxLength: 80 }).filter((s) => s.trim().length > 0),
     fc.constant('A'.repeat(300)),
     fc.constant('International Consortium for Extremely Long Institutional Names and Collaborative Research Networks'),
   ),

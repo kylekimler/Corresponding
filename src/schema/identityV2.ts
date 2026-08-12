@@ -1,6 +1,13 @@
 import { z } from 'zod';
-import { RosterSourceSchema } from '@/schema/author';
-import { ProvenanceAssertionSchema } from '@/schema/provenance';
+import {
+  AffiliationSchema,
+  AuthorSchema,
+  ROSTER_SCHEMA_VERSION,
+  RosterSchema,
+  type Author,
+  type Roster,
+} from './author';
+import { ProvenanceAssertionSchema } from './provenance';
 
 export const IDENTITY_SCHEMA_VERSION = 2;
 
@@ -19,13 +26,12 @@ export const CreditRoleSchema = z.enum([
   'visualization',
   'writing_original_draft',
   'writing_review_editing',
+  'other',
 ]);
 
-export const EmailTypeSchema = z.enum(['work', 'personal', 'other']);
-
-export const EmailRecordSchema = z.object({
-  address: z.string().email(),
-  type: EmailTypeSchema.default('work'),
+export const TypedEmailSchema = z.object({
+  value: z.string().email(),
+  type: z.enum(['work', 'personal', 'corresponding', 'other']).default('work'),
   verificationStatus: z
     .enum(['unverified', 'self_attested', 'externally_verified'])
     .default('unverified'),
@@ -34,99 +40,135 @@ export const EmailRecordSchema = z.object({
   provenance: ProvenanceAssertionSchema.optional(),
 });
 
-export const AffiliationV2Schema = z.object({
-  institution: z.string().min(1),
-  department: z.string().optional(),
-  city: z.string().optional(),
-  state: z.string().optional(),
-  country: z.string().optional(),
-  isPrimary: z.boolean().default(false),
+export const DatedAffiliationSchema = AffiliationSchema.extend({
   startDate: z.string().optional(),
   endDate: z.string().optional(),
   provenance: ProvenanceAssertionSchema.optional(),
 });
 
 export const ExternalIdentifierSchema = z.object({
-  scheme: z.string().min(1),
+  system: z.enum(['orcid', 'ror', 'isni', 'researcherid', 'scopus', 'other']),
   value: z.string().min(1),
   url: z.string().url().optional(),
   provenance: ProvenanceAssertionSchema.optional(),
 });
 
 export const FundingRecordSchema = z.object({
-  funder: z.string().min(1),
+  funderName: z.string().min(1),
   grantId: z.string().optional(),
-  title: z.string().optional(),
-  startDate: z.string().optional(),
-  endDate: z.string().optional(),
+  awardTitle: z.string().optional(),
   provenance: ProvenanceAssertionSchema.optional(),
 });
 
 export const DisclosureSchema = z.object({
-  category: z.string().min(1),
-  description: z.string().min(1),
-  effectiveDate: z.string().optional(),
+  kind: z.enum(['conflict_of_interest', 'competing_interest', 'other']),
+  statement: z.string().min(1),
   provenance: ProvenanceAssertionSchema.optional(),
 });
 
 export const WorkReferenceSchema = z.object({
   title: z.string().min(1),
   doi: z.string().optional(),
-  year: z.number().int().optional(),
-  role: z.string().optional(),
+  url: z.string().url().optional(),
   provenance: ProvenanceAssertionSchema.optional(),
 });
 
 export const TeamMembershipSchema = z.object({
-  teamId: z.string().min(1),
   teamName: z.string().min(1),
   role: z.string().optional(),
-  startDate: z.string().optional(),
-  endDate: z.string().optional(),
   provenance: ProvenanceAssertionSchema.optional(),
 });
 
-export const IdentityAuthorSchema = z.object({
-  id: z.string().min(1),
-  givenName: z.string().min(1),
-  middleName: z.string().optional(),
-  familyName: z.string().min(1),
-  email: z
-    .union([z.string().email(), z.literal('')])
-    .optional()
-    .transform((v) => (v === '' ? undefined : v)),
-  orcid: z.string().optional(),
-  isCorresponding: z.boolean().default(false),
-  affiliations: z.array(AffiliationV2Schema).default([]),
-  sequence: z.number().int().positive(),
+export const IdentityPersonSchema = AuthorSchema.extend({
   preferredPublicationName: z.string().optional(),
-  alternateNames: z.array(z.string()).optional(),
-  emails: z.array(EmailRecordSchema).optional(),
-  externalIdentifiers: z.array(ExternalIdentifierSchema).optional(),
-  funding: z.array(FundingRecordSchema).optional(),
-  disclosures: z.array(DisclosureSchema).optional(),
-  creditRoles: z.array(CreditRoleSchema).optional(),
-  works: z.array(WorkReferenceSchema).optional(),
-  teamMemberships: z.array(TeamMembershipSchema).optional(),
+  alternateNames: z.array(z.string()).default([]),
+  emails: z.array(TypedEmailSchema).default([]),
+  datedAffiliations: z.array(DatedAffiliationSchema).default([]),
+  identifiers: z.array(ExternalIdentifierSchema).default([]),
+  funding: z.array(FundingRecordSchema).default([]),
+  disclosures: z.array(DisclosureSchema).default([]),
+  creditRoles: z.array(CreditRoleSchema).default([]),
+  works: z.array(WorkReferenceSchema).default([]),
+  teamMemberships: z.array(TeamMembershipSchema).default([]),
+  provenance: ProvenanceAssertionSchema.optional(),
 });
 
 export const IdentityDocumentSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
-  authors: z.array(IdentityAuthorSchema),
-  schemaVersion: z.literal(IDENTITY_SCHEMA_VERSION).default(IDENTITY_SCHEMA_VERSION),
+  schemaVersion: z.literal(IDENTITY_SCHEMA_VERSION),
+  people: z.array(IdentityPersonSchema),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
-  source: RosterSourceSchema,
+  provenance: ProvenanceAssertionSchema.optional(),
 });
 
-export type CreditRole = z.infer<typeof CreditRoleSchema>;
-export type EmailRecord = z.infer<typeof EmailRecordSchema>;
-export type AffiliationV2 = z.infer<typeof AffiliationV2Schema>;
-export type ExternalIdentifier = z.infer<typeof ExternalIdentifierSchema>;
-export type FundingRecord = z.infer<typeof FundingRecordSchema>;
-export type Disclosure = z.infer<typeof DisclosureSchema>;
-export type WorkReference = z.infer<typeof WorkReferenceSchema>;
-export type TeamMembership = z.infer<typeof TeamMembershipSchema>;
-export type IdentityAuthor = z.infer<typeof IdentityAuthorSchema>;
 export type IdentityDocument = z.infer<typeof IdentityDocumentSchema>;
+export type IdentityPerson = z.infer<typeof IdentityPersonSchema>;
+
+export function fromSimpleRoster(roster: Roster): IdentityDocument {
+  const people = roster.authors.map((a) =>
+    IdentityPersonSchema.parse({
+      ...a,
+      alternateNames: [],
+      emails: a.email
+        ? [
+            {
+              value: a.email,
+              type: a.isCorresponding ? 'corresponding' : 'work',
+              verificationStatus: 'unverified',
+            },
+          ]
+        : [],
+      datedAffiliations: a.affiliations.map((aff) => ({ ...aff })),
+      identifiers: a.orcid
+        ? [{ system: 'orcid', value: a.orcid }]
+        : [],
+      funding: [],
+      disclosures: [],
+      creditRoles: [],
+      works: [],
+      teamMemberships: [],
+    }),
+  );
+  return IdentityDocumentSchema.parse({
+    id: roster.id,
+    name: roster.name,
+    schemaVersion: IDENTITY_SCHEMA_VERSION,
+    people,
+    createdAt: roster.createdAt,
+    updatedAt: roster.updatedAt,
+  });
+}
+
+export function toSimpleRoster(doc: IdentityDocument): Roster {
+  const authors: Author[] = doc.people.map((p, i) => {
+    const email = p.emails[0]?.value ?? p.email;
+    const affiliations =
+      p.datedAffiliations.length > 0
+        ? p.datedAffiliations.map(({ startDate: _s, endDate: _e, provenance: _p, ...aff }) => aff)
+        : p.affiliations;
+    const orcid =
+      p.identifiers.find((id) => id.system === 'orcid')?.value ?? p.orcid;
+    return AuthorSchema.parse({
+      id: p.id,
+      givenName: p.givenName,
+      middleName: p.middleName,
+      familyName: p.familyName,
+      email,
+      orcid,
+      isCorresponding: p.isCorresponding,
+      affiliations,
+      sequence: p.sequence || i + 1,
+    });
+  });
+  return RosterSchema.parse({
+    id: doc.id,
+    name: doc.name,
+    authors,
+    schemaVersion: ROSTER_SCHEMA_VERSION,
+    createdAt: doc.createdAt,
+    updatedAt: doc.updatedAt,
+    source: 'json',
+  });
+}

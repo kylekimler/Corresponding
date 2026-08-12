@@ -143,6 +143,17 @@ export function assertNoLeakedSecrets(
   }
 }
 
+/** Scan payload for common PII patterns (email, password-like tokens). */
+export function assertNoLeakedPii(payload: string): void {
+  if (EMAIL_RE.test(payload)) {
+    throw new Error('PII leak: email-like string in diagnostic payload');
+  }
+  EMAIL_RE.lastIndex = 0;
+  if (/hunter2|password\s*[:=]/i.test(payload)) {
+    throw new Error('PII leak: password-like content in diagnostic payload');
+  }
+}
+
 export function redactFieldValue(
   category: string,
   rawValue: string,

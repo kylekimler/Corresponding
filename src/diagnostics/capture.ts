@@ -243,7 +243,7 @@ export function captureForm(
 
 export function previewCapture(capture: CompatibilityCapture): string {
   const lines: string[] = [];
-  lines.push('# journal-autofill compatibility capture');
+  lines.push('# Corresponding compatibility capture');
   lines.push(`capturedAt: ${capture.capturedAt}`);
   lines.push(`redactionComplete: ${capture.redactionComplete}`);
   if (capture.urlPattern) lines.push(`urlPattern: ${capture.urlPattern}`);
@@ -288,3 +288,6 @@ export function previewCapture(capture: CompatibilityCapture): string {
   }
   return `${lines.join('\n')}\n`;
 }
+
+/** Alias for captureForm used by compatibility capture tests. */
+export const buildCompatibilityCapture = captureForm;

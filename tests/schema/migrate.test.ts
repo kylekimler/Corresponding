@@ -34,8 +34,8 @@ describe('identity migration', () => {
   it('migrates v1 roster to identity v2', () => {
     const identity = migrateV1RosterToIdentity(v1Roster);
     expect(identity.schemaVersion).toBe(IDENTITY_SCHEMA_VERSION);
-    expect(identity.authors[0]?.emails?.[0]?.address).toBe('jane.doe@example.org');
-    expect(identity.authors[0]?.externalIdentifiers?.[0]?.scheme).toBe('orcid');
+    expect(identity.people[0]?.emails[0]?.value).toBe('jane.doe@example.org');
+    expect(identity.people[0]?.identifiers[0]?.system).toBe('orcid');
   });
 
   it('round-trips through toSimpleRoster without losing v1 fields', () => {
@@ -57,8 +57,10 @@ describe('identity migration', () => {
     expect(isIdentityDocument(parsedV2)).toBe(true);
   });
 
-  it('toSimpleRoster accepts a v1 roster directly', () => {
-    const roster = toSimpleRoster(v1Roster);
+  it('toSimpleRoster strips v2-only expansions', () => {
+    const identity = fromSimpleRoster(v1Roster);
+    identity.people[0]!.preferredPublicationName = 'J. Doe';
+    const roster = toSimpleRoster(identity);
     expect(roster.schemaVersion).toBe(ROSTER_SCHEMA_VERSION);
     expect(roster.name).toBe('Lab roster');
   });
@@ -68,16 +70,15 @@ describe('identity migration', () => {
     const json = exportIdentityV2Json(identity);
     const imported = importIdentityV2Json(json);
     expect(imported.schemaVersion).toBe(IDENTITY_SCHEMA_VERSION);
-    expect(imported.authors[0]?.familyName).toBe('Doe');
+    expect(imported.people[0]?.familyName).toBe('Doe');
   });
 
-  it('preserves v2-only expansions when round-tripping is not required', () => {
+  it('preserves v2-only expansions in JSON round-trip', () => {
     const identity = fromSimpleRoster(v1Roster);
-    identity.authors[0]!.preferredPublicationName = 'J. Doe';
-    identity.authors[0]!.creditRoles = ['writing_original_draft'];
-    const json = exportIdentityV2Json(identity);
-    const imported = importIdentityV2Json(json);
-    expect(imported.authors[0]?.preferredPublicationName).toBe('J. Doe');
-    expect(imported.authors[0]?.creditRoles).toEqual(['writing_original_draft']);
+    identity.people[0]!.preferredPublicationName = 'J. Doe';
+    identity.people[0]!.creditRoles = ['writing_original_draft'];
+    const imported = importIdentityV2Json(exportIdentityV2Json(identity));
+    expect(imported.people[0]?.preferredPublicationName).toBe('J. Doe');
+    expect(imported.people[0]?.creditRoles).toEqual(['writing_original_draft']);
   });
 });

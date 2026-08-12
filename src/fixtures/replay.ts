@@ -235,3 +235,46 @@ export function replayAllFixtures(
     fixtures: results,
   };
 }
+
+export interface FixtureReplayCaseResult {
+  id: string;
+  platformFamily: string;
+  detectionOk: boolean;
+  mappingHits: number;
+  mappingMisses: number;
+  notes: string[];
+}
+
+export interface FixtureReplaySummary {
+  generatedAt: string;
+  total: number;
+  detectionPass: number;
+  mappingPass: number;
+  cases: FixtureReplayCaseResult[];
+}
+
+export function replayCorpus(
+  fixtures: FixtureCorpusEntry[],
+  doc: Document = document,
+  registry: AdapterRegistry = defaultRegistry,
+): FixtureReplaySummary {
+  const cases: FixtureReplayCaseResult[] = fixtures.map((fixture) => {
+    const result = replayFixture(fixture, doc, registry);
+    return {
+      id: result.fixtureId,
+      platformFamily: result.platformFamily,
+      detectionOk: result.detection.pass,
+      mappingHits: result.mappings.passed,
+      mappingMisses: result.mappings.failed,
+      notes: result.recognitionNotes,
+    };
+  });
+
+  return {
+    generatedAt: new Date().toISOString(),
+    total: cases.length,
+    detectionPass: cases.filter((c) => c.detectionOk).length,
+    mappingPass: cases.filter((c) => c.mappingMisses === 0).length,
+    cases,
+  };
+}

@@ -1,89 +1,56 @@
 # Backlog
 
-Status key: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked
+Status key: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked (external)
 
-## Milestone 1 — Scaffold
+## Prior milestones (extension core)
 
-- [x] Initialize WXT + React + TypeScript + Vitest + Zod project
-- [x] Document product, privacy, schema, roadmap, agents guide
-- [x] Popup builds as Chrome MV3 with `activeTab` + `storage` + `scripting` only
-- [x] `npm test`, `npm run typecheck`, `npm run build` pass
+- [x] Scaffold, Nature MTS adapter, CSV import, local rosters, Sheets abstraction, diagnostics, stubs, commercial docs
 
-## Milestone 2 — Nature MTS adapter
+## Overnight reliability tracks
 
-- [x] Formal adapter interface (`detect` / `inspect` / `fill` / `validate`)
-- [x] Synthetic Nature MTS DOM fixture (+ `fixtures/nature-mts-sample.html`)
-- [x] Corresponding author at begin/middle/end
-- [x] Roster sizes 1, 10, 75, 200
-- [x] Missing emails, country select, blank fields
-- [x] Overwrite false/true; linked-author conflicts
-- [x] Unicode names; primary affiliation among multiple
-- [x] Mismatched `num_authors`
-- [x] Assert submit/certify controls never clicked
+### Recognition & safety
+- [x] A — Generic semantic form recognizer (deterministic, no LLM)
+- [x] B — Repeated author-group detection + layout fixtures
+- [x] H — Explicit confidence model + fill threshold
+- [x] C — Property-based roster stress (fast-check)
+- [x] D — DOM chaos harness + `reports/chaos-report.json`
+- [x] E — Shared adapter contract suite (Nature MTS opted in)
+- [x] F — Compatibility capture + redaction tests
+- [x] G — Fixture corpus + replay metrics
+- [x] O — Explicit failure states catalog
 
-## Milestone 3 — Import
+### Data model & privacy
+- [x] I — Identity schema v2 + migrate bridges (v1 adapters unchanged)
+- [x] J — Provenance model (never auto-claim external verification)
+- [x] M — Local audit trail (counts only, clearable)
 
-- [x] Robust CSV parser (quoting, Unicode)
-- [x] Column mapping with common aliases
-- [x] Ambiguous mappings require user confirmation
+### UX / product
+- [x] K — Corresponding branding + design tokens + popup hierarchy
+- [x] L — UX adversarial review → `docs/UX_BACKLOG.md`
+- [x] N — Perf benchmarks with generous thresholds
+- [x] P — DX scripts + adapter template + `docs/ADDING_AN_ADAPTER.md`
+- [x] Q — Public platform research notes (`docs/PLATFORM_RESEARCH.md`)
+- [ ] R — Coverage report review / raise on high-risk gaps (run `npm run test:coverage`)
 
-## Milestone 4 — Local rosters
+## Local remaining (not blocked)
 
-- [x] Create / rename / import / edit / reorder / delete / duplicate
-- [x] Export JSON and CSV
-- [x] Schema version + migration hook
-- [x] Popup UI for rename / delete / duplicate / export / author edit / reorder
+- [ ] Empty-state CTA + one-click sample roster import
+- [ ] CSV mapping data preview (3 rows)
+- [ ] Confidence badges in Preview (exact vs semantic)
+- [ ] Persist last-selected roster id
+- [ ] Wire audit log to chrome.storage in popup (memory log exists)
+- [ ] Optional visual regression for popup tokens
 
-## Milestone 5 — Google Sheets
+## External validation (true blockers)
 
-- [x] Read-only client abstraction + mocks
-- [x] URL parse + tab selection
-- [x] Setup docs for OAuth client ID
-- [x] Popup UI for paste URL + tab select (enabled only when configured)
-- [!] Production OAuth credentials (requires Kyle)
+- [!] Google OAuth client ID for Sheets read-only
+- [!] Real Nature MTS HTML capture to validate synthetic IDs
+- [!] Real ScholarOne / Editorial Manager fixtures before selectors
 
-## Milestone 6 — UX
+## Next five highest-value tasks
 
-- [x] Preview + Fill flow in popup
-- [x] Structured fill/validate summary
-- [x] Clear non-submission messaging
-- [x] Conflict / missing-field drill-down lists in popup
-
-## Milestone 7 — Diagnostics
-
-- [x] Form metadata extractor with redaction
-- [x] Copy-friendly diagnostic report
-
-## Milestone 8 — Platform architecture
-
-- [x] Adapter registry + detection
-- [x] Stubs: ScholarOne, Editorial Manager, generic eJournalPress
-- [x] Unsupported → diagnostic report (no silent failure)
-
-## Milestone 9 — Commercial readiness
-
-- [x] CWS permission explanation
-- [x] Threat model
-- [x] Release checklist + versioning strategy
-- [x] React error boundary
-- [x] Entitlement check interface (no payments yet)
-- [x] Privacy policy draft
-
-## Remaining / follow-ups
-
-- [ ] Wire production Sheets OAuth after Kyle provides client ID
-- [ ] Validate Nature MTS adapter against live HTML capture
-- [ ] Implement ScholarOne / EM only after real fixtures arrive
-- [x] Add / remove author rows in popup
-- [x] ORCID normalization on import/edit
-- [ ] Optional: zip packaging + store listing assets
-
-## Blockers requiring Kyle
-
-See `docs/BLOCKERS.md`.
-
-## Next three highest-value tasks
-
-1. Obtain Google OAuth client ID and enable Sheets import end-to-end.
-2. Capture a real Nature MTS author-form HTML (redacted) and add as a regression fixture.
-3. Collect ScholarOne or Editorial Manager diagnostic reports from real sessions before writing selectors.
+1. Empty-state + sample import (first-run UX)
+2. Preview confidence badges (exact / semantic / unresolved)
+3. Raise coverage on migrate + capture redaction edge cases
+4. Enable Sheets when OAuth credentials arrive
+5. Add live Nature MTS regression fixture when Kyle captures HTML

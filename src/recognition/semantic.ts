@@ -118,7 +118,7 @@ function scoreFeature(feature: FieldFeatures, rule: Rule): {
     }
   }
   if (evidence.length > 0) {
-    let confidence = CONFIDENCE.semanticLabelClear;
+    let confidence: number = CONFIDENCE.semanticLabelClear;
     if (
       rule.preferTypes?.length &&
       feature.inputType &&
