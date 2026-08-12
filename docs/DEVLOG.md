@@ -9,6 +9,7 @@ Chronological overnight / autonomous iteration log.
 - UX: Sample onboarding is development-build only; selector confidence is shown separately from block completeness; every author block remains inspectable in a bounded scroll region; action errors now appear beside Preview/Fill in an accessible live region.
 - correctness/privacy: Validation transport errors no longer read as successful validation. Local activity copy now accurately names stored timestamp, operation, portal family, roster ID, and aggregate counts.
 - tests added: stale roster/version/setting/tab Preview checks, expected-tab enforcement including a pre-send tab switch, and exact-selector/incomplete-block separation.
+- verification: typecheck, 173 tests, production build, and lint passed. Production manifest contains only `activeTab`, `storage`, and `scripting`, with no host permissions or content-script registration. Fresh WXT browser used `.wxt/chrome-data` and opened the pinned fixture; detection, sample load, dry Preview, Fill, validation, confidence/completeness, and protected-control checks passed. The fixture's linked/conflicting Alan Turing block was intentionally preserved while the two safe blocks filled.
 
 ### 2026-08-12 16:20 UTC
 - commits: `0d284b0` founder context and strategic backlog alignment; `9770509` one-click sample roster
