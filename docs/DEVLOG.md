@@ -5,7 +5,7 @@ Chronological overnight / autonomous iteration log.
 ---
 
 ### 2026-08-12 15:30 UTC
-- commit: (pending) popup crash fix — `Cannot read properties of undefined (reading 'type')`
+- commit: `8283484` popup crash fix — `Cannot read properties of undefined (reading 'type')`
 - changed: `sendToActiveTab` now always returns a typed `ExtensionResponse`. Chrome `tabs.sendMessage` can resolve to `undefined` when the content script does not reply; callers were reading `res.type` and crashing the popup on load (DETECT). Added `normalizeTabResponse`, safer ensure/inject/retry, unit tests.
 - tests: tabBridge unit tests + full suite.
 - next: User must rebuild (`.output/chrome-mv3`) and reload the unpacked extension; stale builds still show old tagline/Sheets OAuth UI.
