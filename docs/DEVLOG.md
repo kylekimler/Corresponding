@@ -14,8 +14,10 @@ Chronological overnight / autonomous iteration log.
 - repeated-use workflow: reopening the popup restores a valid remembered roster, falls back safely after deletion, and clears the preference when no rosters remain.
 - Preview commit: `7e6a96d` groups mappings by author sequence and shows Exact/tested, Semantic, or Unresolved badges plus missing/conflict counts. Exact classification is platform-scoped to tested Nature IDs.
 - audit commit: `28f0521` switches the popup from memory-only to counts-only `chrome.storage.local` activity; records Preview and Fill separately, refuses PII-like entries, caps at 200, and exposes a clear control under Advanced. Audit failure cannot break Preview/Fill.
-- verification: preference, Preview confidence, and persistent audit tests + full suite 160 passed, typecheck and build passed.
-- next: Independent QA/privacy/UX/manual review, then safe XLSX dependency decision or bioRxiv/eLife fixture investigation.
+- adversarial/privacy follow-up: `9a96b08` marks sample rosters explicitly, requires successful Preview, blocks sample Fill outside the pinned localhost Nature fixture, adds an atomic double-click guard, and treats optional ORCID as advisory rather than “not ready.”
+- quality follow-up: `6007eae` preserves the caught injection error cause, clearing the inherited ESLint failure.
+- verification: preference, Preview confidence, persistent audit, sample safety, double-click, and fixture-URL tests; full suite 163 passed; typecheck, build, and lint passed.
+- next: Hands-on browser smoke review, then safe XLSX dependency decision or bioRxiv/eLife fixture investigation.
 
 ### 2026-08-12 16:15 UTC
 - commit: `c7e2fdc` `npm run dev` opens Nature fixture via `webExt.startUrls`
