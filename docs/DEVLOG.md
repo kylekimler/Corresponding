@@ -4,6 +4,19 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-12 15:20 UTC
+- commit: (harmonize merge of PR #2 + PR #3 into main)
+- changed: Merged security hardening (Semgrep/ESLint, roster quarantine, linked-PID/corr conflicts, diagnostic redaction, CSV formula escape, message Zod, WXT audit fix) with first-use UX (compact popup, Preview results, paste/CSV import, Manage roster, Sheets/Excel architecture).
+- tests: full suite after merge.
+- next: Persist selected roster; sample import; live Sheets when credentials arrive.
+
+### 2026-08-12 15:15 UTC
+- commit: `6253f5261fb6700c2b07d9897eb14691fdc87556`
+- changed: First-use UX — compact main popup; Preview result card (exact/semantic/preserved/unresolved/conflicts) with dry-run safety; detection error recovery; Manage roster secondary view; unified Import authors (paste TSV, CSV drag-drop, Excel stub, Sheets “Choose Google Sheet” coming-soon); attention-first author list; Advanced diagnostics; Sheets/Excel architecture docs. No package dependency changes.
+- tests: `npm test` (128 passed), `npm run typecheck`, `npm run build`. New: pasteTable, previewSummary, authorAttention, fileKinds, first-use journey (3/75/500).
+- limitations: Excel parse deferred (docs/EXCEL_IMPORT.md); Google Picker + OAuth credentials still blocked for live Sheets; no sample-roster one-click yet.
+- next: Persist selected roster; sample import; live Sheets when credentials arrive.
+
 ### 2026-08-12 15:00 UTC
 - commit: `c2aad211eb6bd5ce1fc0aea124ba8d330aec6a02`
 - tooling decision: **Semgrep CE** as primary OSS SAST (`p/javascript`, `p/typescript`, `p/security-audit`) + **ESLint eslint-plugin-security** for IDE/CI + **npm audit** for deps + **Gitleaks** for secrets. CodeQL deferred (needs GH Advanced Security workflow); Snyk/Sonar commercial skipped.

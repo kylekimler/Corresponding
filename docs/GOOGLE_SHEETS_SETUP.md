@@ -1,33 +1,62 @@
-# Google Sheets Read-Only Setup
+# Google Sheets import architecture
 
-Author data is normalized locally. No backend is required for roster storage.
+Author data is normalized locally. No Corresponding backend stores roster PII.
 
-## Status
+## Product UX (scientist-facing)
 
-**Blocked on production OAuth credentials** (Chrome Extension OAuth client ID).
+The product says **“Choose Google Sheet”**.
 
-The codebase includes:
+Scientists:
 
-- URL parsing
-- Client interface
-- Mock client + tests
-- Chrome Identity-shaped client that throws if unconfigured
-- No write APIs
+1. Sign into Google (Chrome Identity).
+2. Pick a spreadsheet with the **Google Picker**.
+3. Corresponding reads the selected file and maps columns.
+4. Rosters stay on-device.
 
-## Minimum scope
+Scientists **never** enter:
 
-`https://www.googleapis.com/auth/spreadsheets.readonly`
+- API keys
+- OAuth client IDs
+- Client secrets
 
-## Steps for Kyle
+Those are **developer configuration** only (this document).
+
+## Target architecture
+
+| Piece | Role |
+|-------|------|
+| Chrome Extension OAuth client | Identity for the extension item |
+| `chrome.identity` | Interactive Google sign-in / token |
+| Google Picker | Explicit user file selection |
+| Scope `drive.file` | Access only files the user opens/picks with the app |
+| Sheets API read | Values from the selected spreadsheet |
+| Local mapping UI | Same column-mapping as paste/CSV |
+
+### Why `drive.file` (preferred)
+
+Per-file access satisfies “choose a sheet” without requesting access to every spreadsheet in Drive. Broader scopes (e.g. full Sheets readonly across Drive) are a last resort and should not be the default product ask.
+
+Fallback during development: `spreadsheets.readonly` + pasted URL — not the long-term UX.
+
+## Developer setup (Kyle / CI)
+
+**Status:** blocked on production OAuth credentials. Product UI shows “Coming soon” / disabled — never an error about missing client IDs.
 
 1. Create a Google Cloud project.
-2. Enable Google Sheets API.
-3. Configure OAuth consent screen (external or internal as appropriate).
-4. Create an OAuth client ID of type **Chrome Extension**, using the extension’s Chrome Web Store item ID (or development ID during testing).
-5. Provide the client ID as `VITE_GOOGLE_OAUTH_CLIENT_ID` for builds (via CI secret / local `.env` — never commit the value if policies forbid it; client IDs are often public but still manage carefully).
-6. Add the `oauth2` section to the WXT manifest when enabling the feature in a release build:
-   - `client_id`
-   - `scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"]`
-7. Optionally add host permission for `https://sheets.googleapis.com/*` only when shipping Sheets import.
+2. Enable **Google Sheets API**, **Google Picker API**, and **Google Drive API** (Picker).
+3. Configure OAuth consent screen.
+4. Create an OAuth client ID of type **Chrome Extension** (extension ID).
+5. Provide `VITE_GOOGLE_OAUTH_CLIENT_ID` via CI secret / local `.env` — never ask users for it.
+6. When shipping Sheets:
+   - Manifest `oauth2.client_id` + scopes (`drive.file` and/or Sheets read as finalized).
+   - Host permissions only as required for Picker / Sheets endpoints.
+7. Implement `pickSpreadsheet()` behind `GoogleSheetsClient` (see `src/sheets/types.ts`).
 
-Until then, CSV and local roster flows remain the supported import paths.
+## Code status
+
+- Client interface + mock client + tests
+- Chrome Identity-shaped client throws `SheetsNotConfiguredError` when unset (caught; UI stays scientist-friendly)
+- No write APIs
+- Popup: “Choose Google Sheet” disabled until configured — **no OAuth warnings on the main fill screen**
+
+Until credentials exist: **Paste from spreadsheet** and **Upload CSV** are the supported import paths.
