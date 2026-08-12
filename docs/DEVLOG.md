@@ -12,7 +12,7 @@ Chronological overnight / autonomous iteration log.
 - next: Popup roster management UI; Sheets import UI over mocks; real Nature MTS HTML fixture from Kyle.
 
 ### 2026-08-12 04:31 UTC
-- commit: *(pending)*
+- commit: `762d98d42802ccc9236420dc193c2cea82206515`
 - changed: Popup roster CRUD (create/rename/duplicate/delete/export JSON|CSV, author edit/reorder); Sheets import flow + popup UI gated on OAuth config; local HTML/CSV fixtures; `docs/BLOCKERS.md`; richer preview conflict/missing lists.
 - tests: `npm test` (44 passed), `npm run typecheck`, `npm run build`.
 - limitations: Sheets still blocked without Kyle OAuth credentials; Nature MTS still synthetic; no live portal validation.
