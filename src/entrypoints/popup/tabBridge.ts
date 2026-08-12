@@ -19,6 +19,30 @@ export function isInjectableTabUrl(url: string | undefined): boolean {
   }
 }
 
+export function isDevelopmentFixtureUrl(url: string | undefined): boolean {
+  if (!url) return false;
+  try {
+    const parsed = new URL(url);
+    return (
+      parsed.protocol === 'http:' &&
+      parsed.hostname === 'localhost' &&
+      parsed.port === '3000' &&
+      parsed.pathname === '/fixtures/nature-mts-sample.html'
+    );
+  } catch {
+    return false;
+  }
+}
+
+export async function isActiveDevelopmentFixtureTab(): Promise<boolean> {
+  try {
+    const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+    return isDevelopmentFixtureUrl(tab?.url);
+  } catch {
+    return false;
+  }
+}
+
 /** Normalize chrome.runtime messaging replies into a typed ExtensionResponse. */
 export function normalizeTabResponse(response: unknown): ExtensionResponse {
   if (

@@ -39,16 +39,14 @@ describe('attention-first author UX helpers', () => {
       }),
     ];
 
-    expect(readyAuthorCount(authors)).toBe(1);
+    expect(readyAuthorCount(authors)).toBe(2);
     const attention = authorsNeedingAttention(authors);
-    expect(attention).toHaveLength(3);
+    expect(attention).toHaveLength(2);
     expect(attention.map((a) => a.author.familyName)).toEqual([
       'Futey',
       'Hupalowska',
-      'Kimler',
     ]);
     expect(attention[0]?.reasons).toContain('Missing email');
     expect(attention[1]?.reasons).toContain('Missing institution');
-    expect(attention[2]?.reasons).toContain('Missing ORCID');
   });
 });

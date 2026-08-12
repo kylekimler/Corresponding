@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  isDevelopmentFixtureUrl,
   isInjectableTabUrl,
   normalizeTabResponse,
 } from '@/entrypoints/popup/tabBridge';
@@ -38,5 +39,28 @@ describe('isInjectableTabUrl', () => {
     expect(isInjectableTabUrl('https://chromewebstore.google.com/detail/x')).toBe(
       false,
     );
+  });
+});
+
+describe('isDevelopmentFixtureUrl', () => {
+  it('allows only the pinned local Nature test fixture', () => {
+    expect(
+      isDevelopmentFixtureUrl(
+        'http://localhost:3000/fixtures/nature-mts-sample.html',
+      ),
+    ).toBe(true);
+    expect(
+      isDevelopmentFixtureUrl(
+        'https://journal.example/fixtures/nature-mts-sample.html',
+      ),
+    ).toBe(false);
+    expect(
+      isDevelopmentFixtureUrl('http://localhost:3000/fixtures/other.html'),
+    ).toBe(false);
+    expect(
+      isDevelopmentFixtureUrl(
+        'http://127.0.0.1:3000/fixtures/nature-mts-sample.html',
+      ),
+    ).toBe(false);
   });
 });

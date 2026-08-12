@@ -21,7 +21,10 @@ import {
 } from '@/roster/mutations';
 import { normalizeOrcid } from '@/schema/orcid';
 import { createRosterStore } from '@/roster/storage';
-import { createSampleRoster } from '@/roster/sample';
+import {
+  importSampleRosterOnce,
+  sampleFillBlockReason,
+} from '@/roster/sample';
 import type { Author, Roster, RosterSource } from '@/schema/author';
 import { previewCapture } from '@/diagnostics/capture';
 import { createChromeGoogleSheetsClient } from '@/sheets/chromeClient';
@@ -39,7 +42,10 @@ import {
   createPopupPreferences,
 } from '@/popup/preferences';
 import { summarizePreview } from '@/popup/previewSummary';
-import { sendToActiveTab } from './tabBridge';
+import {
+  isActiveDevelopmentFixtureTab,
+  sendToActiveTab,
+} from './tabBridge';
 import {
   AttentionList,
   ColumnSelect,
@@ -95,6 +101,7 @@ export function App() {
   const [auditCount, setAuditCount] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const sampleCreatingRef = useRef(false);
 
   const selected = rosters.find((r) => r.id === selectedId) ?? null;
   const sortedAuthors = useMemo(
@@ -312,15 +319,15 @@ export function App() {
   }
 
   async function addSampleRoster() {
-    if (sampleCreating) return;
+    if (sampleCreatingRef.current) return;
     setSampleCreating(true);
     setError('');
     setStatus('');
     try {
-      const roster = createSampleRoster();
-      await store.importRoster(roster);
+      const roster = await importSampleRosterOnce(store, sampleCreatingRef);
+      if (!roster) return;
       await refreshRosters(roster.id);
-      setStatus('Sample roster added. Try Preview — nothing is submitted.');
+      setStatus('Sample roster added. Preview it on the local test fixture.');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not add the sample roster.');
     } finally {
@@ -452,6 +459,19 @@ export function App() {
   async function runFill() {
     if (!selected) return;
     setError('');
+    if (selected.source === 'sample') {
+      const hasSuccessfulPreview = Boolean(preview?.dryRun);
+      const blockReason = sampleFillBlockReason(
+        selected.source,
+        hasSuccessfulPreview,
+        hasSuccessfulPreview && (await isActiveDevelopmentFixtureTab()),
+      );
+      if (blockReason) {
+        setError(blockReason);
+        setStatus('');
+        return;
+      }
+    }
     setStatus('Filling…');
     try {
       const res = await sendToActiveTab({
@@ -566,7 +586,7 @@ export function App() {
               </button>
             </div>
             <p className="muted tight">
-              The sample uses example-only data and stays on this device.
+              Example-only data for the local test fixture. Preview first.
             </p>
           </section>
         ) : (

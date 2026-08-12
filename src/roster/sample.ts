@@ -1,5 +1,6 @@
 import { rowsToRoster } from '@/import/rosterFromTable';
-import type { Roster } from '@/schema/author';
+import type { Roster, RosterSource } from '@/schema/author';
+import type { RosterStore } from '@/roster/storage';
 
 const SAMPLE_HEADERS = [
   'First Name',
@@ -66,7 +67,39 @@ export function createSampleRoster(now?: string): Roster {
     headers: SAMPLE_HEADERS,
     rows: SAMPLE_ROWS,
     mapping: SAMPLE_MAPPING,
-    source: 'manual',
+    source: 'sample',
     now,
   });
+}
+
+/**
+ * Atomically import at most one sample for a UI action, even if a user clicks
+ * twice before React has rerendered.
+ */
+export async function importSampleRosterOnce(
+  store: RosterStore,
+  lock: { current: boolean },
+): Promise<Roster | undefined> {
+  if (lock.current) return undefined;
+  lock.current = true;
+  try {
+    return await store.importRoster(createSampleRoster());
+  } finally {
+    lock.current = false;
+  }
+}
+
+export function sampleFillBlockReason(
+  source: RosterSource,
+  hasSuccessfulPreview: boolean,
+  isDevelopmentFixture: boolean,
+): string | undefined {
+  if (source !== 'sample') return undefined;
+  if (!hasSuccessfulPreview) {
+    return 'Preview the sample roster before filling the local test fixture.';
+  }
+  if (!isDevelopmentFixture) {
+    return 'Sample rosters can only fill the local Nature test fixture. Import your authors for a real portal.';
+  }
+  return undefined;
 }

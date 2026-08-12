@@ -3,8 +3,7 @@ import { primaryAffiliation, type Author } from '@/schema/author';
 export type AttentionReason =
   | 'Missing name'
   | 'Missing email'
-  | 'Missing institution'
-  | 'Missing ORCID';
+  | 'Missing institution';
 
 export interface AuthorAttention {
   author: Author;
@@ -29,27 +28,23 @@ export function attentionReasons(author: Author): AttentionReason[] {
   if (!primaryAffiliation(author)?.institution?.trim()) {
     reasons.push('Missing institution');
   }
-  if (!author.orcid?.trim()) reasons.push('Missing ORCID');
   return reasons;
 }
 
 /**
  * Authors that need action — ready authors are omitted.
- * Missing ORCID counts as attention (scientist-visible checklist).
+ * ORCID is optional in the canonical v1 schema, so its absence is advisory
+ * rather than a submission-readiness blocker.
  */
 export function authorsNeedingAttention(authors: Author[]): AuthorAttention[] {
   return [...authors]
     .sort((a, b) => a.sequence - b.sequence)
     .map((author) => ({ author, reasons: attentionReasons(author) }))
     .filter((a) => a.reasons.length > 0)
-    .sort((a, b) => {
-      const hard = (x: AuthorAttention) =>
-        x.reasons.some((r) => r !== 'Missing ORCID') ? 0 : 1;
-      return hard(a) - hard(b);
-    });
+    .sort((a, b) => a.author.sequence - b.author.sequence);
 }
 
-/** Ready = no attention reasons (name, email, institution, ORCID present). */
+/** Ready = required submission basics are present; ORCID remains optional. */
 export function readyAuthorCount(authors: Author[]): number {
   return authors.filter((a) => attentionReasons(a).length === 0).length;
 }
