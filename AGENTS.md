@@ -12,13 +12,18 @@ Read, in order:
 
 1. `README.md`
 2. `AGENTS.md` (this file)
-3. `docs/ROADMAP.md`
-4. `docs/BACKLOG.md`
-5. `docs/PRODUCT.md`
-6. `docs/PRIVACY.md`
-7. `docs/AUTHOR_SCHEMA.md`
+3. `docs/FOUNDER_CONTEXT.md`
+4. `docs/ROADMAP.md`
+5. `docs/BACKLOG.md`
+6. `docs/PRODUCT.md`
+7. `docs/PRIVACY.md`
+8. `docs/AUTHOR_SCHEMA.md`
 
 Then inspect `docs/DEVLOG.md` for the latest iteration state.
+
+Before product or architectural decisions, use `docs/FOUNDER_CONTEXT.md` as
+the strategic source of truth. Preserve working architecture unless a concrete
+user, safety, or reliability need justifies changing it.
 
 ## Hard safety constraints
 

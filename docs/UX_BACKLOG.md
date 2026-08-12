@@ -7,7 +7,7 @@ Prioritized friction for a first-time scientist. Status: `[ ]` open · `[x]` fix
 - [x] Rename user-facing product to **Corresponding** (popup, manifest, error boundary)
 - [x] Lead with calm brand line: “One scientific identity, everywhere.”
 - [x] Compact primary popup (portal → roster → Preview/Fill)
-- [ ] Onboarding sample roster one-click import
+- [x] Onboarding sample roster one-click import
 
 ## First roster import
 
@@ -24,7 +24,7 @@ Prioritized friction for a first-time scientist. Status: `[ ]` open · `[x]` fix
 - [x] Status: ready · need attention · conflicts
 - [x] Attention-first list (ready authors collapsed)
 - [x] Manage roster secondary screen (CRUD / export / full list)
-- [ ] Persist last-selected roster id across popup opens
+- [x] Persist last-selected roster id across popup opens
 
 ## Preview
 
@@ -32,7 +32,7 @@ Prioritized friction for a first-time scientist. Status: `[ ]` open · `[x]` fix
 - [x] Exact / semantic / preserved / unresolved / conflicts counts
 - [x] Dry-run never mutates the form (tested)
 - [x] Detection errors no longer stick forever on “Checking…”
-- [ ] Group preview by author block with confidence badges
+- [x] Group preview by author block with confidence badges
 
 ## Unresolved fields
 

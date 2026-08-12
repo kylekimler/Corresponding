@@ -1,4 +1,9 @@
-import type { DetectResult, FieldPlan, FillReport } from '@/adapters/types';
+import type {
+  DetectResult,
+  FieldPlan,
+  FillReport,
+  PlatformId,
+} from '@/adapters/types';
 
 export interface PreviewSummary {
   portalLabel: string;
@@ -16,15 +21,27 @@ export interface PreviewSummary {
   evidence: string[];
   conflictLabels: string[];
   unresolvedLabels: string[];
+  authorGroups: AuthorPreviewGroup[];
   /** Short human status for the banner. */
   headline: string;
+}
+
+export interface AuthorPreviewGroup {
+  authorSequence: number;
+  selectorConfidence: 'exact' | 'semantic' | 'unresolved';
+  completeness: 'complete' | 'needs-attention';
+  exactMappings: number;
+  semanticMappings: number;
+  preserved: number;
+  unresolved: number;
+  conflicts: number;
 }
 
 const EXACT_ID_RE =
   /^(num_authors|corr_auth_|contrib_auth_\d+_)/i;
 
-function isExactPlatformField(plan: FieldPlan): boolean {
-  return EXACT_ID_RE.test(plan.fieldId);
+function isExactPlatformField(plan: FieldPlan, platformId: PlatformId): boolean {
+  return platformId === 'nature-mts' && EXACT_ID_RE.test(plan.fieldId);
 }
 
 function actionable(plan: FieldPlan): boolean {
@@ -33,6 +50,52 @@ function actionable(plan: FieldPlan): boolean {
     plan.action === 'overwrite' ||
     plan.action === 'preserve'
   );
+}
+
+function summarizeAuthorGroups(
+  plans: FieldPlan[],
+  platformId: PlatformId,
+): AuthorPreviewGroup[] {
+  const grouped = new Map<number, FieldPlan[]>();
+  for (const plan of plans) {
+    if (plan.authorSequence === undefined) continue;
+    const existing = grouped.get(plan.authorSequence) ?? [];
+    existing.push(plan);
+    grouped.set(plan.authorSequence, existing);
+  }
+
+  return [...grouped.entries()]
+    .sort(([a], [b]) => a - b)
+    .map(([authorSequence, authorPlans]) => {
+      const actionablePlans = authorPlans.filter(actionable);
+      const exactMappings = actionablePlans.filter((plan) =>
+        isExactPlatformField(plan, platformId),
+      ).length;
+      const semanticMappings = actionablePlans.length - exactMappings;
+      const selectorConfidence =
+        semanticMappings > 0
+          ? 'semantic'
+          : exactMappings > 0
+            ? 'exact'
+            : 'unresolved';
+      const unresolved = authorPlans.filter(
+        (p) => p.action === 'missing_source' || p.action === 'unmapped',
+      ).length;
+      const conflicts = authorPlans.filter(
+        (p) => p.action === 'skip_conflict',
+      ).length;
+      return {
+        authorSequence,
+        selectorConfidence,
+        completeness:
+          unresolved > 0 || conflicts > 0 ? 'needs-attention' : 'complete',
+        exactMappings,
+        semanticMappings,
+        preserved: authorPlans.filter((p) => p.action === 'preserve').length,
+        unresolved,
+        conflicts,
+      };
+    });
 }
 
 /**
@@ -47,14 +110,14 @@ export function summarizePreview(
   const exactMappings = report.plans.filter(
     (p) =>
       (p.action === 'fill' || p.action === 'overwrite') &&
-      isExactPlatformField(p),
+      isExactPlatformField(p, report.platformId),
   ).length;
 
   // Semantic: actionable plans that are not exact platform IDs (future adapters).
   const semanticMappings = report.plans.filter(
     (p) =>
       (p.action === 'fill' || p.action === 'overwrite') &&
-      !isExactPlatformField(p),
+      !isExactPlatformField(p, report.platformId),
   ).length;
 
   const totalMappings = report.plans.filter(actionable).length;
@@ -92,6 +155,7 @@ export function summarizePreview(
     evidence: detected?.evidence?.slice(0, 6) ?? [],
     conflictLabels,
     unresolvedLabels,
+    authorGroups: summarizeAuthorGroups(report.plans, report.platformId),
     headline,
   };
 }

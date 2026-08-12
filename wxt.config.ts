@@ -41,11 +41,4 @@ export default defineConfig({
       default_title: 'Corresponding',
     },
   },
-  hooks: {
-    // Keep the content-script build artifact for activeTab executeScript, but do not
-    // register automatic content_scripts (narrowest permission model).
-    'build:manifestGenerated': (_wxt, manifest) => {
-      delete manifest.content_scripts;
-    },
-  },
 });

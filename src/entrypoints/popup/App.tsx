@@ -21,17 +21,38 @@ import {
 } from '@/roster/mutations';
 import { normalizeOrcid } from '@/schema/orcid';
 import { createRosterStore } from '@/roster/storage';
+import {
+  importSampleRosterOnce,
+  sampleFillBlockReason,
+} from '@/roster/sample';
 import type { Author, Roster, RosterSource } from '@/schema/author';
 import { previewCapture } from '@/diagnostics/capture';
 import { createChromeGoogleSheetsClient } from '@/sheets/chromeClient';
 import { sheetsChooserAvailability } from '@/sheets/types';
-import { createMemoryAuditLog } from '@/audit/localLog';
+import {
+  auditRecordFromFillReport,
+  createChromeAuditLog,
+} from '@/audit/localLog';
 import {
   authorsNeedingAttention,
   readyAuthorCount,
 } from '@/popup/authorAttention';
+import {
+  createPreviewContext,
+  previewMatchesContext,
+  type PreviewSession,
+  type TabTarget,
+} from '@/popup/previewSession';
+import {
+  chooseSelectedRosterId,
+  createPopupPreferences,
+} from '@/popup/preferences';
 import { summarizePreview } from '@/popup/previewSummary';
-import { sendToActiveTab } from './tabBridge';
+import {
+  getActiveTabTarget,
+  isActiveDevelopmentFixtureTab,
+  sendToActiveTab,
+} from './tabBridge';
 import {
   AttentionList,
   ColumnSelect,
@@ -42,7 +63,9 @@ import {
 
 const store = createRosterStore();
 const sheetsClient = createChromeGoogleSheetsClient();
-const auditLog = createMemoryAuditLog();
+const auditLog = createChromeAuditLog();
+const popupPreferences = createPopupPreferences();
+const showSampleOnboarding = import.meta.env.DEV;
 
 type View = 'main' | 'import' | 'manage' | 'advanced';
 type ImportMode = 'chooser' | 'paste' | 'csv' | 'mapping';
@@ -67,10 +90,14 @@ export function App() {
   >('loading');
   const [detected, setDetected] = useState<DetectResult | null>(null);
   const [detectError, setDetectError] = useState('');
-  const [preview, setPreview] = useState<FillReport | null>(null);
+  const [previewSession, setPreviewSession] =
+    useState<PreviewSession | null>(null);
+  const [activeTarget, setActiveTarget] = useState<TabTarget | null>(null);
   const [validation, setValidation] = useState<ValidateReport | null>(null);
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
+  const [actionStatus, setActionStatus] = useState('');
+  const [actionError, setActionError] = useState('');
   const [pending, setPending] = useState<PendingImport | null>(null);
   const [pasteText, setPasteText] = useState('');
   const [csvMeta, setCsvMeta] = useState<{ name: string; rows: number } | null>(
@@ -82,8 +109,11 @@ export function App() {
   const [editingAuthorId, setEditingAuthorId] = useState('');
   const [authorDraft, setAuthorDraft] = useState<Partial<Author>>({});
   const [menuOpen, setMenuOpen] = useState(false);
+  const [sampleCreating, setSampleCreating] = useState(false);
+  const [auditCount, setAuditCount] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const sampleCreatingRef = useRef(false);
 
   const selected = rosters.find((r) => r.id === selectedId) ?? null;
   const sortedAuthors = useMemo(
@@ -98,6 +128,13 @@ export function App() {
     [selected],
   );
   const readyCount = selected ? readyAuthorCount(selected.authors) : 0;
+  const previewIsCurrent = previewMatchesContext(
+    previewSession,
+    selected,
+    overwrite,
+    activeTarget,
+  );
+  const preview = previewIsCurrent ? previewSession?.report ?? null : null;
   const previewSummary = useMemo(
     () => (preview ? summarizePreview(preview, detected) : null),
     [preview, detected],
@@ -108,21 +145,25 @@ export function App() {
   async function refreshRosters(preferId?: string) {
     const list = await store.list();
     setRosters(list);
-    const nextId = preferId ?? selectedId;
-    if (nextId && list.some((r) => r.id === nextId)) {
-      setSelectedId(nextId);
-    } else if (list[0]) {
-      setSelectedId(list[0].id);
-    } else {
-      setSelectedId('');
-    }
+    const explicitId = preferId ?? selectedId;
+    const rememberedId = await popupPreferences.getSelectedRosterId();
+    const nextId =
+      chooseSelectedRosterId(
+        list.map((roster) => roster.id),
+        explicitId,
+        rememberedId,
+      ) ?? '';
+    setSelectedId(nextId);
+    await popupPreferences.setSelectedRosterId(nextId || undefined);
   }
 
   async function runDetect() {
     setDetectStatus('loading');
     setDetectError('');
     try {
-      const res = await sendToActiveTab({ type: 'DETECT' });
+      const target = await getActiveTabTarget();
+      setActiveTarget(target);
+      const res = await sendToActiveTab({ type: 'DETECT' }, target ?? undefined);
       if (res.type === 'DETECT_RESULT') {
         setDetected(res.result);
         setDetectStatus(
@@ -146,10 +187,53 @@ export function App() {
     }
   }
 
+  async function refreshAuditCount() {
+    setAuditCount((await auditLog.list()).length);
+  }
+
+  async function recordLocalActivity(report: FillReport, rosterId: string) {
+    try {
+      await auditLog.append(auditRecordFromFillReport(report, rosterId));
+      await refreshAuditCount();
+    } catch {
+      // Audit persistence is secondary and must never break Preview or Fill.
+      console.warn('Corresponding could not persist local activity counts.');
+    }
+  }
+
   useEffect(() => {
     void refreshRosters();
     void runDetect();
+    void refreshAuditCount();
   }, []);
+
+  useEffect(() => {
+    const refreshTarget = () => {
+      void getActiveTabTarget()
+        .then(setActiveTarget)
+        .catch(() => setActiveTarget(null));
+    };
+    const onUpdated = (
+      _tabId: number,
+      changeInfo: { status?: string; url?: string },
+    ) => {
+      if (changeInfo.url || changeInfo.status === 'complete') refreshTarget();
+    };
+    browser.tabs.onActivated.addListener(refreshTarget);
+    browser.tabs.onUpdated.addListener(onUpdated);
+    return () => {
+      browser.tabs.onActivated.removeListener(refreshTarget);
+      browser.tabs.onUpdated.removeListener(onUpdated);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (previewSession && !previewIsCurrent) {
+      setPreviewSession(null);
+      setValidation(null);
+      setActionStatus('');
+    }
+  }, [previewSession, previewIsCurrent]);
 
   useEffect(() => {
     setRenameValue(selected?.name ?? '');
@@ -283,6 +367,23 @@ export function App() {
     setStatus('Empty roster created.');
   }
 
+  async function addSampleRoster() {
+    if (sampleCreatingRef.current) return;
+    setSampleCreating(true);
+    setError('');
+    setStatus('');
+    try {
+      const roster = await importSampleRosterOnce(store, sampleCreatingRef);
+      if (!roster) return;
+      await refreshRosters(roster.id);
+      setStatus('Sample roster added. Preview it on the local test fixture.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not add the sample roster.');
+    } finally {
+      setSampleCreating(false);
+    }
+  }
+
   async function saveRename() {
     if (!selected) return;
     try {
@@ -374,69 +475,127 @@ export function App() {
 
   async function runPreview() {
     if (!selected) return;
-    setError('');
-    setStatus('Running preview…');
+    setActionError('');
+    setActionStatus('Running preview…');
+    setValidation(null);
     try {
-      const res = await sendToActiveTab({
-        type: 'PREVIEW',
-        roster: selected,
-        overwrite,
-      });
+      const target = await getActiveTabTarget();
+      if (!target) {
+        setActiveTarget(null);
+        setActionError(
+          'Open a journal submission form in an http(s) tab, then Preview again.',
+        );
+        setActionStatus('');
+        return;
+      }
+      const res = await sendToActiveTab(
+        {
+          type: 'PREVIEW',
+          roster: selected,
+          overwrite,
+        },
+        target,
+      );
       if (res.type === 'ERROR') {
-        setError(res.message);
-        setStatus('');
+        setPreviewSession(null);
+        setActionError(res.message);
+        setActionStatus('');
         return;
       }
       if (res.type === 'FILL_RESULT') {
-        setPreview(res.result);
-        setValidation(null);
-        const summary = summarizePreview(res.result, detected);
-        setStatus(summary.headline);
-        void auditLog.append({
-          portalFamily: res.result.platformId,
-          rosterId: selected.id,
-          fieldsProposed: res.result.plans.length,
-          filled: res.result.filled,
-          preserved: res.result.preserved,
-          unresolved: res.result.missingSource + res.result.unmapped,
-          conflicts: res.result.skippedConflicts,
+        setActiveTarget(target);
+        setPreviewSession({
+          report: res.result,
+          context: createPreviewContext(selected, overwrite, target),
         });
+        const summary = summarizePreview(res.result, detected);
+        setActionStatus(summary.headline);
+        await recordLocalActivity(res.result, selected.id);
         // Refresh detect if it was stuck/error — preview proves the tab works.
         if (detectStatus !== 'ready' && res.result.platformId !== 'unknown') {
           void runDetect();
         }
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-      setStatus('');
+      setPreviewSession(null);
+      setActionError(err instanceof Error ? err.message : String(err));
+      setActionStatus('');
     }
   }
 
   async function runFill() {
     if (!selected) return;
-    setError('');
-    setStatus('Filling…');
+    setActionError('');
+    if (!previewSession || !previewIsCurrent) {
+      setActionError(
+        'Preview this roster and active page with the current settings before filling.',
+      );
+      setActionStatus('');
+      return;
+    }
+    const expectedTarget = {
+      tabId: previewSession.context.tabId,
+      url: previewSession.context.url,
+    };
+    if (selected.source === 'sample') {
+      const hasSuccessfulPreview = previewSession.report.dryRun;
+      const blockReason = sampleFillBlockReason(
+        selected.source,
+        hasSuccessfulPreview,
+        hasSuccessfulPreview && (await isActiveDevelopmentFixtureTab()),
+      );
+      if (blockReason) {
+        setActionError(blockReason);
+        setActionStatus('');
+        return;
+      }
+    }
+    setActionStatus('Filling…');
+    setValidation(null);
     try {
-      const res = await sendToActiveTab({
-        type: 'FILL',
-        roster: selected,
-        overwrite,
-      });
+      const res = await sendToActiveTab(
+        {
+          type: 'FILL',
+          roster: selected,
+          overwrite,
+        },
+        expectedTarget,
+      );
       if (res.type === 'ERROR') {
-        setError(res.message);
-        setStatus('');
+        setPreviewSession(null);
+        setActionError(res.message);
+        setActionStatus('');
         return;
       }
       if (res.type === 'FILL_RESULT') {
-        setPreview(res.result);
-        const v = await sendToActiveTab({ type: 'VALIDATE', roster: selected });
-        if (v.type === 'VALIDATE_RESULT') setValidation(v.result);
-        setStatus('Fill complete. You review and submit.');
+        setPreviewSession(null);
+        await recordLocalActivity(res.result, selected.id);
+        const v = await sendToActiveTab(
+          { type: 'VALIDATE', roster: selected },
+          expectedTarget,
+        );
+        if (v.type === 'ERROR') {
+          setActionError(`Fields were filled, but validation failed: ${v.message}`);
+          setActionStatus('Fill complete. Review every field before submitting.');
+          return;
+        }
+        if (v.type !== 'VALIDATE_RESULT') {
+          setActionError('Fields were filled, but validation returned no result.');
+          setActionStatus('Fill complete. Review every field before submitting.');
+          return;
+        }
+        setValidation(v.result);
+        setActionStatus(
+          v.result.ok
+            ? 'Fill complete. Validation finished; you review and submit.'
+            : 'Fill complete. Validation found issues that need review.',
+        );
         if (detectStatus !== 'ready') void runDetect();
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-      setStatus('');
+      setPreviewSession(null);
+      setActionError(err instanceof Error ? err.message : String(err));
+      setActionStatus('');
     }
   }
 
@@ -457,6 +616,13 @@ export function App() {
     } else if (res.type === 'ERROR') {
       setError(res.message);
     }
+  }
+
+  async function clearAuditLog() {
+    if (!confirm('Clear local activity records from this device?')) return;
+    await auditLog.clear();
+    await refreshAuditCount();
+    setStatus('Local activity cleared.');
   }
 
   const portalLabel =
@@ -500,16 +666,33 @@ export function App() {
             <p className="stat">
               Import your author list to get started.
             </p>
-            <button type="button" onClick={openImport}>
-              Import authors
-            </button>
-            <button
-              type="button"
-              className="secondary"
-              onClick={() => void createRoster()}
-            >
-              Start empty roster
-            </button>
+            <div className="empty-state-actions">
+              <button type="button" onClick={openImport}>
+                Import authors
+              </button>
+              {showSampleOnboarding && (
+                <button
+                  type="button"
+                  className="secondary"
+                  disabled={sampleCreating}
+                  onClick={() => void addSampleRoster()}
+                >
+                  {sampleCreating ? 'Adding sample…' : 'Try local test sample'}
+                </button>
+              )}
+              <button
+                type="button"
+                className="linkish"
+                onClick={() => void createRoster()}
+              >
+                Start empty roster
+              </button>
+            </div>
+            {showSampleOnboarding && (
+              <p className="muted tight">
+                Development only: example data for the pinned localhost fixture.
+              </p>
+            )}
           </section>
         ) : (
           <>
@@ -582,7 +765,11 @@ export function App() {
               <select
                 className="roster-select"
                 value={selectedId}
-                onChange={(e) => setSelectedId(e.target.value)}
+              onChange={(e) => {
+                const id = e.target.value;
+                setSelectedId(id);
+                void popupPreferences.setSelectedRosterId(id || undefined);
+              }}
                 aria-label="Saved roster"
               >
                 {rosters.map((r) => (
@@ -637,6 +824,7 @@ export function App() {
                   type="button"
                   disabled={
                     !selected ||
+                    !previewIsCurrent ||
                     detectStatus === 'unknown' ||
                     detectStatus === 'loading'
                   }
@@ -648,18 +836,32 @@ export function App() {
               <p className="safety-near-fill">
                 Corresponding fills. You review and submit.
               </p>
+              <div
+                className="action-feedback"
+                role="status"
+                aria-live="polite"
+                aria-atomic="true"
+              >
+                {actionStatus && <p className="ok tight">{actionStatus}</p>}
+                {actionError && <p className="danger tight">{actionError}</p>}
+              </div>
             </section>
 
             {previewSummary && <PreviewResultCard summary={previewSummary} />}
 
             {validation && (
               <section className="panel">
-                <h2>After fill</h2>
+                <h2>After fill — validation</h2>
                 <ul className="compact">
                   <li>{validation.summary.filledLike} authors look filled</li>
                   <li>{validation.summary.missingEmail} missing email</li>
                   <li>{validation.summary.conflicts} conflicts</li>
                 </ul>
+                {!validation.ok && (
+                  <p className="danger tight">
+                    Validation found issues. Review the highlighted counts and form.
+                  </p>
+                )}
                 <p className="ok tight">Manuscript was not submitted.</p>
               </section>
             )}
@@ -1110,6 +1312,22 @@ export function App() {
             <textarea className="mapping" readOnly value={diagText} />
           </>
         )}
+      </section>
+      <section className="panel">
+        <h2>Local activity</h2>
+        <p className="muted">
+          {auditCount} Preview/Fill records on this device. Each record keeps the
+          time, operation, portal family, roster ID, and aggregate counts — never
+          names, emails, or form values.
+        </p>
+        <button
+          type="button"
+          className="secondary"
+          disabled={auditCount === 0}
+          onClick={() => void clearAuditLog()}
+        >
+          Clear local activity
+        </button>
       </section>
       {status && <p className="ok">{status}</p>}
       {error && <p className="danger">{error}</p>}

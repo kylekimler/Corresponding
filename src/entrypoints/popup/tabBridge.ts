@@ -1,4 +1,8 @@
 import type { ExtensionRequest, ExtensionResponse } from '@/messaging/protocol';
+import type { TabTarget } from '@/popup/previewSession';
+
+export const CONTENT_SCRIPT_FILE = 'content-scripts/content.js';
+const READY_ATTEMPTS = 5;
 
 /** Refuse injection into browser-internal / non-http(s) pages. */
 export function isInjectableTabUrl(url: string | undefined): boolean {
@@ -17,6 +21,36 @@ export function isInjectableTabUrl(url: string | undefined): boolean {
   } catch {
     return false;
   }
+}
+
+export function isDevelopmentFixtureUrl(url: string | undefined): boolean {
+  if (!url) return false;
+  try {
+    const parsed = new URL(url);
+    return (
+      parsed.protocol === 'http:' &&
+      parsed.hostname === 'localhost' &&
+      parsed.port === '3000' &&
+      parsed.pathname === '/fixtures/nature-mts-sample.html'
+    );
+  } catch {
+    return false;
+  }
+}
+
+export async function isActiveDevelopmentFixtureTab(): Promise<boolean> {
+  try {
+    const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+    return isDevelopmentFixtureUrl(tab?.url);
+  } catch {
+    return false;
+  }
+}
+
+export async function getActiveTabTarget(): Promise<TabTarget | null> {
+  const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+  if (!tab?.id || !isInjectableTabUrl(tab.url)) return null;
+  return { tabId: tab.id, url: tab.url! };
 }
 
 /** Normalize chrome.runtime messaging replies into a typed ExtensionResponse. */
@@ -48,9 +82,15 @@ async function pingContentScript(tabId: number): Promise<boolean> {
 }
 
 async function injectContentScript(tabId: number): Promise<void> {
+  type ScriptFile = NonNullable<
+    Parameters<typeof browser.scripting.executeScript>[0]['files']
+  >[number];
   await browser.scripting.executeScript({
     target: { tabId },
-    files: ['/content-scripts/content.js'],
+    // Chrome's executeScript API expects a relative path without a leading
+    // slash. WXT's generated ScriptPublicPath type models packaged URLs with
+    // a leading slash, so narrow the known build artifact at this boundary.
+    files: [CONTENT_SCRIPT_FILE as ScriptFile],
   });
 }
 
@@ -63,8 +103,16 @@ async function ensureContentScript(tabId: number): Promise<void> {
       err instanceof Error
         ? err.message
         : 'Could not inject content script into the active tab',
+      { cause: err },
     );
   }
+  for (let attempt = 0; attempt < READY_ATTEMPTS; attempt += 1) {
+    if (await pingContentScript(tabId)) return;
+    await new Promise((resolve) => setTimeout(resolve, 20 * (attempt + 1)));
+  }
+  throw new Error(
+    'Content script was injected but did not become ready. Refresh the journal tab and retry.',
+  );
 }
 
 async function sendOnce(
@@ -87,6 +135,7 @@ async function sendOnce(
 
 export async function sendToActiveTab(
   message: ExtensionRequest,
+  expectedTarget?: TabTarget,
 ): Promise<ExtensionResponse> {
   const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
   if (!tab?.id) {
@@ -96,6 +145,15 @@ export async function sendToActiveTab(
     return {
       type: 'ERROR',
       message: 'Cannot inject into this page. Open a journal submission form (http/https).',
+    };
+  }
+  if (
+    expectedTarget &&
+    (tab.id !== expectedTarget.tabId || tab.url !== expectedTarget.url)
+  ) {
+    return {
+      type: 'ERROR',
+      message: 'The active tab changed after Preview. Preview this page again before filling.',
     };
   }
 
@@ -110,17 +168,24 @@ export async function sendToActiveTab(
           : 'Could not prepare the content script on this tab',
     };
   }
-
-  let response = await sendOnce(tab.id, message);
-  if (response.type === 'ERROR') {
-    // One retry after a fresh inject — covers race where PING succeeded but
-    // the listener was not yet ready for the real request.
-    try {
-      await injectContentScript(tab.id);
-      response = await sendOnce(tab.id, message);
-    } catch {
-      // keep original error response
+  if (expectedTarget) {
+    const [currentTab] = await browser.tabs.query({
+      active: true,
+      currentWindow: true,
+    });
+    if (
+      currentTab?.id !== expectedTarget.tabId ||
+      currentTab.url !== expectedTarget.url
+    ) {
+      return {
+        type: 'ERROR',
+        message:
+          'The active tab changed after Preview. Preview this page again before filling.',
+      };
     }
   }
-  return response;
+
+  // Do not reinject on a typed ERROR: it may be an intentional application
+  // refusal (unsupported/unsafe mapping), not a transport failure.
+  return sendOnce(tab.id, message);
 }

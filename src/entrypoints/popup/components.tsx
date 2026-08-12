@@ -114,6 +114,48 @@ export function PreviewResultCard(props: { summary: PreviewSummary }) {
           Evidence: {s.evidence.slice(0, 4).join(', ')}
         </p>
       )}
+      {s.authorGroups.length > 0 && (
+        <details
+          className="author-confidence"
+          aria-label="Author selector confidence and completeness"
+          open={s.authorGroups.length <= 8}
+        >
+          <summary>
+            Author blocks ({s.authorGroups.length}) — selector confidence and
+            completeness
+          </summary>
+          <ul tabIndex={0}>
+            {s.authorGroups.map((group) => (
+              <li key={group.authorSequence}>
+                <span>Author {group.authorSequence}</span>
+                <span
+                  className={`confidence-badge confidence-${group.selectorConfidence}`}
+                >
+                  {group.selectorConfidence === 'exact'
+                    ? 'Selectors: exact / tested'
+                    : group.selectorConfidence === 'semantic'
+                      ? 'Selectors: semantic'
+                      : 'Selectors: unresolved'}
+                </span>
+                <span
+                  className={`completeness-badge completeness-${group.completeness}`}
+                >
+                  {group.completeness === 'complete'
+                    ? 'Complete'
+                    : 'Needs attention'}
+                </span>
+                {(group.unresolved > 0 || group.conflicts > 0) && (
+                  <span className="confidence-attention">
+                    {group.unresolved > 0 ? `${group.unresolved} unresolved` : ''}
+                    {group.unresolved > 0 && group.conflicts > 0 ? ' · ' : ''}
+                    {group.conflicts > 0 ? `${group.conflicts} conflicts` : ''}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
       {s.conflictLabels.length > 0 && (
         <div>
           <p className="danger tight">Conflicts (not overwritten)</p>

@@ -1,0 +1,68 @@
+import { describe, expect, it } from 'vitest';
+import { readyAuthorCount } from '@/popup/authorAttention';
+import {
+  createSampleRoster,
+  importSampleRosterOnce,
+  sampleFillBlockReason,
+} from '@/roster/sample';
+import { createMemoryRosterStore } from '@/roster/storage';
+import { RosterSchema } from '@/schema/author';
+
+describe('sample roster', () => {
+  it('is canonical, complete example-only data', () => {
+    const now = '2026-08-12T00:00:00.000Z';
+    const roster = createSampleRoster(now);
+
+    expect(RosterSchema.parse(roster)).toEqual(roster);
+    expect(roster.name).toBe('Sample research team');
+    expect(roster.source).toBe('sample');
+    expect(roster.createdAt).toBe(now);
+    expect(roster.authors).toHaveLength(3);
+    expect(roster.authors.map((author) => author.sequence)).toEqual([1, 2, 3]);
+    expect(roster.authors.filter((author) => author.isCorresponding)).toHaveLength(1);
+    expect(roster.authors.every((author) => author.email?.endsWith('@example.org'))).toBe(
+      true,
+    );
+    expect(readyAuthorCount(roster.authors)).toBe(3);
+  });
+
+  it('saves as a normal local roster and creates fresh ids each time', async () => {
+    const store = createMemoryRosterStore();
+    const first = createSampleRoster();
+    const second = createSampleRoster();
+
+    expect(first.id).not.toBe(second.id);
+    expect(first.authors.map((author) => author.id)).not.toEqual(
+      second.authors.map((author) => author.id),
+    );
+
+    await store.importRoster(first);
+    const saved = await store.list();
+    expect(saved).toHaveLength(1);
+    expect(saved[0]?.id).toBe(first.id);
+    expect(saved[0]?.authors).toHaveLength(3);
+  });
+
+  it('atomically ignores a reentrant sample-import click', async () => {
+    const store = createMemoryRosterStore();
+    const lock = { current: false };
+
+    const [first, duplicate] = await Promise.all([
+      importSampleRosterOnce(store, lock),
+      importSampleRosterOnce(store, lock),
+    ]);
+
+    expect(first).toBeDefined();
+    expect(duplicate).toBeUndefined();
+    expect(await store.list()).toHaveLength(1);
+  });
+
+  it('allows sample Fill only after Preview on the local fixture', () => {
+    expect(sampleFillBlockReason('sample', false, true)).toMatch(/Preview/i);
+    expect(sampleFillBlockReason('sample', true, false)).toMatch(
+      /only fill the local Nature test fixture/i,
+    );
+    expect(sampleFillBlockReason('sample', true, true)).toBeUndefined();
+    expect(sampleFillBlockReason('csv', false, false)).toBeUndefined();
+  });
+});

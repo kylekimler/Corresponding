@@ -26,6 +26,7 @@ export const AuthorSchema = z.object({
 
 export const RosterSourceSchema = z.enum([
   'manual',
+  'sample',
   'csv',
   'google_sheets',
   'json',

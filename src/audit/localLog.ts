@@ -14,6 +14,7 @@ const EMAIL_LIKE_RE =
 export interface AuditEntry {
   id: string;
   timestamp: string;
+  operation?: 'preview' | 'fill';
   portalFamily: string;
   rosterId: string;
   fieldsProposed: number;
@@ -41,18 +42,20 @@ function assertNoPii(entry: AuditEntry): void {
 
 /**
  * Build a privacy-safe audit entry from a fill report.
- * Only aggregate counts are stored — never names, emails, or field values.
+ * Stores operation metadata and aggregate counts — never names, emails, or field values.
  */
 export function auditRecordFromFillReport(
   report: FillReport,
   rosterId: string,
   portalFamily: string = report.platformId,
+  operation: 'preview' | 'fill' = report.dryRun ? 'preview' : 'fill',
 ): Omit<AuditEntry, 'id' | 'timestamp'> {
   const fieldsProposed = report.plans.filter(
     (p) => p.action === 'fill' || p.action === 'overwrite',
   ).length;
 
   return {
+    operation,
     portalFamily,
     rosterId,
     fieldsProposed,
@@ -80,6 +83,7 @@ export function createMemoryAuditLog(initial: AuditEntry[] = []): AuditLog {
       const entry: AuditEntry = {
         id: crypto.randomUUID(),
         timestamp: partial.timestamp ?? new Date().toISOString(),
+        operation: partial.operation,
         portalFamily: partial.portalFamily,
         rosterId: partial.rosterId,
         fieldsProposed: partial.fieldsProposed,
@@ -124,6 +128,7 @@ export function createChromeAuditLog(area?: StorageLike): AuditLog {
       const entry: AuditEntry = {
         id: crypto.randomUUID(),
         timestamp: partial.timestamp ?? new Date().toISOString(),
+        operation: partial.operation,
         portalFamily: partial.portalFamily,
         rosterId: partial.rosterId,
         fieldsProposed: partial.fieldsProposed,

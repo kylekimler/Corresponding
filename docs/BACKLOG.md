@@ -22,7 +22,7 @@ Status key: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked (exte
 ### Data model & privacy
 - [x] I — Identity schema v2 + migrate bridges (v1 adapters unchanged)
 - [x] J — Provenance model (never auto-claim external verification)
-- [x] M — Local audit trail (counts only, clearable)
+- [x] M — Local audit trail (operation metadata + aggregate counts, clearable)
 
 ### UX / product
 - [x] K — Corresponding branding + design tokens + popup hierarchy
@@ -37,10 +37,10 @@ Status key: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked (exte
 - [x] Compact first-use popup + Import authors (paste/CSV) + Manage roster
 - [x] Preview result card with mapping breakdown (exact/semantic/…)
 - [x] CSV mapping data preview
-- [ ] Empty-state one-click sample roster import
-- [ ] Confidence badges per author block in Preview
-- [ ] Persist last-selected roster id
-- [ ] Wire audit log to chrome.storage in popup (memory log exists)
+- [x] Empty-state one-click sample roster import
+- [x] Confidence badges per author block in Preview
+- [x] Persist last-selected roster id
+- [x] Wire audit log to chrome.storage in popup (metadata + counts, clearable)
 - [ ] Optional visual regression for popup tokens
 - [ ] Excel parse enablement after dependency decision (`docs/EXCEL_IMPORT.md`)
 
@@ -60,8 +60,42 @@ Status key: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked (exte
 
 ## Next five highest-value tasks
 
-1. Empty-state + sample import (first-run UX)
-2. Preview confidence badges (exact / semantic / unresolved)
+1. Decide and enable safe local XLSX parsing
+2. bioRxiv/medRxiv + eLife fixture investigation (no selectors without evidence)
 3. Raise coverage on migrate + capture redaction edge cases
-4. Enable Sheets when OAuth credentials arrive
-5. Add live Nature MTS regression fixture when Kyle captures HTML
+4. Add inline “why unresolved” evidence in Preview
+5. Add toast-style fill confirmation with counts only
+
+## Founder-context opportunities
+
+### Now — highest-value unblocked
+
+1. [x] One-click sample roster from the empty state; prove sample → Preview → Fill → validate.
+2. [x] Persist last-selected roster id in local extension storage.
+3. [x] Group Preview by author block with exact/semantic/unresolved confidence.
+4. [x] Persist the metadata-and-counts audit trail in `chrome.storage.local`; retain clear control and PII refusal.
+5. [ ] Enable local XLSX import after a dependency/security decision; reuse explicit column mapping.
+
+### Soon
+
+- [ ] bioRxiv/medRxiv public workflow research + redacted compatibility capture plan.
+- [ ] eLife public workflow research + redacted compatibility capture plan.
+- [!] Implement those adapters only after real anonymized fixtures exist.
+- [!] Validate and broaden Nature/eJournalPress only from real captured HTML.
+- [ ] Expand adversarial coverage for popup bridges, provenance, migration, redaction, and 1/75/500/1000-author flows.
+
+### Later
+
+- [ ] Corresponding Profile with reusable, provenance-aware scientific identity.
+- [ ] Projects/Teams readiness dashboard and collaborator information requests.
+- [ ] Lab and institutional synchronization/administration workflows.
+- [ ] Publisher APIs/OEM after a meaningful trusted-data network exists.
+- [ ] Contribution-aware graph built from workflow-confirmed data.
+
+### Explicitly deferred
+
+- [ ] Public scientist search/recruitment marketplace.
+- [ ] Cloud graph database before private workflows earn the data.
+- [ ] Elaborate billing or entitlement infrastructure.
+- [ ] Speculative AI filling or unconfirmed low-confidence mutation.
+- [ ] General frameworks without an immediate tested user workflow.
