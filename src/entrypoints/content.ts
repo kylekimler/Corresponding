@@ -4,12 +4,10 @@ import type { ExtensionResponse } from '@/messaging/protocol';
 import { parseExtensionRequest } from '@/messaging/validate';
 
 export default defineContentScript({
-  // Built as a file for on-demand injection via activeTab + scripting.executeScript.
-  // Placeholder matches satisfy WXT; stripped from the shipped manifest in wxt.config.ts
-  // so we do not gain automatic injection or broad host permissions.
-  matches: ['http://localhost/*'],
+  // Official WXT on-demand mode: build the script without manifest registration.
+  // The popup injects it only into the active tab via scripting.executeScript.
+  registration: 'runtime',
   runAt: 'document_idle',
-  registration: 'manifest',
   main() {
     browser.runtime.onMessage.addListener(
       (message: unknown): ExtensionResponse | undefined => {
