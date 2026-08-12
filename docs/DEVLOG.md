@@ -5,10 +5,12 @@ Chronological overnight / autonomous iteration log.
 ---
 
 ### 2026-08-12 16:20 UTC
-- commit: (pending) founder context and strategic backlog alignment
+- commits: `0d284b0` founder context and strategic backlog alignment; `9770509` one-click sample roster
 - changed: Added `docs/FOUNDER_CONTEXT.md`; made it required reading in `AGENTS.md`; aligned product/privacy naming; added Now/Soon/Later/Explicitly deferred opportunities to roadmap and backlog without removing existing tasks.
 - architecture review: Current local-first canonical schema, deterministic adapter interface, confidence hierarchy, dry-run, and validation align with founder direction. No large redesign needed.
-- next: Implement the highest-value unblocked Now slice: one-click sample roster → Preview → Fill → validate.
+- user-visible: Empty state now offers “Try a sample roster”; creates three canonical example authors, saves/selects locally, and leads directly to Preview → Fill → validate on the synthetic Nature fixture.
+- tests: canonical sample/storage/fresh-ID coverage; first-use sample journey proves Preview does not mutate, then Fill and validation succeed; full suite 155 passed, typecheck and build passed.
+- next: Persist last-selected roster id, then add author-block Preview confidence.
 
 ### 2026-08-12 16:15 UTC
 - commit: `c7e2fdc` `npm run dev` opens Nature fixture via `webExt.startUrls`

@@ -37,7 +37,7 @@ Status key: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked (exte
 - [x] Compact first-use popup + Import authors (paste/CSV) + Manage roster
 - [x] Preview result card with mapping breakdown (exact/semantic/…)
 - [x] CSV mapping data preview
-- [ ] Empty-state one-click sample roster import
+- [x] Empty-state one-click sample roster import
 - [ ] Confidence badges per author block in Preview
 - [ ] Persist last-selected roster id
 - [ ] Wire audit log to chrome.storage in popup (memory log exists)
@@ -60,17 +60,17 @@ Status key: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked (exte
 
 ## Next five highest-value tasks
 
-1. Empty-state + sample import (first-run UX)
+1. Persist last-selected roster id
 2. Preview confidence badges (exact / semantic / unresolved)
-3. Raise coverage on migrate + capture redaction edge cases
-4. Enable Sheets when OAuth credentials arrive
-5. Add live Nature MTS regression fixture when Kyle captures HTML
+3. Wire counts-only audit log to local extension storage
+4. Decide and enable safe local XLSX parsing
+5. bioRxiv/medRxiv + eLife fixture investigation (no selectors without evidence)
 
 ## Founder-context opportunities
 
 ### Now — highest-value unblocked
 
-1. [ ] One-click sample roster from the empty state; prove sample → Preview → Fill → validate.
+1. [x] One-click sample roster from the empty state; prove sample → Preview → Fill → validate.
 2. [ ] Persist last-selected roster id in local extension storage.
 3. [ ] Group Preview by author block with exact/structural/semantic/unresolved confidence.
 4. [ ] Persist the counts-only audit trail in `chrome.storage.local`; retain clear control and PII refusal.

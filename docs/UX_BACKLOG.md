@@ -7,7 +7,7 @@ Prioritized friction for a first-time scientist. Status: `[ ]` open · `[x]` fix
 - [x] Rename user-facing product to **Corresponding** (popup, manifest, error boundary)
 - [x] Lead with calm brand line: “One scientific identity, everywhere.”
 - [x] Compact primary popup (portal → roster → Preview/Fill)
-- [ ] Onboarding sample roster one-click import
+- [x] Onboarding sample roster one-click import
 
 ## First roster import
 

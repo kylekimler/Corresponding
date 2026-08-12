@@ -1,6 +1,6 @@
 # Privacy Policy (Draft)
 
-**Product:** Corresponding  
+**Product:** Corresponding
 **Status:** Draft for development and Chrome Web Store preparation  
 **Last updated:** 2026-08-12
 
