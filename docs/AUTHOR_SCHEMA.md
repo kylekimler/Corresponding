@@ -65,14 +65,14 @@ Bridges in `src/schema/migrate.ts`:
 - `toSimpleRoster(identityDoc)` → `Roster` (strips v2-only fields)
 - `exportIdentityV2Json` / `importIdentityV2Json` for portable v2 JSON
 
-Optional v2 fields (all optional on `IdentityAuthor`):
+Optional v2 fields (on `IdentityPerson` inside `IdentityDocument.people`):
 
 | Area | Fields |
 |------|--------|
 | Names | `preferredPublicationName`, `alternateNames[]` |
-| Emails | `emails[]` with `type`, `verificationStatus`, `validFrom`/`validTo`, `provenance` |
-| Affiliations | v1 fields plus `startDate`, `endDate`, `provenance` |
-| Identifiers | `externalIdentifiers[]` (ORCID, Scopus, etc.) |
+| Emails | `emails[]` with `value`, `type`, `verificationStatus`, `validFrom`/`validTo`, `provenance` |
+| Affiliations | `datedAffiliations[]` with start/end + provenance |
+| Identifiers | `identifiers[]` (`system`: orcid, ror, …) |
 | Funding | `funding[]` grant records |
 | Ethics | `disclosures[]` |
 | Contributions | `creditRoles[]` (CRediT enum) |

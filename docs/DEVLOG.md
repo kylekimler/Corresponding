@@ -27,5 +27,13 @@ Chronological overnight / autonomous iteration log.
 
 ### 2026-08-12 05:30 UTC
 - changed: Identity schema v2 (`identityV2.ts`) with optional expansions; v1↔v2 migration bridges (`migrate.ts`); provenance model; local-only audit log (`audit/localLog.ts`) with PII redaction invariants; schema/audit tests.
-- tests: `npm test` (109 passed), `npm run typecheck`.
+- tests: `npm test` (112 passed), `npm run typecheck`.
 - next: Wire audit log into fill flow; optional v2 import/export in popup.
+
+### 2026-08-12 05:35 UTC
+- commit: *(pending)*
+- changed: Overnight reliability build — semantic recognition + confidence hierarchy; author-group detection; fast-check property tests; DOM chaos harness; adapter contract suite; compatibility capture/redaction; fixture corpus replay; identity v2 + provenance; local audit trail; failure states; Corresponding branding/UX tokens; perf benchmarks; platform research; DX scripts/template; coverage report.
+- tests: `npm test` (106 passed), `npm run typecheck`, `npm run build`, `npm run test:coverage`.
+- reports: chaos 40/40 correct unsafe=0; fixture replay detection/mapping/unsupported pass rate 1.0; perf 10→1000 authors within thresholds.
+- limitations: External OAuth + live portal fixtures still required for Sheets and new adapters; popup UI largely untested by unit coverage.
+- next: First-run empty-state UX; Preview confidence badges; raise coverage on chromeClient/popup.
