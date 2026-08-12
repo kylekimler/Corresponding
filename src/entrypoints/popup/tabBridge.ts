@@ -1,4 +1,5 @@
 import type { ExtensionRequest, ExtensionResponse } from '@/messaging/protocol';
+import type { TabTarget } from '@/popup/previewSession';
 
 export const CONTENT_SCRIPT_FILE = 'content-scripts/content.js';
 const READY_ATTEMPTS = 5;
@@ -44,6 +45,12 @@ export async function isActiveDevelopmentFixtureTab(): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+export async function getActiveTabTarget(): Promise<TabTarget | null> {
+  const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+  if (!tab?.id || !isInjectableTabUrl(tab.url)) return null;
+  return { tabId: tab.id, url: tab.url! };
 }
 
 /** Normalize chrome.runtime messaging replies into a typed ExtensionResponse. */
@@ -128,6 +135,7 @@ async function sendOnce(
 
 export async function sendToActiveTab(
   message: ExtensionRequest,
+  expectedTarget?: TabTarget,
 ): Promise<ExtensionResponse> {
   const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
   if (!tab?.id) {
@@ -137,6 +145,15 @@ export async function sendToActiveTab(
     return {
       type: 'ERROR',
       message: 'Cannot inject into this page. Open a journal submission form (http/https).',
+    };
+  }
+  if (
+    expectedTarget &&
+    (tab.id !== expectedTarget.tabId || tab.url !== expectedTarget.url)
+  ) {
+    return {
+      type: 'ERROR',
+      message: 'The active tab changed after Preview. Preview this page again before filling.',
     };
   }
 
@@ -150,6 +167,22 @@ export async function sendToActiveTab(
           ? err.message
           : 'Could not prepare the content script on this tab',
     };
+  }
+  if (expectedTarget) {
+    const [currentTab] = await browser.tabs.query({
+      active: true,
+      currentWindow: true,
+    });
+    if (
+      currentTab?.id !== expectedTarget.tabId ||
+      currentTab.url !== expectedTarget.url
+    ) {
+      return {
+        type: 'ERROR',
+        message:
+          'The active tab changed after Preview. Preview this page again before filling.',
+      };
+    }
   }
 
   // Do not reinject on a typed ERROR: it may be an intentional application

@@ -4,6 +4,12 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-12 23:20 UTC
+- changed: Bound every successful Preview to roster ID + `updatedAt`, overwrite setting, and the active tab ID + URL. Fill stays disabled for stale/missing Preview state, and the bridge rechecks the expected tab immediately before sending a mutating request.
+- UX: Sample onboarding is development-build only; selector confidence is shown separately from block completeness; every author block remains inspectable in a bounded scroll region; action errors now appear beside Preview/Fill in an accessible live region.
+- correctness/privacy: Validation transport errors no longer read as successful validation. Local activity copy now accurately names stored timestamp, operation, portal family, roster ID, and aggregate counts.
+- tests added: stale roster/version/setting/tab Preview checks, expected-tab enforcement including a pre-send tab switch, and exact-selector/incomplete-block separation.
+
 ### 2026-08-12 16:20 UTC
 - commits: `0d284b0` founder context and strategic backlog alignment; `9770509` one-click sample roster
 - changed: Added `docs/FOUNDER_CONTEXT.md`; made it required reading in `AGENTS.md`; aligned product/privacy naming; added Now/Soon/Later/Explicitly deferred opportunities to roadmap and backlog without removing existing tasks.
@@ -13,7 +19,7 @@ Chronological overnight / autonomous iteration log.
 - follow-up commits: `163fba4` persists the selected roster in local extension storage; `3cc1990` tightens storage-backend typing.
 - repeated-use workflow: reopening the popup restores a valid remembered roster, falls back safely after deletion, and clears the preference when no rosters remain.
 - Preview commit: `7e6a96d` groups mappings by author sequence and shows Exact/tested, Semantic, or Unresolved badges plus missing/conflict counts. Exact classification is platform-scoped to tested Nature IDs.
-- audit commit: `28f0521` switches the popup from memory-only to counts-only `chrome.storage.local` activity; records Preview and Fill separately, refuses PII-like entries, caps at 200, and exposes a clear control under Advanced. Audit failure cannot break Preview/Fill.
+- audit commit: `28f0521` switches the popup from memory-only to local `chrome.storage.local` activity metadata and aggregate counts; records Preview and Fill separately, refuses PII-like entries, caps at 200, and exposes a clear control under Advanced. Audit failure cannot break Preview/Fill.
 - adversarial/privacy follow-up: `9a96b08` marks sample rosters explicitly, requires successful Preview, blocks sample Fill outside the pinned localhost Nature fixture, adds an atomic double-click guard, and treats optional ORCID as advisory rather than “not ready.”
 - quality follow-up: `6007eae` preserves the caught injection error cause, clearing the inherited ESLint failure.
 - verification: preference, Preview confidence, persistent audit, sample safety, double-click, and fixture-URL tests; full suite 163 passed; typecheck, build, and lint passed.

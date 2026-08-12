@@ -139,4 +139,55 @@ describe('content-script injection', () => {
     });
     expect(executeScript).not.toHaveBeenCalled();
   });
+
+  it('refuses to message a different tab than the preview target', async () => {
+    const sendMessage = vi.fn();
+    const executeScript = vi.fn();
+    vi.stubGlobal('browser', {
+      tabs: {
+        query: vi.fn().mockResolvedValue([
+          { id: 9, url: 'https://journal.example/other-submission' },
+        ]),
+        sendMessage,
+      },
+      scripting: { executeScript },
+    });
+
+    await expect(
+      sendToActiveTab(
+        { type: 'FILL', roster: {} as never, overwrite: false },
+        { tabId: 8, url: 'https://journal.example/submit' },
+      ),
+    ).resolves.toEqual({
+      type: 'ERROR',
+      message:
+        'The active tab changed after Preview. Preview this page again before filling.',
+    });
+    expect(sendMessage).not.toHaveBeenCalled();
+    expect(executeScript).not.toHaveBeenCalled();
+  });
+
+  it('rechecks the expected tab immediately before Fill messaging', async () => {
+    const query = vi
+      .fn()
+      .mockResolvedValueOnce([
+        { id: 8, url: 'https://journal.example/submit' },
+      ])
+      .mockResolvedValueOnce([
+        { id: 9, url: 'https://journal.example/other-submission' },
+      ]);
+    const sendMessage = vi.fn().mockResolvedValueOnce({ type: 'PONG' });
+    vi.stubGlobal('browser', {
+      tabs: { query, sendMessage },
+      scripting: { executeScript: vi.fn() },
+    });
+
+    const result = await sendToActiveTab(
+      { type: 'FILL', roster: {} as never, overwrite: false },
+      { tabId: 8, url: 'https://journal.example/submit' },
+    );
+
+    expect(result.type).toBe('ERROR');
+    expect(sendMessage.mock.calls.map((call) => call[1].type)).toEqual(['PING']);
+  });
 });

@@ -42,7 +42,7 @@ function assertNoPii(entry: AuditEntry): void {
 
 /**
  * Build a privacy-safe audit entry from a fill report.
- * Only aggregate counts are stored — never names, emails, or field values.
+ * Stores operation metadata and aggregate counts — never names, emails, or field values.
  */
 export function auditRecordFromFillReport(
   report: FillReport,

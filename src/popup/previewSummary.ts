@@ -28,7 +28,8 @@ export interface PreviewSummary {
 
 export interface AuthorPreviewGroup {
   authorSequence: number;
-  confidence: 'exact' | 'semantic' | 'unresolved';
+  selectorConfidence: 'exact' | 'semantic' | 'unresolved';
+  completeness: 'complete' | 'needs-attention';
   exactMappings: number;
   semanticMappings: number;
   preserved: number;
@@ -71,22 +72,28 @@ function summarizeAuthorGroups(
         isExactPlatformField(plan, platformId),
       ).length;
       const semanticMappings = actionablePlans.length - exactMappings;
-      const confidence =
+      const selectorConfidence =
         semanticMappings > 0
           ? 'semantic'
           : exactMappings > 0
             ? 'exact'
             : 'unresolved';
+      const unresolved = authorPlans.filter(
+        (p) => p.action === 'missing_source' || p.action === 'unmapped',
+      ).length;
+      const conflicts = authorPlans.filter(
+        (p) => p.action === 'skip_conflict',
+      ).length;
       return {
         authorSequence,
-        confidence,
+        selectorConfidence,
+        completeness:
+          unresolved > 0 || conflicts > 0 ? 'needs-attention' : 'complete',
         exactMappings,
         semanticMappings,
         preserved: authorPlans.filter((p) => p.action === 'preserve').length,
-        unresolved: authorPlans.filter(
-          (p) => p.action === 'missing_source' || p.action === 'unmapped',
-        ).length,
-        conflicts: authorPlans.filter((p) => p.action === 'skip_conflict').length,
+        unresolved,
+        conflicts,
       };
     });
 }

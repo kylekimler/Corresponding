@@ -115,24 +115,38 @@ export function PreviewResultCard(props: { summary: PreviewSummary }) {
         </p>
       )}
       {s.authorGroups.length > 0 && (
-        <div className="author-confidence" aria-label="Author mapping confidence">
-          <p className="preview-subhead">Author blocks</p>
-          <ul>
-            {s.authorGroups.slice(0, 8).map((group) => (
+        <details
+          className="author-confidence"
+          aria-label="Author selector confidence and completeness"
+          open={s.authorGroups.length <= 8}
+        >
+          <summary>
+            Author blocks ({s.authorGroups.length}) — selector confidence and
+            completeness
+          </summary>
+          <ul tabIndex={0}>
+            {s.authorGroups.map((group) => (
               <li key={group.authorSequence}>
                 <span>Author {group.authorSequence}</span>
                 <span
-                  className={`confidence-badge confidence-${group.confidence}`}
+                  className={`confidence-badge confidence-${group.selectorConfidence}`}
                 >
-                  {group.confidence === 'exact'
-                    ? 'Exact / tested'
-                    : group.confidence === 'semantic'
-                      ? 'Semantic'
-                      : 'Unresolved'}
+                  {group.selectorConfidence === 'exact'
+                    ? 'Selectors: exact / tested'
+                    : group.selectorConfidence === 'semantic'
+                      ? 'Selectors: semantic'
+                      : 'Selectors: unresolved'}
+                </span>
+                <span
+                  className={`completeness-badge completeness-${group.completeness}`}
+                >
+                  {group.completeness === 'complete'
+                    ? 'Complete'
+                    : 'Needs attention'}
                 </span>
                 {(group.unresolved > 0 || group.conflicts > 0) && (
                   <span className="confidence-attention">
-                    {group.unresolved > 0 ? `${group.unresolved} missing` : ''}
+                    {group.unresolved > 0 ? `${group.unresolved} unresolved` : ''}
                     {group.unresolved > 0 && group.conflicts > 0 ? ' · ' : ''}
                     {group.conflicts > 0 ? `${group.conflicts} conflicts` : ''}
                   </span>
@@ -140,10 +154,7 @@ export function PreviewResultCard(props: { summary: PreviewSummary }) {
               </li>
             ))}
           </ul>
-          {s.authorGroups.length > 8 && (
-            <p className="muted tight">+{s.authorGroups.length - 8} more authors</p>
-          )}
-        </div>
+        </details>
       )}
       {s.conflictLabels.length > 0 && (
         <div>

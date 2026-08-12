@@ -43,7 +43,7 @@ Privacy draft, CWS permission explanation, threat model, release checklist, vers
 1. Complete first-run success with a one-click sample roster: empty popup → sample → Preview → Fill → validate.
 2. Persist the last-selected roster locally so repeated submission work resumes without re-selection.
 3. Add author-block confidence/evidence to Preview without permitting low-confidence mutation.
-4. Wire the existing counts-only audit log to local extension storage and keep it clearable.
+4. Wire the local metadata-and-counts audit log to extension storage and keep it clearable.
 5. Decide and implement safe local XLSX parsing, preserving explicit mapping confirmation.
 
 ### Soon

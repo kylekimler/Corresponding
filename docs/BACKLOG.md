@@ -22,7 +22,7 @@ Status key: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked (exte
 ### Data model & privacy
 - [x] I — Identity schema v2 + migrate bridges (v1 adapters unchanged)
 - [x] J — Provenance model (never auto-claim external verification)
-- [x] M — Local audit trail (counts only, clearable)
+- [x] M — Local audit trail (operation metadata + aggregate counts, clearable)
 
 ### UX / product
 - [x] K — Corresponding branding + design tokens + popup hierarchy
@@ -40,7 +40,7 @@ Status key: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked (exte
 - [x] Empty-state one-click sample roster import
 - [x] Confidence badges per author block in Preview
 - [x] Persist last-selected roster id
-- [x] Wire audit log to chrome.storage in popup (counts only, clearable)
+- [x] Wire audit log to chrome.storage in popup (metadata + counts, clearable)
 - [ ] Optional visual regression for popup tokens
 - [ ] Excel parse enablement after dependency decision (`docs/EXCEL_IMPORT.md`)
 
@@ -73,7 +73,7 @@ Status key: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked (exte
 1. [x] One-click sample roster from the empty state; prove sample → Preview → Fill → validate.
 2. [x] Persist last-selected roster id in local extension storage.
 3. [x] Group Preview by author block with exact/semantic/unresolved confidence.
-4. [x] Persist the counts-only audit trail in `chrome.storage.local`; retain clear control and PII refusal.
+4. [x] Persist the metadata-and-counts audit trail in `chrome.storage.local`; retain clear control and PII refusal.
 5. [ ] Enable local XLSX import after a dependency/security decision; reuse explicit column mapping.
 
 ### Soon
