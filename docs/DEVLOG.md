@@ -5,7 +5,7 @@ Chronological overnight / autonomous iteration log.
 ---
 
 ### 2026-08-12 15:20 UTC
-- commit: (harmonize merge of PR #2 + PR #3 into main)
+- commit: `b4f1200` (harmonize merge of PR #2 + PR #3 into main)
 - changed: Merged security hardening (Semgrep/ESLint, roster quarantine, linked-PID/corr conflicts, diagnostic redaction, CSV formula escape, message Zod, WXT audit fix) with first-use UX (compact popup, Preview results, paste/CSV import, Manage roster, Sheets/Excel architecture).
 - tests: full suite after merge.
 - next: Persist selected roster; sample import; live Sheets when credentials arrive.
