@@ -159,10 +159,28 @@ textarea.mapping {
   font-size: 0.75rem;
 }
 
-select {
+select,
+input[type='text'],
+input:not([type]) {
   max-width: 100%;
   padding: 6px 8px;
   border-radius: 4px;
   border: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.65);
+  font: inherit;
+}
+
+.author-list {
+  list-style: none;
+  padding-left: 0;
+}
+
+.author-list > li {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+button.secondary {
+  padding: 6px 8px;
+  font-size: 0.8rem;
 }

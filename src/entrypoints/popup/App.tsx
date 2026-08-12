@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { DetectResult, FillReport, ValidateReport } from '@/adapters/types';
 import { parseCsv } from '@/import/csv';
 import {
@@ -8,12 +8,66 @@ import {
   type ColumnMapping,
 } from '@/import/columnMap';
 import { rowsToRoster } from '@/import/rosterFromTable';
+import {
+  createEmptyRoster,
+  reorderAuthors,
+  renameRoster,
+  setCorrespondingAuthor,
+  updateAuthor,
+} from '@/roster/mutations';
 import { createRosterStore } from '@/roster/storage';
-import type { Roster } from '@/schema/author';
+import type { Author, Roster } from '@/schema/author';
 import { formatDiagnosticReport } from '@/diagnostics/formProbe';
+import { createChromeGoogleSheetsClient } from '@/sheets/chromeClient';
+import {
+  loadSheetPreview,
+  rosterFromSheetPreview,
+  type SheetsImportPreview,
+} from '@/sheets/importFlow';
+import { SheetsNotConfiguredError } from '@/sheets/types';
 import { sendToActiveTab } from './tabBridge';
 
 const store = createRosterStore();
+const sheetsClient = createChromeGoogleSheetsClient();
+
+function ColumnSelect(props: {
+  value: CanonicalColumn | '';
+  onChange: (v: CanonicalColumn) => void;
+}) {
+  return (
+    <select
+      value={props.value}
+      onChange={(e) =>
+        props.onChange((e.target.value || 'ignore') as CanonicalColumn)
+      }
+    >
+      <option value="">— select —</option>
+      <option value="givenName">Given / first name</option>
+      <option value="middleName">Middle name</option>
+      <option value="familyName">Family / last name</option>
+      <option value="email">Email</option>
+      <option value="orcid">ORCID</option>
+      <option value="institution">Institution</option>
+      <option value="department">Department</option>
+      <option value="city">City</option>
+      <option value="state">State</option>
+      <option value="country">Country</option>
+      <option value="isCorresponding">Corresponding?</option>
+      <option value="sequence">Sequence</option>
+      <option value="ignore">Ignore</option>
+    </select>
+  );
+}
+
+function downloadText(filename: string, contents: string, mime: string) {
+  const blob = new Blob([contents], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 export function App() {
   const [rosters, setRosters] = useState<Roster[]>([]);
@@ -29,15 +83,37 @@ export function App() {
     rows: string[][];
     mapping: ColumnMapping;
     name: string;
+    source: 'csv' | 'google_sheets';
   } | null>(null);
   const [diagText, setDiagText] = useState('');
+  const [renameValue, setRenameValue] = useState('');
+  const [editingAuthorId, setEditingAuthorId] = useState<string>('');
+  const [authorDraft, setAuthorDraft] = useState<Partial<Author>>({});
+  const [sheetUrl, setSheetUrl] = useState('');
+  const [sheetPreview, setSheetPreview] = useState<SheetsImportPreview | null>(
+    null,
+  );
 
   const selected = rosters.find((r) => r.id === selectedId) ?? null;
+  const sortedAuthors = useMemo(
+    () =>
+      selected
+        ? [...selected.authors].sort((a, b) => a.sequence - b.sequence)
+        : [],
+    [selected],
+  );
 
-  async function refreshRosters() {
+  async function refreshRosters(preferId?: string) {
     const list = await store.list();
     setRosters(list);
-    if (!selectedId && list[0]) setSelectedId(list[0].id);
+    const nextId = preferId ?? selectedId;
+    if (nextId && list.some((r) => r.id === nextId)) {
+      setSelectedId(nextId);
+    } else if (list[0]) {
+      setSelectedId(list[0].id);
+    } else {
+      setSelectedId('');
+    }
   }
 
   useEffect(() => {
@@ -48,6 +124,11 @@ export function App() {
     })();
   }, []);
 
+  useEffect(() => {
+    setRenameValue(selected?.name ?? '');
+    setEditingAuthorId('');
+  }, [selected?.id]);
+
   async function onCsvFile(file: File) {
     setError('');
     const text = await file.text();
@@ -55,7 +136,7 @@ export function App() {
     const mapping = suggestColumnMapping(headers);
     const name = file.name.replace(/\.csv$/i, '') || 'Imported roster';
     if (mapping.requiresConfirmation || !mappingIsComplete(mapping.map)) {
-      setPendingMapping({ headers, rows, mapping, name });
+      setPendingMapping({ headers, rows, mapping, name, source: 'csv' });
       setStatus('Confirm column mapping before import.');
       return;
     }
@@ -68,8 +149,7 @@ export function App() {
     });
     await store.importRoster(roster);
     setPendingMapping(null);
-    await refreshRosters();
-    setSelectedId(roster.id);
+    await refreshRosters(roster.id);
     setStatus(`Imported ${roster.authors.length} authors.`);
   }
 
@@ -84,12 +164,12 @@ export function App() {
       headers: pendingMapping.headers,
       rows: pendingMapping.rows,
       mapping: pendingMapping.mapping.map,
-      source: 'csv',
+      source: pendingMapping.source,
     });
     await store.importRoster(roster);
     setPendingMapping(null);
-    await refreshRosters();
-    setSelectedId(roster.id);
+    setSheetPreview(null);
+    await refreshRosters(roster.id);
     setStatus(`Imported ${roster.authors.length} authors.`);
   }
 
@@ -100,6 +180,153 @@ export function App() {
       ...pendingMapping,
       mapping: { ...pendingMapping.mapping, map },
     });
+  }
+
+  async function createRoster() {
+    const roster = createEmptyRoster(`Roster ${rosters.length + 1}`);
+    await store.save(roster);
+    await refreshRosters(roster.id);
+    setStatus('Created empty roster. Import CSV/Sheets or edit authors.');
+  }
+
+  async function saveRename() {
+    if (!selected) return;
+    try {
+      const next = renameRoster(selected, renameValue);
+      await store.save(next);
+      await refreshRosters(next.id);
+      setStatus('Roster renamed.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    }
+  }
+
+  async function duplicateSelected() {
+    if (!selected) return;
+    const dup = await store.duplicate(selected.id);
+    await refreshRosters(dup.id);
+    setStatus(`Duplicated as “${dup.name}”.`);
+  }
+
+  async function deleteSelected() {
+    if (!selected) return;
+    if (!confirm(`Delete local roster “${selected.name}”?`)) return;
+    await store.remove(selected.id);
+    await refreshRosters();
+    setStatus('Roster deleted from local storage.');
+  }
+
+  async function exportSelected(kind: 'json' | 'csv') {
+    if (!selected) return;
+    if (kind === 'json') {
+      downloadText(
+        `${selected.name}.json`,
+        await store.exportJson(selected.id),
+        'application/json',
+      );
+    } else {
+      downloadText(
+        `${selected.name}.csv`,
+        await store.exportCsv(selected.id),
+        'text/csv',
+      );
+    }
+    setStatus(`Exported ${kind.toUpperCase()} (local download only).`);
+  }
+
+  async function moveAuthor(fromIndex: number, toIndex: number) {
+    if (!selected) return;
+    const next = reorderAuthors(selected, fromIndex, toIndex);
+    await store.save(next);
+    await refreshRosters(next.id);
+  }
+
+  async function saveAuthorEdit() {
+    if (!selected || !editingAuthorId) return;
+    let next = updateAuthor(selected, editingAuthorId, {
+      givenName: authorDraft.givenName,
+      middleName: authorDraft.middleName,
+      familyName: authorDraft.familyName,
+      email: authorDraft.email,
+      orcid: authorDraft.orcid,
+    });
+    if (authorDraft.isCorresponding) {
+      next = setCorrespondingAuthor(next, editingAuthorId);
+    }
+    await store.save(next);
+    setEditingAuthorId('');
+    await refreshRosters(next.id);
+    setStatus('Author updated locally.');
+  }
+
+  async function loadSheets() {
+    setError('');
+    try {
+      const preview = await loadSheetPreview(sheetsClient, sheetUrl);
+      setSheetPreview(preview);
+      if (preview.mapping.requiresConfirmation || !mappingIsComplete(preview.mapping.map)) {
+        setPendingMapping({
+          headers: preview.headers,
+          rows: preview.rows,
+          mapping: preview.mapping,
+          name: preview.selectedTab.title || 'Google Sheet',
+          source: 'google_sheets',
+        });
+        setStatus('Confirm column mapping for Google Sheet.');
+      } else {
+        setStatus(
+          `Loaded tab “${preview.selectedTab.title}” (${preview.rows.length} rows). Import when ready.`,
+        );
+      }
+    } catch (err) {
+      if (err instanceof SheetsNotConfiguredError) {
+        setError(
+          'Google Sheets OAuth is not configured. See docs/GOOGLE_SHEETS_SETUP.md (blocked on Kyle credentials). CSV import still works.',
+        );
+      } else {
+        setError(err instanceof Error ? err.message : String(err));
+      }
+    }
+  }
+
+  async function importSheetPreview() {
+    if (!sheetPreview) return;
+    try {
+      if (
+        sheetPreview.mapping.requiresConfirmation ||
+        !mappingIsComplete(sheetPreview.mapping.map)
+      ) {
+        setPendingMapping({
+          headers: sheetPreview.headers,
+          rows: sheetPreview.rows,
+          mapping: sheetPreview.mapping,
+          name: sheetPreview.selectedTab.title || 'Google Sheet',
+          source: 'google_sheets',
+        });
+        return;
+      }
+      const roster = rosterFromSheetPreview(
+        sheetPreview,
+        sheetPreview.selectedTab.title || 'Google Sheet',
+      );
+      await store.importRoster(roster);
+      setSheetPreview(null);
+      await refreshRosters(roster.id);
+      setStatus(`Imported ${roster.authors.length} authors from Google Sheets.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    }
+  }
+
+  async function selectSheetTab(title: string) {
+    setError('');
+    try {
+      const preview = await loadSheetPreview(sheetsClient, sheetUrl, title);
+      setSheetPreview(preview);
+      setPendingMapping(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    }
   }
 
   async function runPreview() {
@@ -152,6 +379,8 @@ export function App() {
   }
 
   const corresponding = selected?.authors.find((a) => a.isCorresponding);
+  const missingRequired = preview?.plans.filter((p) => p.action === 'missing_source') ?? [];
+  const conflictPlans = preview?.plans.filter((p) => p.action === 'skip_conflict') ?? [];
 
   return (
     <div>
@@ -190,7 +419,13 @@ export function App() {
               </option>
             ))}
           </select>
-          <label className="secondary">
+          <button type="button" className="secondary" onClick={() => void createRoster()}>
+            New
+          </button>
+        </div>
+        <div className="row" style={{ marginTop: 8 }}>
+          <label className="secondary" style={{ fontSize: '0.85rem' }}>
+            CSV
             <input
               type="file"
               accept=".csv,text/csv"
@@ -202,25 +437,195 @@ export function App() {
           </label>
         </div>
         {selected && (
-          <ul className="compact">
-            <li>
-              Authors: <strong>{selected.authors.length}</strong>
-            </li>
-            <li>
-              Corresponding:{' '}
-              <strong>
-                {corresponding
-                  ? `${corresponding.givenName} ${corresponding.familyName}`
-                  : '—'}
-              </strong>
-            </li>
-            <li>
-              Missing email:{' '}
-              <strong>
-                {selected.authors.filter((a) => !a.email).length}
-              </strong>
-            </li>
+          <>
+            <div className="row" style={{ marginTop: 8 }}>
+              <input
+                aria-label="Rename roster"
+                value={renameValue}
+                onChange={(e) => setRenameValue(e.target.value)}
+                style={{ flex: 1, padding: '6px 8px' }}
+              />
+              <button type="button" className="secondary" onClick={() => void saveRename()}>
+                Rename
+              </button>
+            </div>
+            <div className="row" style={{ marginTop: 8 }}>
+              <button type="button" className="secondary" onClick={() => void duplicateSelected()}>
+                Duplicate
+              </button>
+              <button type="button" className="secondary" onClick={() => void exportSelected('json')}>
+                Export JSON
+              </button>
+              <button type="button" className="secondary" onClick={() => void exportSelected('csv')}>
+                Export CSV
+              </button>
+              <button type="button" className="secondary" onClick={() => void deleteSelected()}>
+                Delete
+              </button>
+            </div>
+            <ul className="compact">
+              <li>
+                Authors: <strong>{selected.authors.length}</strong>
+              </li>
+              <li>
+                Corresponding:{' '}
+                <strong>
+                  {corresponding
+                    ? `${corresponding.givenName} ${corresponding.familyName}`
+                    : '—'}
+                </strong>
+              </li>
+              <li>
+                Missing email:{' '}
+                <strong>
+                  {selected.authors.filter((a) => !a.email).length}
+                </strong>
+              </li>
+            </ul>
+          </>
+        )}
+      </section>
+
+      {selected && sortedAuthors.length > 0 && (
+        <section className="panel">
+          <h2>Authors</h2>
+          <ul className="compact author-list">
+            {sortedAuthors.map((author, index) => (
+              <li key={author.id}>
+                <div className="row">
+                  <span style={{ flex: 1 }}>
+                    {author.sequence}. {author.givenName} {author.familyName}
+                    {author.isCorresponding ? ' (corr)' : ''}
+                    {!author.email ? ' · missing email' : ''}
+                  </span>
+                  <button
+                    type="button"
+                    className="secondary"
+                    disabled={index === 0}
+                    onClick={() => void moveAuthor(index, index - 1)}
+                  >
+                    Up
+                  </button>
+                  <button
+                    type="button"
+                    className="secondary"
+                    disabled={index === sortedAuthors.length - 1}
+                    onClick={() => void moveAuthor(index, index + 1)}
+                  >
+                    Down
+                  </button>
+                  <button
+                    type="button"
+                    className="secondary"
+                    onClick={() => {
+                      setEditingAuthorId(author.id);
+                      setAuthorDraft(author);
+                    }}
+                  >
+                    Edit
+                  </button>
+                </div>
+              </li>
+            ))}
           </ul>
+          {editingAuthorId && (
+            <div style={{ marginTop: 8 }}>
+              <div className="row" style={{ marginBottom: 6 }}>
+                <input
+                  placeholder="Given"
+                  value={authorDraft.givenName ?? ''}
+                  onChange={(e) =>
+                    setAuthorDraft((d) => ({ ...d, givenName: e.target.value }))
+                  }
+                />
+                <input
+                  placeholder="Family"
+                  value={authorDraft.familyName ?? ''}
+                  onChange={(e) =>
+                    setAuthorDraft((d) => ({ ...d, familyName: e.target.value }))
+                  }
+                />
+              </div>
+              <div className="row" style={{ marginBottom: 6 }}>
+                <input
+                  placeholder="Email"
+                  value={authorDraft.email ?? ''}
+                  onChange={(e) =>
+                    setAuthorDraft((d) => ({ ...d, email: e.target.value }))
+                  }
+                  style={{ flex: 1 }}
+                />
+              </div>
+              <label className="checkbox">
+                <input
+                  type="checkbox"
+                  checked={Boolean(authorDraft.isCorresponding)}
+                  onChange={(e) =>
+                    setAuthorDraft((d) => ({
+                      ...d,
+                      isCorresponding: e.target.checked,
+                    }))
+                  }
+                />
+                Corresponding author
+              </label>
+              <div className="row" style={{ marginTop: 8 }}>
+                <button type="button" onClick={() => void saveAuthorEdit()}>
+                  Save author
+                </button>
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={() => setEditingAuthorId('')}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+        </section>
+      )}
+
+      <section className="panel">
+        <h2>Google Sheets (read-only)</h2>
+        {!sheetsClient.isConfigured() ? (
+          <p className="warn">
+            OAuth client ID not configured. CSV works now; Sheets blocked until Kyle adds credentials
+            (`docs/GOOGLE_SHEETS_SETUP.md`).
+          </p>
+        ) : (
+          <>
+            <input
+              aria-label="Google Sheet URL"
+              placeholder="https://docs.google.com/spreadsheets/d/…"
+              value={sheetUrl}
+              onChange={(e) => setSheetUrl(e.target.value)}
+              style={{ width: '100%', padding: '6px 8px', marginBottom: 8 }}
+            />
+            <div className="row">
+              <button type="button" className="secondary" onClick={() => void loadSheets()}>
+                Load sheet
+              </button>
+              {sheetPreview && (
+                <>
+                  <select
+                    aria-label="Sheet tab"
+                    value={sheetPreview.selectedTab.title}
+                    onChange={(e) => void selectSheetTab(e.target.value)}
+                  >
+                    {sheetPreview.tabs.map((t) => (
+                      <option key={t.sheetId} value={t.title}>
+                        {t.title}
+                      </option>
+                    ))}
+                  </select>
+                  <button type="button" onClick={() => void importSheetPreview()}>
+                    Import tab
+                  </button>
+                </>
+              )}
+            </div>
+          </>
         )}
       </section>
 
@@ -233,27 +638,10 @@ export function App() {
           {pendingMapping.headers.map((header, idx) => (
             <div className="row" key={`${header}-${idx}`} style={{ marginBottom: 6 }}>
               <span style={{ flex: 1, fontSize: '0.85rem' }}>{header || '(empty)'}</span>
-              <select
+              <ColumnSelect
                 value={pendingMapping.mapping.map[idx] ?? ''}
-                onChange={(e) =>
-                  updateMapping(idx, (e.target.value || 'ignore') as CanonicalColumn)
-                }
-              >
-                <option value="">— select —</option>
-                <option value="givenName">Given / first name</option>
-                <option value="middleName">Middle name</option>
-                <option value="familyName">Family / last name</option>
-                <option value="email">Email</option>
-                <option value="orcid">ORCID</option>
-                <option value="institution">Institution</option>
-                <option value="department">Department</option>
-                <option value="city">City</option>
-                <option value="state">State</option>
-                <option value="country">Country</option>
-                <option value="isCorresponding">Corresponding?</option>
-                <option value="sequence">Sequence</option>
-                <option value="ignore">Ignore</option>
-              </select>
+                onChange={(v) => updateMapping(idx, v)}
+              />
             </div>
           ))}
           <button type="button" onClick={() => void confirmMapping()}>
@@ -298,6 +686,26 @@ export function App() {
             <li>{preview.missingSource} missing source</li>
             <li>{preview.unmapped} unmapped</li>
           </ul>
+          {conflictPlans.length > 0 && (
+            <>
+              <p className="danger">Linked-account conflicts (not overwritten):</p>
+              <ul className="compact">
+                {conflictPlans.slice(0, 8).map((p) => (
+                  <li key={p.fieldId}>{p.label}</li>
+                ))}
+              </ul>
+            </>
+          )}
+          {missingRequired.length > 0 && (
+            <>
+              <p className="warn">Missing source values:</p>
+              <ul className="compact">
+                {missingRequired.slice(0, 8).map((p) => (
+                  <li key={p.fieldId}>{p.label}</li>
+                ))}
+              </ul>
+            </>
+          )}
           {preview.warnings.map((w) => (
             <p className="warn" key={w}>
               {w}
@@ -315,6 +723,14 @@ export function App() {
             <li>{validation.summary.conflicts} conflicts</li>
             <li>{validation.summary.mismatchedCount} count mismatches</li>
           </ul>
+          {validation.issues.slice(0, 10).map((issue) => (
+            <p
+              key={`${issue.code}-${issue.fieldId}-${issue.message}`}
+              className={issue.severity === 'error' ? 'danger' : 'warn'}
+            >
+              {issue.message}
+            </p>
+          ))}
           <p className="ok">Manuscript was not submitted.</p>
         </section>
       )}

@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Nature MTS synthetic author form (local fixture)</title>
+    <style>
+      body { font-family: Georgia, serif; margin: 2rem; max-width: 720px; }
+      fieldset { margin: 1rem 0; }
+      label { display: inline-block; min-width: 9rem; }
+      input, select { margin: 0.25rem 0; }
+    </style>
+  </head>
+  <body>
+    <h1>Synthetic Nature MTS author form</h1>
+    <p>
+      Local fixture for journal-autofill development. Not a real publisher page.
+      Load the extension, open this file (or serve it), then Preview / Fill.
+    </p>
+    <form id="author_form">
+      <label for="num_authors">Number of Authors</label>
+      <input id="num_authors" name="num_authors" type="text" value="3" />
+
+      <fieldset id="corresponding_author">
+        <legend>Corresponding Author</legend>
+        <input id="corr_auth_first_nm" type="text" />
+        <input id="corr_auth_middle_nm" type="text" />
+        <input id="corr_auth_last_nm" type="text" />
+        <input id="corr_auth_email" type="text" />
+        <input id="corr_auth_author_seq" type="text" />
+      </fieldset>
+
+      <fieldset>
+        <legend>Contributing Author 1</legend>
+        <input id="contrib_auth_1_first_nm" type="text" value="Existing" />
+        <input id="contrib_auth_1_middle_nm" type="text" />
+        <input id="contrib_auth_1_last_nm" type="text" value="Person" />
+        <input id="contrib_auth_1_email" type="text" />
+        <input id="contrib_auth_1_org" type="text" />
+        <input id="contrib_auth_1_city" type="text" />
+        <select id="contrib_auth_1_country">
+          <option value="">Select country</option>
+          <option>United States</option>
+          <option>United Kingdom</option>
+          <option>Germany</option>
+          <option>Japan</option>
+          <option>France</option>
+        </select>
+        <input id="contrib_auth_1_author_seq" type="text" />
+        <input id="current_contrib_auth_1_author_pid" type="hidden" value="" />
+      </fieldset>
+
+      <fieldset>
+        <legend>Contributing Author 2</legend>
+        <input id="contrib_auth_2_first_nm" type="text" />
+        <input id="contrib_auth_2_middle_nm" type="text" />
+        <input id="contrib_auth_2_last_nm" type="text" />
+        <input id="contrib_auth_2_email" type="text" />
+        <input id="contrib_auth_2_org" type="text" />
+        <input id="contrib_auth_2_city" type="text" />
+        <select id="contrib_auth_2_country">
+          <option value="">Select country</option>
+          <option>United States</option>
+          <option>United Kingdom</option>
+          <option>Germany</option>
+          <option>Japan</option>
+          <option>France</option>
+        </select>
+        <input id="contrib_auth_2_author_seq" type="text" />
+        <input id="current_contrib_auth_2_author_pid" type="hidden" value="PID-LINKED" />
+      </fieldset>
+
+      <fieldset>
+        <legend>Contributing Author 3</legend>
+        <input id="contrib_auth_3_first_nm" type="text" />
+        <input id="contrib_auth_3_middle_nm" type="text" />
+        <input id="contrib_auth_3_last_nm" type="text" />
+        <input id="contrib_auth_3_email" type="text" />
+        <input id="contrib_auth_3_org" type="text" />
+        <input id="contrib_auth_3_city" type="text" />
+        <select id="contrib_auth_3_country">
+          <option value="">Select country</option>
+          <option>United States</option>
+          <option>United Kingdom</option>
+          <option>Germany</option>
+          <option>Japan</option>
+          <option>France</option>
+        </select>
+        <input id="contrib_auth_3_author_seq" type="text" />
+        <input id="current_contrib_auth_3_author_pid" type="hidden" value="" />
+      </fieldset>
+
+      <button type="button" id="save_authors">Save Authors</button>
+      <button type="submit" id="final_submit">Final Submit Manuscript</button>
+      <label><input type="checkbox" id="certify_accuracy" /> I certify this submission</label>
+      <button type="button" id="accept_copyright">Accept Copyright</button>
+      <button type="button" id="pay_apc">Make Payment</button>
+    </form>
+  </body>
+</html>

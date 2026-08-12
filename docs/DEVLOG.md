@@ -10,3 +10,10 @@ Chronological overnight / autonomous iteration log.
 - tests: `npm test` (37 passed), `npm run typecheck`, `npm run build` → `.output/chrome-mv3` with permissions `activeTab`, `storage`, `scripting` only.
 - limitations: Nature MTS based on observed IDs (synthetic fixture, not live HTML); Google OAuth credentials unavailable; popup roster CRUD UI incomplete (storage API ready); Sheets UI not yet in popup.
 - next: Popup roster management UI; Sheets import UI over mocks; real Nature MTS HTML fixture from Kyle.
+
+### 2026-08-12 04:31 UTC
+- commit: *(pending)*
+- changed: Popup roster CRUD (create/rename/duplicate/delete/export JSON|CSV, author edit/reorder); Sheets import flow + popup UI gated on OAuth config; local HTML/CSV fixtures; `docs/BLOCKERS.md`; richer preview conflict/missing lists.
+- tests: `npm test` (44 passed), `npm run typecheck`, `npm run build`.
+- limitations: Sheets still blocked without Kyle OAuth credentials; Nature MTS still synthetic; no live portal validation.
+- next: OAuth credentials; live Nature MTS HTML; portal diagnostic captures for ScholarOne/EM.

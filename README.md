@@ -18,7 +18,14 @@ npm run build
 npm run dev
 ```
 
-Load the unpacked extension from `.output/chrome-mv3` (or use `npm run dev` with WXT).
+Load the unpacked extension from `.output/chrome-mv3` (Chrome → Extensions → Developer mode → Load unpacked), or use `npm run dev` with WXT.
+
+### Manual smoke test
+
+1. `npm run build` then load `.output/chrome-mv3`.
+2. Open `fixtures/nature-mts-sample.html` in Chrome.
+3. Import `fixtures/sample-authors.csv` in the popup (confirm mapping if prompted).
+4. Click **Preview**, then **Fill**, then review validation. Confirm submit/certify controls were not touched.
 
 ### Scripts
 
