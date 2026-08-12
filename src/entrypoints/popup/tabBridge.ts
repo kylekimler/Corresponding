@@ -75,10 +75,15 @@ async function pingContentScript(tabId: number): Promise<boolean> {
 }
 
 async function injectContentScript(tabId: number): Promise<void> {
+  type ScriptFile = NonNullable<
+    Parameters<typeof browser.scripting.executeScript>[0]['files']
+  >[number];
   await browser.scripting.executeScript({
     target: { tabId },
-    // Chrome expects paths relative to the extension root (no leading slash).
-    files: [CONTENT_SCRIPT_FILE],
+    // Chrome's executeScript API expects a relative path without a leading
+    // slash. WXT's generated ScriptPublicPath type models packaged URLs with
+    // a leading slash, so narrow the known build artifact at this boundary.
+    files: [CONTENT_SCRIPT_FILE as ScriptFile],
   });
 }
 
