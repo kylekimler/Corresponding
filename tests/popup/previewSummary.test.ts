@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { FillReport } from '@/adapters/types';
 import { natureMtsAdapter } from '@/adapters/nature-mts/adapter';
 import { mountNatureMtsFixture } from '@/adapters/nature-mts/fixture';
 import { summarizePreview } from '@/popup/previewSummary';
@@ -24,6 +25,52 @@ describe('preview summary + no DOM mutation', () => {
     expect(summary.exactMappings).toBeGreaterThan(0);
     expect(summary.dryRun).toBe(true);
     expect(summary.filled + summary.overwritten).toBeGreaterThan(0);
+    expect(summary.authorGroups).toHaveLength(3);
+    expect(summary.authorGroups.every((group) => group.confidence === 'exact')).toBe(
+      true,
+    );
+  });
+
+  it('labels semantic and unresolved author blocks without promoting confidence', () => {
+    const report: FillReport = {
+      platformId: 'unknown',
+      dryRun: true,
+      overwrite: false,
+      plans: [
+        {
+          fieldId: 'author-1-given',
+          label: 'Author 1 given name',
+          authorSequence: 1,
+          action: 'fill',
+          proposedValue: 'Ada',
+        },
+        {
+          fieldId: 'author-2-email',
+          label: 'Author 2 email',
+          authorSequence: 2,
+          action: 'unmapped',
+          reason: 'Low confidence',
+        },
+      ],
+      filled: 1,
+      preserved: 0,
+      overwritten: 0,
+      skippedConflicts: 0,
+      missingSource: 0,
+      unmapped: 1,
+      warnings: [],
+      errors: [],
+    };
+
+    const summary = summarizePreview(report);
+    expect(summary.authorGroups).toEqual([
+      expect.objectContaining({ authorSequence: 1, confidence: 'semantic' }),
+      expect.objectContaining({
+        authorSequence: 2,
+        confidence: 'unresolved',
+        unresolved: 1,
+      }),
+    ]);
   });
 
   it('keeps DOM frozen across 75-author preview', () => {

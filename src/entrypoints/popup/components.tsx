@@ -114,6 +114,37 @@ export function PreviewResultCard(props: { summary: PreviewSummary }) {
           Evidence: {s.evidence.slice(0, 4).join(', ')}
         </p>
       )}
+      {s.authorGroups.length > 0 && (
+        <div className="author-confidence" aria-label="Author mapping confidence">
+          <p className="preview-subhead">Author blocks</p>
+          <ul>
+            {s.authorGroups.slice(0, 8).map((group) => (
+              <li key={group.authorSequence}>
+                <span>Author {group.authorSequence}</span>
+                <span
+                  className={`confidence-badge confidence-${group.confidence}`}
+                >
+                  {group.confidence === 'exact'
+                    ? 'Exact / tested'
+                    : group.confidence === 'semantic'
+                      ? 'Semantic'
+                      : 'Unresolved'}
+                </span>
+                {(group.unresolved > 0 || group.conflicts > 0) && (
+                  <span className="confidence-attention">
+                    {group.unresolved > 0 ? `${group.unresolved} missing` : ''}
+                    {group.unresolved > 0 && group.conflicts > 0 ? ' · ' : ''}
+                    {group.conflicts > 0 ? `${group.conflicts} conflicts` : ''}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+          {s.authorGroups.length > 8 && (
+            <p className="muted tight">+{s.authorGroups.length - 8} more authors</p>
+          )}
+        </div>
+      )}
       {s.conflictLabels.length > 0 && (
         <div>
           <p className="danger tight">Conflicts (not overwritten)</p>
