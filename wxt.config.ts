@@ -6,6 +6,11 @@ export default defineConfig({
   modules: ['@wxt-dev/module-react'],
   srcDir: 'src',
   outDir: '.output',
+  // Dedicated Chromium profile for `npm run dev` — separate from your everyday Chrome.
+  // Rosters, cookies, and logins persist across restarts under `.wxt/chrome-data` (gitignored).
+  webExt: {
+    chromiumArgs: ['--user-data-dir=./.wxt/chrome-data'],
+  },
   manifest: {
     name: 'Corresponding',
     description:
