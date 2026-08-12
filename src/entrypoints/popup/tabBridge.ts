@@ -1,5 +1,8 @@
 import type { ExtensionRequest, ExtensionResponse } from '@/messaging/protocol';
 
+export const CONTENT_SCRIPT_FILE = 'content-scripts/content.js';
+const READY_ATTEMPTS = 5;
+
 /** Refuse injection into browser-internal / non-http(s) pages. */
 export function isInjectableTabUrl(url: string | undefined): boolean {
   if (!url) return false;
@@ -74,7 +77,8 @@ async function pingContentScript(tabId: number): Promise<boolean> {
 async function injectContentScript(tabId: number): Promise<void> {
   await browser.scripting.executeScript({
     target: { tabId },
-    files: ['/content-scripts/content.js'],
+    // Chrome expects paths relative to the extension root (no leading slash).
+    files: [CONTENT_SCRIPT_FILE],
   });
 }
 
@@ -90,6 +94,13 @@ async function ensureContentScript(tabId: number): Promise<void> {
       { cause: err },
     );
   }
+  for (let attempt = 0; attempt < READY_ATTEMPTS; attempt += 1) {
+    if (await pingContentScript(tabId)) return;
+    await new Promise((resolve) => setTimeout(resolve, 20 * (attempt + 1)));
+  }
+  throw new Error(
+    'Content script was injected but did not become ready. Refresh the journal tab and retry.',
+  );
 }
 
 async function sendOnce(
@@ -136,16 +147,7 @@ export async function sendToActiveTab(
     };
   }
 
-  let response = await sendOnce(tab.id, message);
-  if (response.type === 'ERROR') {
-    // One retry after a fresh inject — covers race where PING succeeded but
-    // the listener was not yet ready for the real request.
-    try {
-      await injectContentScript(tab.id);
-      response = await sendOnce(tab.id, message);
-    } catch {
-      // keep original error response
-    }
-  }
-  return response;
+  // Do not reinject on a typed ERROR: it may be an intentional application
+  // refusal (unsupported/unsafe mapping), not a transport failure.
+  return sendOnce(tab.id, message);
 }
