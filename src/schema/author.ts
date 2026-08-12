@@ -1,0 +1,61 @@
+import { z } from 'zod';
+
+export const AffiliationSchema = z.object({
+  institution: z.string().min(1),
+  department: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  country: z.string().optional(),
+  isPrimary: z.boolean().default(false),
+});
+
+export const AuthorSchema = z.object({
+  id: z.string().min(1),
+  givenName: z.string().min(1),
+  middleName: z.string().optional(),
+  familyName: z.string().min(1),
+  email: z
+    .union([z.string().email(), z.literal('')])
+    .optional()
+    .transform((v) => (v === '' ? undefined : v)),
+  orcid: z.string().optional(),
+  isCorresponding: z.boolean().default(false),
+  affiliations: z.array(AffiliationSchema).default([]),
+  sequence: z.number().int().positive(),
+});
+
+export const RosterSourceSchema = z.enum([
+  'manual',
+  'csv',
+  'google_sheets',
+  'json',
+  'duplicate',
+]);
+
+export const ROSTER_SCHEMA_VERSION = 1;
+
+export const RosterSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  authors: z.array(AuthorSchema),
+  schemaVersion: z.number().int().positive().default(ROSTER_SCHEMA_VERSION),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+  source: RosterSourceSchema,
+});
+
+export type Affiliation = z.infer<typeof AffiliationSchema>;
+export type Author = z.infer<typeof AuthorSchema>;
+export type Roster = z.infer<typeof RosterSchema>;
+export type RosterSource = z.infer<typeof RosterSourceSchema>;
+
+export function primaryAffiliation(author: Author): Affiliation | undefined {
+  if (author.affiliations.length === 0) return undefined;
+  return (
+    author.affiliations.find((a) => a.isPrimary) ?? author.affiliations[0]
+  );
+}
+
+export function sortAuthors(authors: Author[]): Author[] {
+  return [...authors].sort((a, b) => a.sequence - b.sequence);
+}

@@ -1,0 +1,168 @@
+:root {
+  --bg0: #f3efe6;
+  --bg1: #e7f0ea;
+  --ink: #1c2421;
+  --muted: #5b6b64;
+  --accent: #0f6a56;
+  --accent-ink: #f7fffb;
+  --warn: #8a4b00;
+  --danger: #8b1e1e;
+  --line: rgba(28, 36, 33, 0.14);
+  --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 380px;
+  min-height: 520px;
+  color: var(--ink);
+  font-family: var(--font-body);
+  background:
+    radial-gradient(120% 80% at 0% 0%, #d9ebe3 0%, transparent 55%),
+    radial-gradient(90% 70% at 100% 0%, #efe4cf 0%, transparent 50%),
+    linear-gradient(180deg, var(--bg0), var(--bg1));
+}
+
+body {
+  padding: 16px;
+}
+
+h1 {
+  font-family: var(--font-display);
+  font-size: 1.55rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin: 0 0 4px;
+}
+
+.tagline {
+  margin: 0 0 14px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
+
+section {
+  margin: 0 0 14px;
+}
+
+section h2 {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin: 0 0 6px;
+  font-weight: 600;
+}
+
+.panel {
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+button,
+select,
+input[type='file'] {
+  font: inherit;
+}
+
+button {
+  appearance: none;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button.secondary {
+  background: transparent;
+  color: var(--accent);
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+label.checkbox {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.stat {
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.stat strong {
+  font-weight: 600;
+}
+
+.warn {
+  color: var(--warn);
+  font-size: 0.85rem;
+}
+
+.danger {
+  color: var(--danger);
+  font-size: 0.85rem;
+}
+
+.ok {
+  color: var(--accent);
+  font-size: 0.85rem;
+}
+
+ul.compact {
+  margin: 6px 0 0;
+  padding-left: 1.1rem;
+  font-size: 0.85rem;
+}
+
+.footnote {
+  margin-top: 16px;
+  font-size: 0.75rem;
+  color: var(--muted);
+  line-height: 1.35;
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+
+.error-boundary pre {
+  white-space: pre-wrap;
+  font-size: 0.8rem;
+}
+
+textarea.mapping {
+  width: 100%;
+  min-height: 72px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.75rem;
+}
+
+select {
+  max-width: 100%;
+  padding: 6px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.65);
+}
