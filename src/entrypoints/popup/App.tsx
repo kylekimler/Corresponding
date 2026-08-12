@@ -26,7 +26,10 @@ import type { Author, Roster, RosterSource } from '@/schema/author';
 import { previewCapture } from '@/diagnostics/capture';
 import { createChromeGoogleSheetsClient } from '@/sheets/chromeClient';
 import { sheetsChooserAvailability } from '@/sheets/types';
-import { createMemoryAuditLog } from '@/audit/localLog';
+import {
+  auditRecordFromFillReport,
+  createChromeAuditLog,
+} from '@/audit/localLog';
 import {
   authorsNeedingAttention,
   readyAuthorCount,
@@ -47,7 +50,7 @@ import {
 
 const store = createRosterStore();
 const sheetsClient = createChromeGoogleSheetsClient();
-const auditLog = createMemoryAuditLog();
+const auditLog = createChromeAuditLog();
 const popupPreferences = createPopupPreferences();
 
 type View = 'main' | 'import' | 'manage' | 'advanced';
@@ -89,6 +92,7 @@ export function App() {
   const [authorDraft, setAuthorDraft] = useState<Partial<Author>>({});
   const [menuOpen, setMenuOpen] = useState(false);
   const [sampleCreating, setSampleCreating] = useState(false);
+  const [auditCount, setAuditCount] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -155,9 +159,24 @@ export function App() {
     }
   }
 
+  async function refreshAuditCount() {
+    setAuditCount((await auditLog.list()).length);
+  }
+
+  async function recordLocalActivity(report: FillReport, rosterId: string) {
+    try {
+      await auditLog.append(auditRecordFromFillReport(report, rosterId));
+      await refreshAuditCount();
+    } catch {
+      // Audit persistence is secondary and must never break Preview or Fill.
+      console.warn('Corresponding could not persist local activity counts.');
+    }
+  }
+
   useEffect(() => {
     void refreshRosters();
     void runDetect();
+    void refreshAuditCount();
   }, []);
 
   useEffect(() => {
@@ -418,15 +437,7 @@ export function App() {
         setValidation(null);
         const summary = summarizePreview(res.result, detected);
         setStatus(summary.headline);
-        void auditLog.append({
-          portalFamily: res.result.platformId,
-          rosterId: selected.id,
-          fieldsProposed: res.result.plans.length,
-          filled: res.result.filled,
-          preserved: res.result.preserved,
-          unresolved: res.result.missingSource + res.result.unmapped,
-          conflicts: res.result.skippedConflicts,
-        });
+        await recordLocalActivity(res.result, selected.id);
         // Refresh detect if it was stuck/error — preview proves the tab works.
         if (detectStatus !== 'ready' && res.result.platformId !== 'unknown') {
           void runDetect();
@@ -455,6 +466,7 @@ export function App() {
       }
       if (res.type === 'FILL_RESULT') {
         setPreview(res.result);
+        await recordLocalActivity(res.result, selected.id);
         const v = await sendToActiveTab({ type: 'VALIDATE', roster: selected });
         if (v.type === 'VALIDATE_RESULT') setValidation(v.result);
         setStatus('Fill complete. You review and submit.');
@@ -483,6 +495,13 @@ export function App() {
     } else if (res.type === 'ERROR') {
       setError(res.message);
     }
+  }
+
+  async function clearAuditLog() {
+    if (!confirm('Clear local activity counts from this device?')) return;
+    await auditLog.clear();
+    await refreshAuditCount();
+    setStatus('Local activity cleared.');
   }
 
   const portalLabel =
@@ -1153,6 +1172,21 @@ export function App() {
             <textarea className="mapping" readOnly value={diagText} />
           </>
         )}
+      </section>
+      <section className="panel">
+        <h2>Local activity</h2>
+        <p className="muted">
+          {auditCount} Preview/Fill records on this device. Counts only — no names,
+          emails, or form values.
+        </p>
+        <button
+          type="button"
+          className="secondary"
+          disabled={auditCount === 0}
+          onClick={() => void clearAuditLog()}
+        >
+          Clear local activity
+        </button>
       </section>
       {status && <p className="ok">{status}</p>}
       {error && <p className="danger">{error}</p>}

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { FillReport } from '@/adapters/types';
 import {
   auditRecordFromFillReport,
+  createChromeAuditLog,
   createMemoryAuditLog,
   serializedAuditHasNoEmailLikeContent,
 } from '@/audit/localLog';
@@ -83,6 +84,7 @@ describe('local audit log', () => {
 
     expect(entries).toHaveLength(1);
     expect(entry).toMatchObject({
+      operation: 'fill',
       portalFamily: 'nature-mts',
       rosterId: 'roster-uuid-1',
       fieldsProposed: 2,
@@ -97,6 +99,38 @@ describe('local audit log', () => {
     expect(serialized).not.toContain('Ada');
     expect(serialized).not.toContain('secret.author');
     expect(serializedAuditHasNoEmailLikeContent(entries)).toBe(true);
+  });
+
+  it('persists counts across Chrome audit log instances and stays clearable', async () => {
+    const data: Record<string, unknown> = {};
+    const area = {
+      async get(key: string) {
+        return { [key]: data[key] };
+      },
+      async set(items: Record<string, unknown>) {
+        Object.assign(data, items);
+      },
+    };
+    const report = sampleFillReportWithEmails();
+    report.dryRun = true;
+
+    const first = createChromeAuditLog(area);
+    await first.append(auditRecordFromFillReport(report, 'roster-local-only'));
+
+    const reopened = createChromeAuditLog(area);
+    expect(await reopened.list()).toEqual([
+      expect.objectContaining({
+        operation: 'preview',
+        rosterId: 'roster-local-only',
+        fieldsProposed: 2,
+      }),
+    ]);
+    expect(JSON.stringify(await reopened.list())).not.toContain(
+      'secret.author@university.edu',
+    );
+
+    await reopened.clear();
+    expect(await createChromeAuditLog(area).list()).toEqual([]);
   });
 
   it('rejects entries containing email-like strings in rosterId', async () => {
