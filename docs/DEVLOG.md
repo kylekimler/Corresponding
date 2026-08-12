@@ -12,8 +12,10 @@ Chronological overnight / autonomous iteration log.
 - tests: canonical sample/storage/fresh-ID coverage; first-use sample journey proves Preview does not mutate, then Fill and validation succeed; full suite 155 passed, typecheck and build passed.
 - follow-up commits: `163fba4` persists the selected roster in local extension storage; `3cc1990` tightens storage-backend typing.
 - repeated-use workflow: reopening the popup restores a valid remembered roster, falls back safely after deletion, and clears the preference when no rosters remain.
-- verification: preference unit tests + full suite 158 passed, typecheck and build passed.
-- next: Add author-block Preview confidence.
+- Preview commit: `7e6a96d` groups mappings by author sequence and shows Exact/tested, Semantic, or Unresolved badges plus missing/conflict counts. Exact classification is platform-scoped to tested Nature IDs.
+- audit commit: `28f0521` switches the popup from memory-only to counts-only `chrome.storage.local` activity; records Preview and Fill separately, refuses PII-like entries, caps at 200, and exposes a clear control under Advanced. Audit failure cannot break Preview/Fill.
+- verification: preference, Preview confidence, and persistent audit tests + full suite 160 passed, typecheck and build passed.
+- next: Independent QA/privacy/UX/manual review, then safe XLSX dependency decision or bioRxiv/eLife fixture investigation.
 
 ### 2026-08-12 16:15 UTC
 - commit: `c7e2fdc` `npm run dev` opens Nature fixture via `webExt.startUrls`

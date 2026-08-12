@@ -32,7 +32,7 @@ Prioritized friction for a first-time scientist. Status: `[ ]` open · `[x]` fix
 - [x] Exact / semantic / preserved / unresolved / conflicts counts
 - [x] Dry-run never mutates the form (tested)
 - [x] Detection errors no longer stick forever on “Checking…”
-- [ ] Group preview by author block with confidence badges
+- [x] Group preview by author block with confidence badges
 
 ## Unresolved fields
 
