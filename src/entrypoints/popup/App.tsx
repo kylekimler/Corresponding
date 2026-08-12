@@ -21,6 +21,7 @@ import {
 } from '@/roster/mutations';
 import { normalizeOrcid } from '@/schema/orcid';
 import { createRosterStore } from '@/roster/storage';
+import { createSampleRoster } from '@/roster/sample';
 import type { Author, Roster, RosterSource } from '@/schema/author';
 import { previewCapture } from '@/diagnostics/capture';
 import { createChromeGoogleSheetsClient } from '@/sheets/chromeClient';
@@ -82,6 +83,7 @@ export function App() {
   const [editingAuthorId, setEditingAuthorId] = useState('');
   const [authorDraft, setAuthorDraft] = useState<Partial<Author>>({});
   const [menuOpen, setMenuOpen] = useState(false);
+  const [sampleCreating, setSampleCreating] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -281,6 +283,23 @@ export function App() {
     await store.save(roster);
     await refreshRosters(roster.id);
     setStatus('Empty roster created.');
+  }
+
+  async function addSampleRoster() {
+    if (sampleCreating) return;
+    setSampleCreating(true);
+    setError('');
+    setStatus('');
+    try {
+      const roster = createSampleRoster();
+      await store.importRoster(roster);
+      await refreshRosters(roster.id);
+      setStatus('Sample roster added. Try Preview — nothing is submitted.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not add the sample roster.');
+    } finally {
+      setSampleCreating(false);
+    }
   }
 
   async function saveRename() {
@@ -500,16 +519,29 @@ export function App() {
             <p className="stat">
               Import your author list to get started.
             </p>
-            <button type="button" onClick={openImport}>
-              Import authors
-            </button>
-            <button
-              type="button"
-              className="secondary"
-              onClick={() => void createRoster()}
-            >
-              Start empty roster
-            </button>
+            <div className="empty-state-actions">
+              <button type="button" onClick={openImport}>
+                Import authors
+              </button>
+              <button
+                type="button"
+                className="secondary"
+                disabled={sampleCreating}
+                onClick={() => void addSampleRoster()}
+              >
+                {sampleCreating ? 'Adding sample…' : 'Try a sample roster'}
+              </button>
+              <button
+                type="button"
+                className="linkish"
+                onClick={() => void createRoster()}
+              >
+                Start empty roster
+              </button>
+            </div>
+            <p className="muted tight">
+              The sample uses example-only data and stays on this device.
+            </p>
           </section>
         ) : (
           <>

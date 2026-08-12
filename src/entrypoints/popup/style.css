@@ -132,6 +132,13 @@ summary:focus-visible {
   margin: var(--c-space-2) 0 var(--c-space-3);
 }
 
+.empty-state-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--c-space-2);
+  flex-wrap: wrap;
+}
+
 label.checkbox {
   display: flex;
   gap: 6px;

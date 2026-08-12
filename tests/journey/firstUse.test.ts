@@ -4,6 +4,7 @@ import { mountNatureMtsFixture } from '@/adapters/nature-mts/fixture';
 import { mappingIsComplete, suggestColumnMapping } from '@/import/columnMap';
 import { parsePastedTable } from '@/import/pasteTable';
 import { rowsToRoster } from '@/import/rosterFromTable';
+import { createSampleRoster } from '@/roster/sample';
 import { createMemoryRosterStore } from '@/roster/storage';
 import { summarizePreview } from '@/popup/previewSummary';
 import { makeNAuthors, makeRoster } from '../helpers/roster';
@@ -46,6 +47,38 @@ describe('first-use journey', () => {
   it('install/open with no roster', async () => {
     const store = createMemoryRosterStore();
     expect(await store.list()).toEqual([]);
+  });
+
+  it('one-click sample → preview → fill → validate', async () => {
+    const store = createMemoryRosterStore();
+    const sample = createSampleRoster('2026-08-12T00:00:00.000Z');
+    await store.importRoster(sample);
+    const roster = (await store.list())[0]!;
+
+    mountNatureMtsFixture({ slots: roster.authors.length });
+    const detect = natureMtsAdapter.detect(document);
+    expect(detect.platformId).toBe('nature-mts');
+
+    const firstName = () =>
+      (document.getElementById('contrib_auth_1_first_nm') as HTMLInputElement)
+        .value;
+    const preview = natureMtsAdapter.fill(document, roster, {
+      overwrite: false,
+      dryRun: true,
+    });
+    expect(preview.dryRun).toBe(true);
+    expect(firstName()).toBe('');
+
+    const fill = natureMtsAdapter.fill(document, roster, {
+      overwrite: false,
+      dryRun: false,
+    });
+    expect(fill.filled).toBeGreaterThan(0);
+    expect(firstName()).toBe('Ada');
+
+    const validation = natureMtsAdapter.validate(document, roster);
+    expect(validation.summary.conflicts).toBe(0);
+    expect(validation.summary.filledLike).toBe(3);
   });
 
   it.each([3, 75, 500])(
