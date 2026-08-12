@@ -19,14 +19,69 @@ export function isInjectableTabUrl(url: string | undefined): boolean {
   }
 }
 
-async function ensureContentScript(tabId: number): Promise<void> {
+/** Normalize chrome.runtime messaging replies into a typed ExtensionResponse. */
+export function normalizeTabResponse(response: unknown): ExtensionResponse {
+  if (
+    response &&
+    typeof response === 'object' &&
+    'type' in response &&
+    typeof (response as { type: unknown }).type === 'string'
+  ) {
+    return response as ExtensionResponse;
+  }
+  return {
+    type: 'ERROR',
+    message:
+      'No response from the page content script. Reload the extension and refresh the journal tab.',
+  };
+}
+
+async function pingContentScript(tabId: number): Promise<boolean> {
   try {
-    await browser.tabs.sendMessage(tabId, { type: 'PING' } satisfies ExtensionRequest);
+    const res = await browser.tabs.sendMessage(tabId, {
+      type: 'PING',
+    } satisfies ExtensionRequest);
+    return Boolean(res && typeof res === 'object' && 'type' in res);
   } catch {
-    await browser.scripting.executeScript({
-      target: { tabId },
-      files: ['/content-scripts/content.js'],
-    });
+    return false;
+  }
+}
+
+async function injectContentScript(tabId: number): Promise<void> {
+  await browser.scripting.executeScript({
+    target: { tabId },
+    files: ['/content-scripts/content.js'],
+  });
+}
+
+async function ensureContentScript(tabId: number): Promise<void> {
+  if (await pingContentScript(tabId)) return;
+  try {
+    await injectContentScript(tabId);
+  } catch (err) {
+    throw new Error(
+      err instanceof Error
+        ? err.message
+        : 'Could not inject content script into the active tab',
+    );
+  }
+}
+
+async function sendOnce(
+  tabId: number,
+  message: ExtensionRequest,
+): Promise<ExtensionResponse> {
+  try {
+    const raw = await browser.tabs.sendMessage(tabId, message);
+    return normalizeTabResponse(raw);
+  } catch (err) {
+    return {
+      type: 'ERROR',
+      message:
+        err instanceof Error
+          ? err.message
+          : 'Failed to message the active tab content script',
+    };
   }
 }
 
@@ -43,6 +98,29 @@ export async function sendToActiveTab(
       message: 'Cannot inject into this page. Open a journal submission form (http/https).',
     };
   }
-  await ensureContentScript(tab.id);
-  return browser.tabs.sendMessage(tab.id, message);
+
+  try {
+    await ensureContentScript(tab.id);
+  } catch (err) {
+    return {
+      type: 'ERROR',
+      message:
+        err instanceof Error
+          ? err.message
+          : 'Could not prepare the content script on this tab',
+    };
+  }
+
+  let response = await sendOnce(tab.id, message);
+  if (response.type === 'ERROR') {
+    // One retry after a fresh inject — covers race where PING succeeded but
+    // the listener was not yet ready for the real request.
+    try {
+      await injectContentScript(tab.id);
+      response = await sendOnce(tab.id, message);
+    } catch {
+      // keep original error response
+    }
+  }
+  return response;
 }
