@@ -31,7 +31,7 @@ Chronological overnight / autonomous iteration log.
 - next: Wire audit log into fill flow; optional v2 import/export in popup.
 
 ### 2026-08-12 05:35 UTC
-- commit: *(pending)*
+- commit: `e04b18dd433c69461ace7bb1b01f95ae54a44b7e`
 - changed: Overnight reliability build — semantic recognition + confidence hierarchy; author-group detection; fast-check property tests; DOM chaos harness; adapter contract suite; compatibility capture/redaction; fixture corpus replay; identity v2 + provenance; local audit trail; failure states; Corresponding branding/UX tokens; perf benchmarks; platform research; DX scripts/template; coverage report.
 - tests: `npm test` (106 passed), `npm run typecheck`, `npm run build`, `npm run test:coverage`.
 - reports: chaos 40/40 correct unsafe=0; fixture replay detection/mapping/unsupported pass rate 1.0; perf 10→1000 authors within thresholds.
