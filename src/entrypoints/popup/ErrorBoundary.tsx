@@ -18,7 +18,7 @@ export class ErrorBoundary extends React.Component<
     if (this.state.error) {
       return (
         <div className="error-boundary">
-          <h1>journal-autofill</h1>
+          <h1>Corresponding</h1>
           <p>Something went wrong in the popup. Your roster data was not submitted anywhere.</p>
           <pre>{this.state.error.message}</pre>
         </div>

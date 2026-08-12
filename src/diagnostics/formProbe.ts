@@ -3,6 +3,20 @@
  * Values are redacted by default. Never collects password/auth fields.
  */
 
+import {
+  captureForm,
+  previewCapture,
+  type CompatibilityCapture,
+} from './capture';
+import {
+  normalizeIdPattern,
+  normalizeNamePattern,
+  shouldOmitFieldFromCapture,
+} from './redact';
+
+export type { CompatibilityCapture } from './capture';
+export { captureForm, previewCapture } from './capture';
+
 export type FieldCategory =
   | 'author'
   | 'affiliation'
@@ -19,21 +33,26 @@ export interface DiagnosticField {
   inputType?: string;
   id?: string;
   name?: string;
+  /** Normalized id with digits replaced by #. */
+  idPattern?: string;
+  /** Normalized name with digits replaced by #. */
+  namePattern?: string;
   labelText?: string;
   optionTexts?: string[];
   category: FieldCategory;
+  required?: boolean;
   /** Always redacted unless includeValues=true and not secret. */
   value?: string;
   redacted: boolean;
 }
 
-export interface DiagnosticReport {
+export interface DiagnosticReport extends CompatibilityCapture {
+  /** Backward-compatible redacted URL (same as urlPattern). */
   url?: string;
+  /** Backward-compatible redacted title (same as titleSafe). */
   title?: string;
-  capturedAt: string;
-  fieldCount: number;
+  /** Legacy flat field list — values always redacted in production captures. */
   fields: DiagnosticField[];
-  notes: string[];
 }
 
 const SECRET_TYPES = new Set(['password']);
@@ -41,7 +60,6 @@ const SECRET_NAME_RE =
   /(password|passwd|pwd|auth[_-]?token|access[_-]?token|csrf|session)/i;
 
 function cssEscapeIdent(value: string): string {
-  // jsdom may lack CSS.escape; enough for id attribute selectors in diagnostics.
   if (typeof CSS !== 'undefined' && typeof CSS.escape === 'function') {
     return CSS.escape(value);
   }
@@ -57,6 +75,9 @@ function labelFor(el: Element): string | undefined {
   }
   const parentLabel = el.closest('label');
   if (parentLabel?.textContent) return parentLabel.textContent.trim();
+  const fieldset = el.closest('fieldset');
+  const legend = fieldset?.querySelector('legend');
+  if (legend?.textContent) return legend.textContent.trim();
   return undefined;
 }
 
@@ -86,18 +107,12 @@ function categorize(el: Element, label?: string): FieldCategory {
   return 'other';
 }
 
-export function probeForm(
+function probeLegacyFields(
   doc: Document,
-  options: { includeValues?: boolean; url?: string } = {},
-): DiagnosticReport {
-  const includeValues = options.includeValues === true;
+  includeValues: boolean,
+): DiagnosticField[] {
   const nodes = doc.querySelectorAll('input, select, textarea');
   const fields: DiagnosticField[] = [];
-  const notes: string[] = [
-    'Values redacted by default.',
-    'Password and authentication fields are never included with values.',
-    'Copy this report when requesting support for a new journal portal.',
-  ];
 
   nodes.forEach((el) => {
     const tag = el.tagName.toLowerCase();
@@ -107,15 +122,24 @@ export function probeForm(
     const name = el.getAttribute('name') || undefined;
     const labelText = labelFor(el);
     const category = categorize(el, labelText);
+    const required =
+      el.hasAttribute('required') ||
+      el.getAttribute('aria-required') === 'true';
 
-    if (category === 'auth_secret') {
+    if (
+      category === 'auth_secret' ||
+      shouldOmitFieldFromCapture(el, labelText)
+    ) {
       fields.push({
         tag,
         inputType,
-        id,
-        name,
+        id: id ? normalizeIdPattern(id) : undefined,
+        name: name ? normalizeNamePattern(name) : undefined,
+        idPattern: id ? normalizeIdPattern(id) : undefined,
+        namePattern: name ? normalizeNamePattern(name) : undefined,
         labelText,
         category,
+        required,
         redacted: true,
       });
       return;
@@ -136,45 +160,56 @@ export function probeForm(
     fields.push({
       tag,
       inputType,
-      id,
-      name,
+      id: id ? normalizeIdPattern(id) : undefined,
+      name: name ? normalizeNamePattern(name) : undefined,
+      idPattern: id ? normalizeIdPattern(id) : undefined,
+      namePattern: name ? normalizeNamePattern(name) : undefined,
       labelText,
       optionTexts,
       category,
+      required,
       value: includeValues ? rawValue : undefined,
       redacted: !includeValues,
     });
   });
 
+  return fields;
+}
+
+export function probeForm(
+  doc: Document,
+  options: { includeValues?: boolean; url?: string } = {},
+): DiagnosticReport {
+  const includeValues = options.includeValues === true;
+  const capture = captureForm(doc, { url: options.url });
+  const fields = probeLegacyFields(doc, includeValues);
+
   return {
-    url: options.url,
-    title: doc.title || undefined,
-    capturedAt: new Date().toISOString(),
-    fieldCount: fields.length,
+    ...capture,
+    url: capture.urlPattern,
+    title: capture.titleSafe,
     fields,
-    notes,
   };
 }
 
+/** Human-readable preview — preferred for UI export. */
 export function formatDiagnosticReport(report: DiagnosticReport): string {
-  const lines: string[] = [];
-  lines.push('# journal-autofill diagnostic report');
-  lines.push(`capturedAt: ${report.capturedAt}`);
-  if (report.url) lines.push(`url: ${report.url}`);
-  if (report.title) lines.push(`title: ${report.title}`);
-  lines.push(`fieldCount: ${report.fieldCount}`);
-  lines.push('');
-  for (const note of report.notes) lines.push(`- ${note}`);
-  lines.push('');
+  return formatLegacyDiagnosticReport(report);
+}
+
+/** Format legacy probe output including fields section. */
+export function formatLegacyDiagnosticReport(report: DiagnosticReport): string {
+  const lines: string[] = [previewCapture(report).trimEnd(), '', '## fields'];
   for (const f of report.fields) {
     lines.push(
       [
         f.tag,
         f.inputType ? `type=${f.inputType}` : null,
-        f.id ? `id=${f.id}` : null,
-        f.name ? `name=${f.name}` : null,
+        f.idPattern ? `idPattern=${f.idPattern}` : null,
+        f.namePattern ? `namePattern=${f.namePattern}` : null,
         f.labelText ? `label=${JSON.stringify(f.labelText)}` : null,
         `category=${f.category}`,
+        f.required ? 'required' : null,
         f.optionTexts
           ? `options=${JSON.stringify(f.optionTexts.slice(0, 30))}`
           : null,

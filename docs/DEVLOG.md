@@ -24,3 +24,8 @@ Chronological overnight / autonomous iteration log.
 - tests: `npm test` (48 passed), `npm run typecheck`, `npm run build`.
 - limitations: Further reliable portal adapters blocked on real DOM fixtures and OAuth credentials from Kyle.
 - next: Stop on external blockers; Kyle provides OAuth + live HTML captures.
+
+### 2026-08-12 05:30 UTC
+- changed: Identity schema v2 (`identityV2.ts`) with optional expansions; v1↔v2 migration bridges (`migrate.ts`); provenance model; local-only audit log (`audit/localLog.ts`) with PII redaction invariants; schema/audit tests.
+- tests: `npm test` (109 passed), `npm run typecheck`.
+- next: Wire audit log into fill flow; optional v2 import/export in popup.

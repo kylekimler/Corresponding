@@ -1,0 +1,20 @@
+{
+  "id": "nature-mts-synthetic",
+  "platformFamily": "ejournalpress",
+  "journalId": "nature-mts",
+  "sourceDate": "2026-01-15",
+  "description": "Synthetic Nature MTS / eJournalPress author entry form (2 slots).",
+  "sanitizedHtml": "<form id=\"author_form\"><label for=\"num_authors\">Number of Authors</label><input id=\"num_authors\" name=\"num_authors\" type=\"text\" value=\"2\" /><fieldset id=\"corresponding_author\"><legend>Corresponding Author</legend><input id=\"corr_auth_first_nm\" name=\"corr_auth_first_nm\" type=\"text\" value=\"\" /><input id=\"corr_auth_middle_nm\" name=\"corr_auth_middle_nm\" type=\"text\" value=\"\" /><input id=\"corr_auth_last_nm\" name=\"corr_auth_last_nm\" type=\"text\" value=\"\" /><input id=\"corr_auth_email\" name=\"corr_auth_email\" type=\"text\" value=\"\" /><input id=\"corr_auth_author_seq\" name=\"corr_auth_author_seq\" type=\"text\" value=\"\" /></fieldset><fieldset class=\"contrib_auth\" data-index=\"1\"><legend>Contributing Author 1</legend><input id=\"contrib_auth_1_first_nm\" name=\"contrib_auth_1_first_nm\" type=\"text\" value=\"\" /><input id=\"contrib_auth_1_middle_nm\" name=\"contrib_auth_1_middle_nm\" type=\"text\" value=\"\" /><input id=\"contrib_auth_1_last_nm\" name=\"contrib_auth_1_last_nm\" type=\"text\" value=\"\" /><input id=\"contrib_auth_1_email\" name=\"contrib_auth_1_email\" type=\"text\" value=\"\" /><input id=\"contrib_auth_1_org\" name=\"contrib_auth_1_org\" type=\"text\" value=\"\" /><input id=\"contrib_auth_1_city\" name=\"contrib_auth_1_city\" type=\"text\" value=\"\" /><select id=\"contrib_auth_1_country\" name=\"contrib_auth_1_country\"><option value=\"\">Select country</option><option value=\"United States\">United States</option><option value=\"Japan\">Japan</option></select><input id=\"contrib_auth_1_author_seq\" name=\"contrib_auth_1_author_seq\" type=\"text\" value=\"\" /><input id=\"current_contrib_auth_1_author_pid\" name=\"current_contrib_auth_1_author_pid\" type=\"hidden\" value=\"\" /></fieldset><fieldset class=\"contrib_auth\" data-index=\"2\"><legend>Contributing Author 2</legend><input id=\"contrib_auth_2_first_nm\" name=\"contrib_auth_2_first_nm\" type=\"text\" value=\"\" /><input id=\"contrib_auth_2_middle_nm\" name=\"contrib_auth_2_middle_nm\" type=\"text\" value=\"\" /><input id=\"contrib_auth_2_last_nm\" name=\"contrib_auth_2_last_nm\" type=\"text\" value=\"\" /><input id=\"contrib_auth_2_email\" name=\"contrib_auth_2_email\" type=\"text\" value=\"\" /><input id=\"contrib_auth_2_org\" name=\"contrib_auth_2_org\" type=\"text\" value=\"\" /><input id=\"contrib_auth_2_city\" name=\"contrib_auth_2_city\" type=\"text\" value=\"\" /><select id=\"contrib_auth_2_country\" name=\"contrib_auth_2_country\"><option value=\"\">Select country</option><option value=\"United States\">United States</option><option value=\"Japan\">Japan</option></select><input id=\"contrib_auth_2_author_seq\" name=\"contrib_auth_2_author_seq\" type=\"text\" value=\"\" /><input id=\"current_contrib_auth_2_author_pid\" name=\"current_contrib_auth_2_author_pid\" type=\"hidden\" value=\"\" /></fieldset><button type=\"button\" id=\"save_authors\">Save Authors</button><button type=\"submit\" id=\"final_submit\">Final Submit Manuscript</button></form>",
+  "expectedDetection": {
+    "platformId": "nature-mts",
+    "minConfidence": 0.5
+  },
+  "expectedMappings": [
+    { "idPattern": "contrib_auth_#_first_nm", "canonicalField": "givenName", "authorGroupIndex": 1, "minConfidence": 0.5 },
+    { "idPattern": "contrib_auth_#_last_nm", "canonicalField": "familyName", "authorGroupIndex": 1, "minConfidence": 0.5 },
+    { "idPattern": "contrib_auth_#_email", "canonicalField": "email", "authorGroupIndex": 1, "minConfidence": 0.5 },
+    { "idPattern": "contrib_auth_#_org", "canonicalField": "institution", "authorGroupIndex": 1, "minConfidence": 0.4 },
+    { "idPattern": "contrib_auth_#_country", "canonicalField": "country", "authorGroupIndex": 1, "minConfidence": 0.4 }
+  ],
+  "expectedUnsupportedFields": ["current_contrib_auth_#_author_pid"]
+}

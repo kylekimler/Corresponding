@@ -38,7 +38,7 @@ describe('diagnostics', () => {
       <button id="final_submit">Final Submit</button>
     `;
     const report = probeForm(document);
-    const email = report.fields.find((f) => f.id === 'contrib_auth_1_email');
+    const email = report.fields.find((f) => f.idPattern === 'contrib_auth_#_email');
     const pwd = report.fields.find((f) => f.id === 'password');
     expect(email?.redacted).toBe(true);
     expect(email?.value).toBeUndefined();
@@ -46,7 +46,7 @@ describe('diagnostics', () => {
     expect(pwd?.category).toBe('auth_secret');
     expect(pwd?.value).toBeUndefined();
     const text = formatDiagnosticReport(report);
-    expect(text).toContain('[REDACTED]');
+    expect(text).toContain('redactionComplete: true');
     expect(text).not.toContain('hunter2');
     expect(text).not.toContain('secret@example.org');
   });

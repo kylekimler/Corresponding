@@ -7,14 +7,14 @@ export default defineConfig({
   srcDir: 'src',
   outDir: '.output',
   manifest: {
-    name: 'journal-autofill',
+    name: 'Corresponding',
     description:
-      'Fill manuscript submission author forms from a local canonical author roster. Never submits or certifies for you.',
+      'Maintain one scientific identity and fill manuscript author forms locally. Never submits or certifies for you.',
     version: '0.1.0',
     permissions: ['activeTab', 'storage', 'scripting'],
     // No host_permissions: rely on activeTab for the current tab only.
     action: {
-      default_title: 'journal-autofill',
+      default_title: 'Corresponding',
     },
   },
   hooks: {

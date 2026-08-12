@@ -1,0 +1,37 @@
+:root {
+  /* Corresponding design tokens — warm, calm, scientifically credible */
+  --c-font-display: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  --c-font-body: "Source Serif 4", "Iowan Old Style", Georgia, serif;
+  --c-font-ui: "IBM Plex Sans", "Segoe UI", sans-serif;
+  --c-font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+
+  --c-space-1: 4px;
+  --c-space-2: 8px;
+  --c-space-3: 12px;
+  --c-space-4: 16px;
+  --c-space-5: 24px;
+
+  --c-radius-sm: 4px;
+  --c-radius-md: 8px;
+
+  --c-border: rgba(36, 48, 42, 0.14);
+  --c-border-strong: rgba(36, 48, 42, 0.28);
+
+  --c-surface-0: #f6f1e8;
+  --c-surface-1: #eef5f0;
+  --c-surface-2: rgba(255, 255, 255, 0.55);
+  --c-ink: #1f2a24;
+  --c-muted: #5c6b63;
+  --c-accent: #0d6b56;
+  --c-accent-ink: #f4fffa;
+
+  --c-status-ready: #0d6b56;
+  --c-status-attention: #8a5a00;
+  --c-status-conflict: #8b1e1e;
+  --c-status-info: #2f5d78;
+
+  --c-bg:
+    radial-gradient(120% 80% at 0% 0%, #d7ebe2 0%, transparent 55%),
+    radial-gradient(90% 70% at 100% 0%, #f0e4cf 0%, transparent 50%),
+    linear-gradient(180deg, var(--c-surface-0), var(--c-surface-1));
+}

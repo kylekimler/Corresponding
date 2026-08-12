@@ -20,7 +20,7 @@ import {
 import { normalizeOrcid } from '@/schema/orcid';
 import { createRosterStore } from '@/roster/storage';
 import type { Author, Roster } from '@/schema/author';
-import { formatDiagnosticReport } from '@/diagnostics/formProbe';
+import { previewCapture } from '@/diagnostics/capture';
 import { createChromeGoogleSheetsClient } from '@/sheets/chromeClient';
 import {
   loadSheetPreview,
@@ -28,6 +28,7 @@ import {
   type SheetsImportPreview,
 } from '@/sheets/importFlow';
 import { SheetsNotConfiguredError } from '@/sheets/types';
+import { failureState, formatFailure } from '@/failure/states';
 import { sendToActiveTab } from './tabBridge';
 
 const store = createRosterStore();
@@ -394,8 +395,12 @@ export function App() {
   async function runDiagnostic() {
     const res = await sendToActiveTab({ type: 'DIAGNOSTIC' });
     if (res.type === 'DIAGNOSTIC_RESULT') {
-      setDiagText(formatDiagnosticReport(res.result));
-      setStatus('Diagnostic captured (values redacted).');
+      setDiagText(previewCapture(res.result));
+      setStatus(
+        res.result.redactionComplete
+          ? 'Compatibility capture exported (structural only, values redacted).'
+          : 'Diagnostic captured.',
+      );
     } else if (res.type === 'ERROR') {
       setError(res.message);
     }
@@ -404,31 +409,47 @@ export function App() {
   const corresponding = selected?.authors.find((a) => a.isCorresponding);
   const missingRequired = preview?.plans.filter((p) => p.action === 'missing_source') ?? [];
   const conflictPlans = preview?.plans.filter((p) => p.action === 'skip_conflict') ?? [];
+  const readyCount = selected
+    ? selected.authors.filter((a) => a.givenName && a.familyName && a.email).length
+    : 0;
+  const attentionCount = selected
+    ? selected.authors.filter((a) => !a.email || !a.givenName || !a.familyName).length
+    : 0;
+  const conflictCount = preview?.skippedConflicts ?? 0;
+  const unknownPortalFailure =
+    detected && detected.platformId === 'unknown'
+      ? failureState('unknown_portal')
+      : null;
 
   return (
     <div>
-      <h1>journal-autofill</h1>
+      <h1>Corresponding</h1>
       <p className="tagline">
-        Fill author metadata from a local roster. You always submit and certify yourself.
+        One scientific identity, filled carefully. You always submit and certify yourself.
       </p>
 
       <section className="panel">
-        <h2>Detected platform</h2>
+        <h2>Detected portal</h2>
         <div className="stat">
           {detected ? (
             <>
               <strong>{detected.label}</strong>
               {' · '}
-              confidence {(detected.confidence * 100).toFixed(0)}%
+              {(detected.confidence * 100).toFixed(0)}% confidence
             </>
           ) : (
             'Checking active tab…'
           )}
         </div>
+        {unknownPortalFailure && (
+          <pre className="warn" style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit' }}>
+            {formatFailure(unknownPortalFailure)}
+          </pre>
+        )}
       </section>
 
       <section className="panel">
-        <h2>Roster</h2>
+        <h2>Current roster</h2>
         <div className="row">
           <select
             value={selectedId}
@@ -486,6 +507,20 @@ export function App() {
                 Delete
               </button>
             </div>
+            <div className="counts" aria-label="Roster status counts">
+              <div className="count ready">
+                <span className="n">{readyCount}</span>
+                <span className="l">Ready</span>
+              </div>
+              <div className="count attention">
+                <span className="n">{attentionCount}</span>
+                <span className="l">Needs attention</span>
+              </div>
+              <div className="count conflict">
+                <span className="n">{conflictCount}</span>
+                <span className="l">Conflicts</span>
+              </div>
+            </div>
             <ul className="compact">
               <li>
                 Authors: <strong>{selected.authors.length}</strong>
@@ -496,12 +531,6 @@ export function App() {
                   {corresponding
                     ? `${corresponding.givenName} ${corresponding.familyName}`
                     : '—'}
-                </strong>
-              </li>
-              <li>
-                Missing email:{' '}
-                <strong>
-                  {selected.authors.filter((a) => !a.email).length}
                 </strong>
               </li>
             </ul>
@@ -526,8 +555,12 @@ export function App() {
                 <div className="row">
                   <span style={{ flex: 1 }}>
                     {author.sequence}. {author.givenName} {author.familyName}
-                    {author.isCorresponding ? ' (corr)' : ''}
-                    {!author.email ? ' · missing email' : ''}
+                    {author.isCorresponding ? ' (corr)' : ''}{' '}
+                    {!author.email ? (
+                      <span className="pill attention">email</span>
+                    ) : (
+                      <span className="pill ready">ready</span>
+                    )}
                   </span>
                   <button
                     type="button"
@@ -689,7 +722,7 @@ export function App() {
       )}
 
       <section className="panel">
-        <h2>Actions</h2>
+        <h2>Fill safely</h2>
         <div className="row">
           <label className="checkbox">
             <input
@@ -700,17 +733,17 @@ export function App() {
             Overwrite non-empty fields
           </label>
         </div>
-        <div className="row" style={{ marginTop: 8 }}>
+        <div className="primary-actions">
           <button type="button" className="secondary" disabled={!selected} onClick={() => void runPreview()}>
             Preview
           </button>
-          <button type="button" disabled={!selected} onClick={() => void runFill()}>
+          <button type="button" disabled={!selected || detected?.platformId === 'unknown'} onClick={() => void runFill()}>
             Fill
           </button>
-          <button type="button" className="secondary" onClick={() => void runDiagnostic()}>
-            Diagnostics
-          </button>
         </div>
+        <p className="footnote" style={{ marginTop: 10, border: 'none', paddingTop: 0 }}>
+          Preview first. Fill never submits the manuscript.
+        </p>
       </section>
 
       {preview && (
@@ -773,19 +806,28 @@ export function App() {
         </section>
       )}
 
-      {diagText && (
-        <section className="panel">
-          <h2>Diagnostic report</h2>
-          <textarea className="mapping" readOnly value={diagText} />
-        </section>
-      )}
+      <details className="secondary-panel">
+        <summary>Diagnostics (advanced)</summary>
+        <p className="warn">
+          Captures structural field metadata only. Values are redacted. Preview the payload before copying.
+        </p>
+        <button type="button" className="secondary" onClick={() => void runDiagnostic()}>
+          Capture diagnostic
+        </button>
+        {diagText && (
+          <>
+            <p className="ok">Preview — confirm no names/emails/passwords appear before sharing:</p>
+            <textarea className="mapping" readOnly value={diagText} />
+          </>
+        )}
+      </details>
 
       {status && <p className="ok">{status}</p>}
       {error && <p className="danger">{error}</p>}
 
       <p className="footnote">
-        Local-first: author rosters stay in extension storage. The extension never clicks final
-        submission, certification, copyright, payment, or signature controls.
+        Local-first: rosters stay on this device. Corresponding never clicks final submission,
+        certification, copyright, payment, or signature controls.
       </p>
     </div>
   );

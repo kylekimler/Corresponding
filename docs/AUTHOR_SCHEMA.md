@@ -54,3 +54,29 @@ Recognized headings (non-exhaustive; mapping UI must show final mapping):
 - Corresponding: `Corresponding`, `Corresponding Author`, `is_corresponding`
 
 **Never silently guess an ambiguous column mapping.** Show the mapping to the user and require confirmation when confidence is not unique.
+
+## Identity schema v2 (optional expansions)
+
+`schemaVersion: 2` (`IDENTITY_SCHEMA_VERSION`) extends the v1 roster with optional per-author metadata. Adapters and local roster storage continue to use v1 `Author` records (`ROSTER_SCHEMA_VERSION = 1`).
+
+Bridges in `src/schema/migrate.ts`:
+
+- `fromSimpleRoster(roster)` → `IdentityDocument`
+- `toSimpleRoster(identityDoc)` → `Roster` (strips v2-only fields)
+- `exportIdentityV2Json` / `importIdentityV2Json` for portable v2 JSON
+
+Optional v2 fields (all optional on `IdentityAuthor`):
+
+| Area | Fields |
+|------|--------|
+| Names | `preferredPublicationName`, `alternateNames[]` |
+| Emails | `emails[]` with `type`, `verificationStatus`, `validFrom`/`validTo`, `provenance` |
+| Affiliations | v1 fields plus `startDate`, `endDate`, `provenance` |
+| Identifiers | `externalIdentifiers[]` (ORCID, Scopus, etc.) |
+| Funding | `funding[]` grant records |
+| Ethics | `disclosures[]` |
+| Contributions | `creditRoles[]` (CRediT enum) |
+| Works | `works[]` publication references |
+| Teams | `teamMemberships[]` |
+
+Provenance (`src/schema/provenance.ts`): each externally sourced assertion may carry `source`, `timestamp`, `verificationStatus` (`unverified` \| `self_attested` \| `externally_verified`), and optional `note`. Defaults are `unverified`; never infer `externally_verified`.

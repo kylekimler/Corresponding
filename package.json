@@ -1,8 +1,8 @@
 {
-  "name": "journal-autofill",
+  "name": "corresponding",
   "version": "0.1.0",
   "private": true,
-  "description": "Browser extension that fills scientific manuscript submission author forms from a canonical local roster.",
+  "description": "Corresponding — local-first scientific identity and submission assistance Chrome extension.",
   "type": "module",
   "scripts": {
     "dev": "wxt",
@@ -10,7 +10,13 @@
     "zip": "wxt zip",
     "postinstall": "wxt prepare",
     "test": "vitest run",
+    "test:all": "vitest run",
+    "test:adapters": "vitest run tests/adapters",
+    "test:fuzz": "vitest run tests/chaos tests/property",
+    "test:fixtures": "vitest run tests/fixtures tests/recognition",
     "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "benchmark": "vitest run tests/perf/benchmark.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
