@@ -10,13 +10,20 @@ Active development. First supported platform: **Nature MTS / eJournalPress** (sy
 
 ## Quick start
 
+Run these from the **repository root** (not `.output/`):
+
 ```bash
-npm install
+git pull origin main
+rm -rf node_modules
+npm install          # expects WXT 0.21.4 and `found 0 vulnerabilities`
+npm audit
 npm test
 npm run typecheck
 npm run build
 npm run dev
 ```
+
+If `npm install` still prints `WXT 0.19.x` or reports critical vulnerabilities, the tree is stale — pull `main` and reinstall cleanly.
 
 Load the unpacked extension from `.output/chrome-mv3` (Chrome → Extensions → Developer mode → Load unpacked), or use `npm run dev` with WXT.
 
