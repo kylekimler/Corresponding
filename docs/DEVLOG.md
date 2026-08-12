@@ -4,6 +4,12 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-12 16:20 UTC
+- commit: (pending) founder context and strategic backlog alignment
+- changed: Added `docs/FOUNDER_CONTEXT.md`; made it required reading in `AGENTS.md`; aligned product/privacy naming; added Now/Soon/Later/Explicitly deferred opportunities to roadmap and backlog without removing existing tasks.
+- architecture review: Current local-first canonical schema, deterministic adapter interface, confidence hierarchy, dry-run, and validation align with founder direction. No large redesign needed.
+- next: Implement the highest-value unblocked Now slice: one-click sample roster → Preview → Fill → validate.
+
 ### 2026-08-12 16:15 UTC
 - commit: `c7e2fdc` `npm run dev` opens Nature fixture via `webExt.startUrls`
 - changed: Pin WXT Vite port 3000 (`strictPort`); Vite middleware serves `fixtures/` at `/fixtures/*` on the existing server; `webExt.startUrls` → `http://localhost:3000/fixtures/nature-mts-sample.html`. Document that `--disable-blink-features=AutomationControlled` comes from web-ext (not our chromiumArgs). No production permission changes; no second server.

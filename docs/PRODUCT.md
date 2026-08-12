@@ -2,7 +2,7 @@
 
 ## Name
 
-journal-autofill
+Corresponding
 
 ## Problem
 
@@ -29,6 +29,11 @@ Nature MTS / eJournalPress, based on observed DOM field IDs such as:
 - `corr_auth_*`
 - `contrib_auth_{n}_*`
 - `current_contrib_auth_{n}_author_pid`
+
+This is the first implemented adapter, not the strategic destination order.
+Near-term coverage priority is bioRxiv/medRxiv, eLife, then broader real-world
+Nature/eJournalPress validation. New adapters still require anonymized fixture
+evidence before selectors are implemented.
 
 ## Non-goals (v0)
 

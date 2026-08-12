@@ -35,3 +35,37 @@ Adapter registration + detection; empty stubs for ScholarOne, Editorial Manager,
 ## Milestone 9 — Commercial readiness
 
 Privacy draft, CWS permission explanation, threat model, release checklist, versioning, error boundary, local roster schema migrations; entitlement interface without payments; no PII analytics.
+
+## Founder-context opportunities
+
+### Now
+
+1. Complete first-run success with a one-click sample roster: empty popup → sample → Preview → Fill → validate.
+2. Persist the last-selected roster locally so repeated submission work resumes without re-selection.
+3. Add author-block confidence/evidence to Preview without permitting low-confidence mutation.
+4. Wire the existing counts-only audit log to local extension storage and keep it clearable.
+5. Decide and implement safe local XLSX parsing, preserving explicit mapping confirmation.
+
+### Soon
+
+- Investigate bioRxiv/medRxiv and eLife through public research and redacted fixture capture; implement only after fixture evidence.
+- Validate Nature/eJournalPress against a real anonymized capture and expand only tested platform-family patterns.
+- Add collaborator/project readiness concepts incrementally after the Fill workflow is dependable.
+- Improve coverage on popup browser bridges, migrations, redaction, DOM chaos, and large-roster edge cases.
+- Enable Google Picker/read-only import after developer OAuth credentials exist; never expose credentials to users.
+
+### Later
+
+- Reusable Corresponding Profile with freshness and provenance.
+- Projects/Teams, reusable groups, and requests for missing collaborator information.
+- Lab and institutional coordination workflows.
+- Publisher/platform APIs based on trusted submission-ready metadata.
+- A contribution-aware Corresponding Graph earned through useful workflows.
+
+### Explicitly deferred
+
+- Public scientist search or recruitment marketplace.
+- Cloud graph infrastructure before workflow-generated data justifies it.
+- Elaborate billing and publisher enterprise/OEM work.
+- Speculative AI filling or automatic low-confidence mutations.
+- Generalized frameworks without a testable user-visible vertical slice.

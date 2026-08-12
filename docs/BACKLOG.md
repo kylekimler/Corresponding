@@ -65,3 +65,37 @@ Status key: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked (exte
 3. Raise coverage on migrate + capture redaction edge cases
 4. Enable Sheets when OAuth credentials arrive
 5. Add live Nature MTS regression fixture when Kyle captures HTML
+
+## Founder-context opportunities
+
+### Now — highest-value unblocked
+
+1. [ ] One-click sample roster from the empty state; prove sample → Preview → Fill → validate.
+2. [ ] Persist last-selected roster id in local extension storage.
+3. [ ] Group Preview by author block with exact/structural/semantic/unresolved confidence.
+4. [ ] Persist the counts-only audit trail in `chrome.storage.local`; retain clear control and PII refusal.
+5. [ ] Enable local XLSX import after a dependency/security decision; reuse explicit column mapping.
+
+### Soon
+
+- [ ] bioRxiv/medRxiv public workflow research + redacted compatibility capture plan.
+- [ ] eLife public workflow research + redacted compatibility capture plan.
+- [!] Implement those adapters only after real anonymized fixtures exist.
+- [!] Validate and broaden Nature/eJournalPress only from real captured HTML.
+- [ ] Expand adversarial coverage for popup bridges, provenance, migration, redaction, and 1/75/500/1000-author flows.
+
+### Later
+
+- [ ] Corresponding Profile with reusable, provenance-aware scientific identity.
+- [ ] Projects/Teams readiness dashboard and collaborator information requests.
+- [ ] Lab and institutional synchronization/administration workflows.
+- [ ] Publisher APIs/OEM after a meaningful trusted-data network exists.
+- [ ] Contribution-aware graph built from workflow-confirmed data.
+
+### Explicitly deferred
+
+- [ ] Public scientist search/recruitment marketplace.
+- [ ] Cloud graph database before private workflows earn the data.
+- [ ] Elaborate billing or entitlement infrastructure.
+- [ ] Speculative AI filling or unconfirmed low-confidence mutation.
+- [ ] General frameworks without an immediate tested user workflow.
