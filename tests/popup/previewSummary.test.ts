@@ -28,9 +28,12 @@ describe('preview summary + no DOM mutation', () => {
     expect(summary.authorGroups).toHaveLength(3);
     expect(
       summary.authorGroups.every(
-        (group) =>
-          group.selectorConfidence === 'exact' &&
-          group.completeness === 'complete',
+        (group) => group.selectorConfidence === 'exact',
+      ),
+    ).toBe(true);
+    expect(
+      summary.authorGroups.some(
+        (group) => group.completeness === 'needs-attention',
       ),
     ).toBe(true);
   });
