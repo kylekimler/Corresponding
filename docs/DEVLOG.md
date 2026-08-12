@@ -5,7 +5,7 @@ Chronological overnight / autonomous iteration log.
 ---
 
 ### 2026-08-12 16:15 UTC
-- commit: (pending) `npm run dev` opens Nature fixture via `webExt.startUrls`
+- commit: `c7e2fdc` `npm run dev` opens Nature fixture via `webExt.startUrls`
 - changed: Pin WXT Vite port 3000 (`strictPort`); Vite middleware serves `fixtures/` at `/fixtures/*` on the existing server; `webExt.startUrls` → `http://localhost:3000/fixtures/nature-mts-sample.html`. Document that `--disable-blink-features=AutomationControlled` comes from web-ext (not our chromiumArgs). No production permission changes; no second server.
 - tests: typecheck, suite, build; verify Chrome opens fixture URL + `--load-extension=...chrome-mv3-dev`.
 - next: Kyle Preview/Fill against auto-opened fixture.
