@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  addAuthor,
   createEmptyRoster,
+  removeAuthor,
   reorderAuthors,
   renameRoster,
   setCorrespondingAuthor,
@@ -39,5 +41,18 @@ describe('roster mutations', () => {
     const r = createEmptyRoster('Blank');
     expect(r.authors).toHaveLength(0);
     expect(r.source).toBe('manual');
+  });
+
+  it('adds and removes authors while maintaining sequence', () => {
+    let roster = createEmptyRoster('Blank');
+    roster = addAuthor(roster, { givenName: 'Ada', familyName: 'Lovelace' });
+    roster = addAuthor(roster, { givenName: 'Alan', familyName: 'Turing' });
+    expect(roster.authors).toHaveLength(2);
+    expect(roster.authors[0]?.isCorresponding).toBe(true);
+    roster = removeAuthor(roster, roster.authors[0]!.id);
+    expect(roster.authors).toHaveLength(1);
+    expect(roster.authors[0]?.givenName).toBe('Alan');
+    expect(roster.authors[0]?.sequence).toBe(1);
+    expect(roster.authors[0]?.isCorresponding).toBe(true);
   });
 });

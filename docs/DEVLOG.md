@@ -17,3 +17,10 @@ Chronological overnight / autonomous iteration log.
 - tests: `npm test` (44 passed), `npm run typecheck`, `npm run build`.
 - limitations: Sheets still blocked without Kyle OAuth credentials; Nature MTS still synthetic; no live portal validation.
 - next: OAuth credentials; live Nature MTS HTML; portal diagnostic captures for ScholarOne/EM.
+
+### 2026-08-12 04:32 UTC
+- commit: *(pending)*
+- changed: ORCID normalization on import/edit; add/remove author rows in popup; mutation tests.
+- tests: `npm test` (48 passed), `npm run typecheck`, `npm run build`.
+- limitations: Further reliable portal adapters blocked on real DOM fixtures and OAuth credentials from Kyle.
+- next: Stop on external blockers; Kyle provides OAuth + live HTML captures.

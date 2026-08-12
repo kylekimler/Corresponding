@@ -71,3 +71,35 @@ export function createEmptyRoster(name = 'New roster'): Roster {
     source: 'manual',
   };
 }
+
+export function addAuthor(
+  roster: Roster,
+  partial?: Partial<Author>,
+): Roster {
+  const sequence =
+    roster.authors.reduce((max, a) => Math.max(max, a.sequence), 0) + 1;
+  const author: Author = {
+    id: crypto.randomUUID(),
+    givenName: partial?.givenName?.trim() || 'Given',
+    middleName: partial?.middleName,
+    familyName: partial?.familyName?.trim() || 'Family',
+    email: partial?.email,
+    orcid: partial?.orcid,
+    isCorresponding:
+      partial?.isCorresponding ?? roster.authors.length === 0,
+    affiliations: partial?.affiliations ?? [],
+    sequence,
+  };
+  return { ...roster, authors: [...roster.authors, author] };
+}
+
+export function removeAuthor(roster: Roster, authorId: string): Roster {
+  const authors = roster.authors
+    .filter((a) => a.id !== authorId)
+    .sort((a, b) => a.sequence - b.sequence)
+    .map((a, i) => ({ ...a, sequence: i + 1 }));
+  if (authors.length && !authors.some((a) => a.isCorresponding)) {
+    authors[0]!.isCorresponding = true;
+  }
+  return { ...roster, authors };
+}

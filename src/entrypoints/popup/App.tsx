@@ -9,12 +9,15 @@ import {
 } from '@/import/columnMap';
 import { rowsToRoster } from '@/import/rosterFromTable';
 import {
+  addAuthor,
   createEmptyRoster,
+  removeAuthor,
   reorderAuthors,
   renameRoster,
   setCorrespondingAuthor,
   updateAuthor,
 } from '@/roster/mutations';
+import { normalizeOrcid } from '@/schema/orcid';
 import { createRosterStore } from '@/roster/storage';
 import type { Author, Roster } from '@/schema/author';
 import { formatDiagnosticReport } from '@/diagnostics/formProbe';
@@ -248,7 +251,7 @@ export function App() {
       middleName: authorDraft.middleName,
       familyName: authorDraft.familyName,
       email: authorDraft.email,
-      orcid: authorDraft.orcid,
+      orcid: normalizeOrcid(authorDraft.orcid),
     });
     if (authorDraft.isCorresponding) {
       next = setCorrespondingAuthor(next, editingAuthorId);
@@ -257,6 +260,26 @@ export function App() {
     setEditingAuthorId('');
     await refreshRosters(next.id);
     setStatus('Author updated locally.');
+  }
+
+  async function addBlankAuthor() {
+    if (!selected) return;
+    const next = addAuthor(selected);
+    await store.save(next);
+    const created = next.authors[next.authors.length - 1]!;
+    setEditingAuthorId(created.id);
+    setAuthorDraft(created);
+    await refreshRosters(next.id);
+    setStatus('Added author row. Edit name/email before filling.');
+  }
+
+  async function deleteAuthor(authorId: string) {
+    if (!selected) return;
+    const next = removeAuthor(selected, authorId);
+    await store.save(next);
+    if (editingAuthorId === authorId) setEditingAuthorId('');
+    await refreshRosters(next.id);
+    setStatus('Author removed from local roster.');
   }
 
   async function loadSheets() {
@@ -486,9 +509,17 @@ export function App() {
         )}
       </section>
 
-      {selected && sortedAuthors.length > 0 && (
+      {selected && (
         <section className="panel">
           <h2>Authors</h2>
+          <div className="row" style={{ marginBottom: 8 }}>
+            <button type="button" className="secondary" onClick={() => void addBlankAuthor()}>
+              Add author
+            </button>
+          </div>
+          {sortedAuthors.length === 0 && (
+            <p className="warn">No authors yet. Add a row or import CSV/Sheets.</p>
+          )}
           <ul className="compact author-list">
             {sortedAuthors.map((author, index) => (
               <li key={author.id}>
@@ -523,6 +554,13 @@ export function App() {
                     }}
                   >
                     Edit
+                  </button>
+                  <button
+                    type="button"
+                    className="secondary"
+                    onClick={() => void deleteAuthor(author.id)}
+                  >
+                    Remove
                   </button>
                 </div>
               </li>

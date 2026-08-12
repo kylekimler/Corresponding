@@ -74,7 +74,8 @@ Status key: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked
 - [ ] Wire production Sheets OAuth after Kyle provides client ID
 - [ ] Validate Nature MTS adapter against live HTML capture
 - [ ] Implement ScholarOne / EM only after real fixtures arrive
-- [ ] Optional: add author “add row” UI for empty manual rosters
+- [x] Add / remove author rows in popup
+- [x] ORCID normalization on import/edit
 - [ ] Optional: zip packaging + store listing assets
 
 ## Blockers requiring Kyle

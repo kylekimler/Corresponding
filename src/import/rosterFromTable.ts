@@ -5,6 +5,7 @@ import {
   type Roster,
   type RosterSource,
 } from '@/schema/author';
+import { normalizeOrcid } from '@/schema/orcid';
 import type { CanonicalColumn } from './columnMap';
 
 function truthy(v: string): boolean {
@@ -58,7 +59,7 @@ export function rowsToRoster(input: {
       middleName: cell(row, input.mapping, 'middleName') || undefined,
       familyName: cell(row, input.mapping, 'familyName'),
       email: email || undefined,
-      orcid: cell(row, input.mapping, 'orcid') || undefined,
+      orcid: normalizeOrcid(cell(row, input.mapping, 'orcid')),
       isCorresponding: truthy(cell(row, input.mapping, 'isCorresponding')),
       affiliations,
       sequence: Number.isFinite(sequence) && sequence > 0 ? sequence : i + 1,
