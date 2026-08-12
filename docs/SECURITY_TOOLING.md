@@ -25,7 +25,8 @@ For this Chrome MV3 / TypeScript extension, the best open-source stack is:
 git pull origin main
 rm -rf node_modules
 npm install
-npm audit                 # expect: found 0 vulnerabilities (WXT >= 0.21.4)
+npm audit --omit=dev      # production deps (what ships): expect 0 vulnerabilities
+npm audit                 # may report known highs in optional-ish `web-ext` → addons-linter → image-size (dev-only browser launcher; not in the extension bundle)
 
 npm test
 npm run typecheck
@@ -39,3 +40,5 @@ gitleaks detect --source . --no-git
 ## Dependency baseline
 
 `wxt` is pinned to **0.21.4** (exact). Older trees (e.g. `0.19.29`) report multiple critical/high CVEs via transitive deps (`node-forge`, `happy-dom`, etc.). If `npm install` still prints `WXT 0.19.x`, the checkout is stale or `node_modules`/`package-lock.json` was not refreshed from `main`.
+
+`web-ext` (**10.6.0+**) is a **devDependency** so `npm run dev` can auto-open Chrome with a persistent profile (`.wxt/chrome-data`). It is not packed into `.output/chrome-mv3`. Prefer `npm audit --omit=dev` when checking what users install.

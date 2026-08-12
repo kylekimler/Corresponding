@@ -15,17 +15,68 @@ Run these from the **repository root** (not `.output/`):
 ```bash
 git pull origin main
 rm -rf node_modules
-npm install          # expects WXT 0.21.4 and `found 0 vulnerabilities`
-npm audit
+npm install          # expects WXT 0.21.4 + web-ext (auto-opens Chrome in dev)
+npm audit --omit=dev # production deps only — expect 0 vulnerabilities
 npm test
 npm run typecheck
 npm run build
+npm run dev          # opens a dedicated Chrome test profile (see below)
+```
+
+If `npm install` still prints `WXT 0.19.x`, the tree is stale — pull `main` and reinstall cleanly.
+
+For a one-off production build without the dev browser, load the unpacked extension from `.output/chrome-mv3` (Chrome → Extensions → Developer mode → Load unpacked).
+
+## Kyle's testing workflow
+
+This is the simplest day-to-day loop. You do **not** need to load the extension by hand when using `npm run dev`.
+
+### Normal start
+
+From the repository root:
+
+```bash
 npm run dev
 ```
 
-If `npm install` still prints `WXT 0.19.x` or reports critical vulnerabilities, the tree is stale — pull `main` and reinstall cleanly.
+What happens:
 
-Load the unpacked extension from `.output/chrome-mv3` (Chrome → Extensions → Developer mode → Load unpacked), or use `npm run dev` with WXT.
+1. WXT builds Corresponding in development mode.
+2. Chrome opens automatically with Corresponding already installed.
+3. That Chrome window uses a **dedicated test profile** at `.wxt/chrome-data` — not your normal Chrome.
+4. Rosters you import, cookies, and test-site logins in this window survive stopping and restarting `npm run dev`.
+
+Leave this terminal open while you test.
+
+### When new code landed on GitHub (dev still running)
+
+Keep `npm run dev` running. Open a **second** terminal in the same repo folder:
+
+```bash
+git pull --ff-only
+```
+
+WXT watches source files. After the pull, changed files should hot-reload into the open test Chrome. You usually do **not** need to restart.
+
+### When `package.json` or `package-lock.json` changed
+
+Dependencies may have changed. Restart cleanly:
+
+1. In the `npm run dev` terminal, press **Ctrl+C** to stop.
+2. Then:
+
+```bash
+npm install
+npm run dev
+```
+
+### Tips
+
+- Always run commands from the **repository root** (the folder that contains `package.json`).
+- Do not run `npm install` inside `.output/` — that can install the wrong dependency tree.
+- Your everyday Chrome profile is never used or modified by this workflow.
+- `.wxt/` (including the test profile at `.wxt/chrome-data`) stays on your machine and is gitignored.
+- `web-ext` is a development tool that launches Chrome; it is not part of the shipped extension.
 
 ### Manual smoke test
 
@@ -38,7 +89,7 @@ Load the unpacked extension from `.output/chrome-mv3` (Chrome → Extensions →
 
 | Command | Purpose |
 |---------|---------|
-| `npm run dev` | WXT development build |
+| `npm run dev` | WXT dev build + Chrome with persistent test profile (`.wxt/chrome-data`) |
 | `npm run build` | Production Chrome MV3 build |
 | `npm test` / `npm run test:all` | Full Vitest suite |
 | `npm run test:adapters` | Adapter contract tests |

@@ -4,6 +4,14 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-12 16:00 UTC
+- commit: (pending) persistent Chromium profile for `npm run dev`
+- changed: `wxt.config.ts` `webExt.chromiumArgs` → `--user-data-dir=./.wxt/chrome-data` (official WXT Mac/Linux pattern). Added `web-ext` **10.6.0** as a devDependency so WXT auto-opens Chrome (without it, WXT falls back to “load unpacked manually”). README “Kyle's testing workflow”. `.wxt` already gitignored; no extension permission changes.
+- verified: first `npm run dev` created `.wxt/chrome-data` + Default/Cookies; after Ctrl+C and second `npm run dev`, marker file + Cookies inode unchanged; Chrome cmdline includes `--user-data-dir=./.wxt/chrome-data`.
+- audit note: `npm audit --omit=dev` stays clean; full `npm audit` may report `web-ext` → `addons-linter` → `image-size` highs (dev-only launcher).
+- tests: typecheck, full suite, build.
+- next: Kyle day-to-day testing against Nature MTS with surviving rosters/cookies.
+
 ### 2026-08-12 15:30 UTC
 - commit: `8283484` popup crash fix — `Cannot read properties of undefined (reading 'type')`
 - changed: `sendToActiveTab` now always returns a typed `ExtensionResponse`. Chrome `tabs.sendMessage` can resolve to `undefined` when the content script does not reply; callers were reading `res.type` and crashing the popup on load (DETECT). Added `normalizeTabResponse`, safer ensure/inject/retry, unit tests.
