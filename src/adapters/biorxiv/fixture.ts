@@ -4,6 +4,10 @@ export interface BiorxivFixtureOptions {
   saveCloses?: boolean;
   addRemountDelayMs?: number;
   addLabelAfterSave?: string;
+  /** Render a Material icon ligature inside the Add control, as bioRxiv does. */
+  addIconLigature?: string;
+  /** Add a hidden decoy button whose text is exactly "Add Author". */
+  hiddenDecoyAddButton?: boolean;
 }
 
 export interface BiorxivFixtureHarness {
@@ -23,11 +27,21 @@ export interface BiorxivFixtureHarness {
 export function mountBiorxivFixture(
   options: BiorxivFixtureOptions = {},
 ): BiorxivFixtureHarness {
+  const iconMarkup = options.addIconLigature
+    ? `<i class="v-icon material-icons">${options.addIconLigature}</i>`
+    : '';
+  const decoyMarkup = options.hiddenDecoyAddButton
+    ? `<div class="v-dialog" style="display: none">
+         <button type="button" id="decoy-add-author">Add Author</button>
+       </div>`
+    : '';
+
   document.body.innerHTML = `
     <div id="submission_form">
+      ${decoyMarkup}
       <main class="v-content">
         <button type="button" class="v-btn theme--light primary" id="add-author">
-          Add Author
+          ${iconMarkup}Add Author
         </button>
         <table class="v-datatable v-table theme--light">
           <thead><tr><th>Author</th><th>Email</th></tr></thead>
@@ -134,7 +148,7 @@ export function mountBiorxivFixture(
     if (options.addRemountDelayMs !== undefined) {
       add.style.display = 'none';
       setTimeout(() => {
-        add.textContent = options.addLabelAfterSave ?? 'Add Author';
+        add.innerHTML = `${iconMarkup}${options.addLabelAfterSave ?? 'Add Author'}`;
         add.style.display = '';
       }, options.addRemountDelayMs);
     }
