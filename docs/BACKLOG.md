@@ -60,11 +60,11 @@ Status key: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked (exte
 
 ## Next five highest-value tasks
 
-1. Decide and enable safe local XLSX parsing
-2. eLife fixture investigation (bioRxiv/medRxiv capture-backed adapter complete)
-3. Raise coverage on migrate + capture redaction edge cases
-4. Add inline “why unresolved” evidence in Preview
-5. Add toast-style fill confirmation with counts only
+1. Assess local DOCX front-matter author/affiliation extraction with anonymized manuscript fixtures
+2. Decide and enable safe local XLSX parsing
+3. eLife fixture investigation (bioRxiv/medRxiv capture-backed adapter complete)
+4. Raise coverage on migrate + capture redaction edge cases
+5. Add inline “why unresolved” evidence in Preview
 
 ## Founder-context opportunities
 

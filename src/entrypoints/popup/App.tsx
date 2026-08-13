@@ -426,6 +426,15 @@ export function App() {
     }
   }
 
+  async function removeSelectedSample() {
+    if (!selected || selected.source !== 'sample') return;
+    await store.remove(selected.id);
+    setPreviewSession(null);
+    setValidation(null);
+    await refreshRosters();
+    setStatus('Development sample removed from this browser.');
+  }
+
   async function runPreview() {
     if (!selected) return;
     setActionError('');
@@ -483,36 +492,72 @@ export function App() {
     if (!selected) return;
     setActionError('');
     setActionInFlight('fill');
-    if (!previewSession || !previewAllowsFill) {
-      reportActionError(
-        previewSession?.report.errors[0] ??
-          'Preview this roster and active page with the current settings before filling.',
-      );
-      setActionStatus('');
-      setActionInFlight(null);
-      return;
-    }
-    const expectedTarget = {
-      tabId: previewSession.context.tabId,
-      url: previewSession.context.url,
-    };
-    if (selected.source === 'sample') {
-      const hasSuccessfulPreview = previewSession.report.dryRun;
-      const blockReason = sampleFillBlockReason(
-        selected.source,
-        hasSuccessfulPreview,
-        hasSuccessfulPreview && (await isActiveDevelopmentFixtureTab()),
-      );
-      if (blockReason) {
-        reportActionError(blockReason);
-        setActionStatus('');
-        setActionInFlight(null);
-        return;
-      }
-    }
-    setActionStatus('Filling…');
     setValidation(null);
     try {
+      let currentSession =
+        previewSession && previewAllowsFill ? previewSession : null;
+
+      if (!currentSession) {
+        setActionStatus('Checking the current form…');
+        const target = await getActiveTabTarget();
+        if (!target) {
+          reportActionError(
+            'Open a journal submission form in an http(s) tab, then try Fill again.',
+          );
+          setActionStatus('');
+          return;
+        }
+        const preflight = await requestActiveTab(
+          {
+            type: 'PREVIEW',
+            roster: selected,
+            overwrite,
+          },
+          target,
+        );
+        if (preflight.type === 'ERROR') {
+          reportActionError(preflight.message);
+          setActionStatus('');
+          return;
+        }
+        if (preflight.type !== 'FILL_RESULT') {
+          reportActionError('The form preflight returned no result.');
+          setActionStatus('');
+          return;
+        }
+        currentSession = {
+          report: preflight.result,
+          context: createPreviewContext(selected, overwrite, target),
+        };
+        setActiveTarget(target);
+        setPreviewSession(currentSession);
+        await recordLocalActivity(preflight.result, selected.id);
+        if (preflight.result.errors.length > 0) {
+          reportActionError(preflight.result.errors[0]!);
+          setActionStatus(summarizePreview(preflight.result, detected).headline);
+          return;
+        }
+      }
+
+      const expectedTarget = {
+        tabId: currentSession.context.tabId,
+        url: currentSession.context.url,
+      };
+      if (selected.source === 'sample') {
+        const hasSuccessfulPreview = currentSession.report.dryRun;
+        const blockReason = sampleFillBlockReason(
+          selected.source,
+          hasSuccessfulPreview,
+          hasSuccessfulPreview && (await isActiveDevelopmentFixtureTab()),
+        );
+        if (blockReason) {
+          reportActionError(blockReason);
+          setActionStatus('');
+          return;
+        }
+      }
+
+      setActionStatus('Filling…');
       const res = await requestActiveTab(
         {
           type: 'FILL',
@@ -621,7 +666,7 @@ export function App() {
       <div className="app compact-app">
         <header className="app-header">
           <h1>Corresponding</h1>
-          <p className="brand-line">One scientific identity, everywhere.</p>
+          <p className="brand-line">Giving scientists more time to do science.</p>
         </header>
 
         <PortalBadge
@@ -752,6 +797,16 @@ export function App() {
                 ))}
               </select>
 
+              {selected.source === 'sample' && (
+                <button
+                  type="button"
+                  className="linkish sample-remove"
+                  onClick={() => void removeSelectedSample()}
+                >
+                  Remove development sample
+                </button>
+              )}
+
               <p className="status-line">
                 <span className="ready-text">{readyCount} ready</span>
                 {' · '}
@@ -803,7 +858,6 @@ export function App() {
                   }`}
                   disabled={
                     !selected ||
-                    !previewAllowsFill ||
                     actionInFlight !== null ||
                     detectStatus === 'unknown' ||
                     detectStatus === 'loading'
@@ -815,7 +869,7 @@ export function App() {
                 </button>
               </div>
               <p className="safety-near-fill">
-                Corresponding fills. You review and submit.
+                Preview to check for errors before the form gets filled.
               </p>
               <div
                 className="action-feedback"

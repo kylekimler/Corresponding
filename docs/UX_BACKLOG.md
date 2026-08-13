@@ -5,7 +5,7 @@ Prioritized friction for a first-time scientist. Status: `[ ]` open · `[x]` fix
 ## First install / open
 
 - [x] Rename user-facing product to **Corresponding** (popup, manifest, error boundary)
-- [x] Lead with calm brand line: “One scientific identity, everywhere.”
+- [x] Lead with purpose line: “Giving scientists more time to do science.”
 - [x] Compact primary popup (portal → roster → Preview/Fill)
 - [x] Onboarding sample roster one-click import
 
@@ -42,7 +42,7 @@ Prioritized friction for a first-time scientist. Status: `[ ]` open · `[x]` fix
 ## Fill / validation
 
 - [x] Fill disabled on unknown portal
-- [x] Safety near Fill: “Corresponding fills. You review and submit.”
+- [x] Optional Preview guidance near Fill; direct Fill still performs internal preflight
 - [x] Post-fill validation summary + “not submitted” message
 - [ ] Toast-style confirmation with counts only (no PII)
 
