@@ -97,7 +97,7 @@ const ALIASES: Record<Exclude<CanonicalColumn, 'ignore'>, string[]> = {
 };
 
 function normalizeHeader(h: string): string {
-  return h.trim().toLowerCase().replace(/[\/]+/g, ' ').replace(/\s+/g, ' ');
+  return h.trim().toLowerCase().replaceAll('/', ' ').replace(/\s+/g, ' ');
 }
 
 export function suggestColumnMapping(headers: string[]): ColumnMapping {
