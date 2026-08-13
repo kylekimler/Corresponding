@@ -72,10 +72,7 @@ test('production popup previews, fills, validates, and preserves protected contr
   ).toBeVisible();
 
   await popup.getByRole('button', { name: 'Import authors' }).click();
-  await popup
-    .locator('button.import-option')
-    .filter({ hasText: 'Upload CSV' })
-    .click();
+  await expect(popup.getByText('Upload CSV', { exact: true })).toBeVisible();
   await popup
     .locator('input[type="file"]')
     .setInputFiles(path.resolve('fixtures/sample-authors.csv'));
