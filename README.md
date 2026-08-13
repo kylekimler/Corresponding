@@ -53,6 +53,53 @@ Then: click the Corresponding icon → import `fixtures/sample-authors.csv` (onc
 
 Leave this terminal open while you test.
 
+### Cursor / remote terminal: automated real-browser test
+
+Remote terminals often have no desktop surface, so `npm run dev` may launch a
+browser that you cannot see. Use the Playwright MV3 test environment instead:
+
+```bash
+npm install
+npx playwright install chromium   # once per machine/environment
+npm run test:e2e
+```
+
+This builds the production extension, verifies its shipped permission boundary,
+loads it into an isolated current Chromium profile, intercepts the localhost
+fixture without starting another server, and exercises popup → CSV import →
+Preview → stale-Preview invalidation → Fill → validate. It also verifies that
+submit, certify, copyright, and payment controls remain untouched.
+
+Failure artifacts are written to `playwright-report/` and `test-results/`:
+
+```bash
+npm run test:e2e:report
+```
+
+On a local desktop, use `npm run test:e2e:headed` to watch the automated browser
+or `npm run test:e2e:ui` for Playwright's interactive runner.
+
+The E2E harness copies the production build into ignored `.wxt/` test output and
+adds a localhost-only host grant to that copy. This is necessary because a
+programmatically opened popup does not receive Chrome's toolbar `activeTab`
+gesture. The test fails first if the real production manifest has any host
+permission, automatic content script, or permissions beyond `activeTab`,
+`storage`, and `scripting`.
+
+### Testing a bioRxiv submission
+
+bioRxiv filling is not implemented yet. On a live author-entry page, the current
+safe test is: detection reports unsupported, Preview refuses without mutation,
+Fill stays unavailable, and Advanced → Capture diagnostic produces structural
+metadata with values redacted. Review a capture for names, emails, manuscript
+titles, credentials, and tokens before sharing it. Do not automate login, final
+submission, certification, copyright, payment, or legal actions.
+
+An authenticated live bioRxiv workflow still requires a visible local browser.
+Use the dedicated WXT profile locally, or load `.output/chrome-mv3` unpacked into
+a separate Chrome profile. Do not connect automated tests to a normal Chrome
+profile or store portal credentials in the repository.
+
 ### When new code landed on GitHub (dev still running)
 
 Keep `npm run dev` running. Open a **second** terminal in the same repo folder:
@@ -98,6 +145,9 @@ npm run dev
 |---------|---------|
 | `npm run dev` | WXT dev + Chrome (persistent `.wxt/chrome-data`) opens Nature fixture |
 | `npm run build` | Production Chrome MV3 build |
+| `npm run test:e2e` | Headless Chromium MV3 popup → Preview → Fill → validate |
+| `npm run test:e2e:headed` | Watch the E2E browser on a local desktop |
+| `npm run test:e2e:ui` | Open Playwright's interactive local runner |
 | `npm test` / `npm run test:all` | Full Vitest suite |
 | `npm run test:adapters` | Adapter contract tests |
 | `npm run test:fuzz` | Chaos + property tests |

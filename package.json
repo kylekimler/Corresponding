@@ -16,6 +16,10 @@
     "test:fixtures": "vitest run tests/fixtures tests/recognition",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "test:e2e": "npm run build && playwright test",
+    "test:e2e:headed": "npm run build && playwright test --headed",
+    "test:e2e:ui": "npm run build && playwright test --ui",
+    "test:e2e:report": "playwright show-report",
     "benchmark": "vitest run tests/perf/benchmark.test.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src tests",
@@ -30,6 +34,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.62.1",
     "@types/chrome": "^0.2.5",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
