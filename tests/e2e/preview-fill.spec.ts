@@ -206,7 +206,7 @@ test('wide Excel-style paste defaults extra columns to Ignore and imports', asyn
 
   await popup.getByRole('button', { name: 'Import authors' }).click();
   await popup
-    .getByRole('button', { name: /Paste from spreadsheet/ })
+    .getByRole('button', { name: /Paste Google Sheet or Excel table/ })
     .click();
   await popup
     .getByLabel('Paste spreadsheet table')
