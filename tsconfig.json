@@ -12,6 +12,7 @@
     "tests",
     "dev",
     "wxt.config.ts",
+    "playwright.config.ts",
     "vitest.config.ts",
     ".wxt/wxt.d.ts"
   ]

@@ -12,3 +12,6 @@ coverage
 .chrome-profile
 reports
 coverage
+playwright-report
+test-results
+blob-report
