@@ -30,6 +30,10 @@ export function ColumnSelect(props: {
       <option value="country">Country</option>
       <option value="isCorresponding">Corresponding?</option>
       <option value="sequence">Sequence</option>
+      <option value="fundingStatement">Support / funding statement</option>
+      <option value="disclosureStatement">
+        Conflict / disclosure statement
+      </option>
       <option value="ignore">Ignore</option>
     </select>
   );

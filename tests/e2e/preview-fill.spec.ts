@@ -172,42 +172,28 @@ test('wide Excel-style paste defaults extra columns to Ignore and imports', asyn
 }) => {
   const { popup } = await openFixtureAndPopup(context, extensionId);
   const headers = [
-    'Order',
-    'Author type',
-    'Given name',
-    'Family name',
+    '',
+    'First name',
+    'Last Name',
     'Name on paper',
     'ORCID',
-    'Email (portal)',
-    'Affiliation numbers',
     'Affiliation 1',
     'Affiliation 2',
     'Affiliation 3',
-    'Affiliation 4',
-    'Affiliation 5',
-    'Equal contribution',
-    'Joint supervision',
-    'Portal status',
-    'Notes',
+    'Support/ Funding Statement',
+    'Conflicts of Interest',
   ];
   const row = [
-    '1',
-    'Researcher',
+    '*',
     'Ada',
     'Lovelace',
     'Ada Lovelace',
     '0000-0002-1825-0097',
-    'ada@example.org',
-    '1',
     'Analytical Engines Institute',
     '',
     '',
-    '',
-    '',
-    '',
-    '',
-    'Ready',
-    'Imported from workbook',
+    'Supported by Grant A',
+    'No competing interests',
   ];
 
   await popup.getByRole('button', { name: 'Import authors' }).click();
@@ -221,15 +207,20 @@ test('wide Excel-style paste defaults extra columns to Ignore and imports', asyn
 
   const mappings = popup.getByLabel('Column mapping');
   await expect(mappings).toHaveCount(headers.length);
-  await expect(mappings.nth(2)).toHaveValue('givenName');
-  await expect(mappings.nth(3)).toHaveValue('familyName');
-  await expect(mappings.nth(8)).toHaveValue('institution');
-  for (const index of [1, 4, 7, 9, 10, 11, 12, 13, 14, 15, 16]) {
+  await expect(mappings.nth(0)).toHaveValue('ignore');
+  await expect(mappings.nth(1)).toHaveValue('givenName');
+  await expect(mappings.nth(2)).toHaveValue('familyName');
+  await expect(mappings.nth(3)).toHaveValue('ignore');
+  await expect(mappings.nth(4)).toHaveValue('orcid');
+  await expect(mappings.nth(5)).toHaveValue('institution');
+  await expect(mappings.nth(8)).toHaveValue('fundingStatement');
+  await expect(mappings.nth(9)).toHaveValue('disclosureStatement');
+  for (const index of [6, 7]) {
     await expect(mappings.nth(index)).toHaveValue('ignore');
   }
 
-  await mappings.nth(16).selectOption('city');
-  await mappings.nth(16).selectOption('ignore');
+  await mappings.nth(7).selectOption('city');
+  await mappings.nth(7).selectOption('ignore');
   await popup.getByRole('button', { name: 'Import', exact: true }).click();
 
   await expect(popup.getByText('1 authors', { exact: true })).toBeVisible();
@@ -241,6 +232,9 @@ test('wide Excel-style paste defaults extra columns to Ignore and imports', asyn
     popup.getByRole('heading', { name: 'Review imported authors' }),
   ).toBeVisible();
   await expect(popup.getByText(/Ada Lovelace/)).toBeVisible();
+  await popup.getByText('Project statements').click();
+  await expect(popup.getByText('Supported by Grant A')).toBeVisible();
+  await expect(popup.getByText('No competing interests')).toBeVisible();
   await expect(popup.getByRole('button', { name: /Duplicate|Export|Edit/ })).toHaveCount(
     0,
   );

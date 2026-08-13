@@ -24,6 +24,20 @@ function cell(
   return '';
 }
 
+function uniqueColumnValues(
+  rows: string[][],
+  mapping: Record<number, CanonicalColumn>,
+  key: CanonicalColumn,
+): string[] {
+  return [
+    ...new Set(
+      rows
+        .map((row) => cell(row, mapping, key).trim())
+        .filter((value) => value.length > 0),
+    ),
+  ];
+}
+
 export function rowsToRoster(input: {
   name: string;
   headers: string[];
@@ -79,5 +93,17 @@ export function rowsToRoster(input: {
     createdAt: now,
     updatedAt: now,
     source: input.source,
+    projectMetadata: {
+      fundingStatements: uniqueColumnValues(
+        input.rows,
+        input.mapping,
+        'fundingStatement',
+      ),
+      disclosureStatements: uniqueColumnValues(
+        input.rows,
+        input.mapping,
+        'disclosureStatement',
+      ),
+    },
   };
 }

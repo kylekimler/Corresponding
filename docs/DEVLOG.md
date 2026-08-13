@@ -4,6 +4,13 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-13 02:40 UTC
+- bug: Spreadsheet paste used `trim()`, which removed a leading tab from an unlabeled header column but not from following rows. Wide Google Sheets data shifted one column right, produced incorrect mappings (for example publication name as ORCID), then failed import validation without surfacing the rejected promise.
+- fix: Preserve leading/trailing tab structure, keep blank headers as Ignore, and catch mapping-import validation failures beside the Import action.
+- schema/import: Added optional project-level `fundingStatements` and `disclosureStatements` to rosters and identity-v2 round trips. Support/Funding and Conflicts/Competing Interests columns map explicitly instead of false-matching author state.
+- UX: Read-only roster review summarizes imported project statements. Adapters do not fill them until portal fixtures prove the corresponding fields, and no certification/attestation is automated.
+- tests: Added the reported leading-blank-column shape, project metadata mapping/deduplication, identity migration preservation, and production popup E2E coverage.
+
 ### 2026-08-13 02:30 UTC
 - branding: Added a “Corr” extension icon using the popup's mint, cream, parchment, and pale-sage gradient with dark forest serif lettering.
 - assets: Retained 1024px source artwork under `assets/brand`; generated Lanczos-resized Chrome icons at 16/32/48/128px and wired both extension and toolbar manifest icons.

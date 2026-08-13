@@ -2,6 +2,7 @@ import { z } from 'zod';
 import {
   AffiliationSchema,
   AuthorSchema,
+  ProjectMetadataSchema,
   ROSTER_SCHEMA_VERSION,
   RosterSchema,
   type Author,
@@ -101,6 +102,7 @@ export const IdentityDocumentSchema = z.object({
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
   provenance: ProvenanceAssertionSchema.optional(),
+  projectMetadata: ProjectMetadataSchema.optional(),
 });
 
 export type IdentityDocument = z.infer<typeof IdentityDocumentSchema>;
@@ -138,6 +140,7 @@ export function fromSimpleRoster(roster: Roster): IdentityDocument {
     people,
     createdAt: roster.createdAt,
     updatedAt: roster.updatedAt,
+    projectMetadata: roster.projectMetadata,
   });
 }
 
@@ -170,5 +173,6 @@ export function toSimpleRoster(doc: IdentityDocument): Roster {
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
     source: 'json',
+    projectMetadata: doc.projectMetadata,
   });
 }

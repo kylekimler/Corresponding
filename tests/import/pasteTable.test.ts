@@ -108,6 +108,64 @@ describe('paste from spreadsheet', () => {
     expect(Object.keys(mapping.map)).toHaveLength(headers.length);
   });
 
+  it('preserves a leading blank header column without shifting author data', () => {
+    const parsed = parsePastedTable(
+      [
+        '\tFirst name\tLast Name\tName on paper\tORCID',
+        '*\tKyle\tKimler\tKyle Kimler\t0000-0002-1825-0097',
+        '*\tChristopher\tLance\tChristopher Lance\t',
+      ].join('\n'),
+    );
+
+    expect(parsed.headers).toEqual([
+      '',
+      'First name',
+      'Last Name',
+      'Name on paper',
+      'ORCID',
+    ]);
+    expect(parsed.rows[0]).toEqual([
+      '*',
+      'Kyle',
+      'Kimler',
+      'Kyle Kimler',
+      '0000-0002-1825-0097',
+    ]);
+    const mapping = suggestColumnMapping(parsed.headers);
+    expect(mapping.map[0]).toBe('ignore');
+    expect(mapping.map[1]).toBe('givenName');
+    expect(mapping.map[2]).toBe('familyName');
+    expect(mapping.map[3]).toBe('ignore');
+    expect(mapping.map[4]).toBe('orcid');
+    expect(mappingIsComplete(mapping.map)).toBe(true);
+  });
+
+  it('imports project funding and disclosure statements separately', () => {
+    const text = [
+      'First name\tLast Name\tAffiliation 1\tSupport/ Funding Statement\tConflicts of Interest',
+      'Ada\tLovelace\tAnalytical Engines\tSupported by Grant A\tNo competing interests',
+      'Alan\tTuring\tBletchley Park\tSupported by Grant A\tNo competing interests',
+    ].join('\n');
+    const parsed = parsePastedTable(text);
+    const mapping = suggestColumnMapping(parsed.headers);
+
+    expect(mapping.map[3]).toBe('fundingStatement');
+    expect(mapping.map[4]).toBe('disclosureStatement');
+    expect(Object.values(mapping.map)).not.toContain('state');
+
+    const roster = rowsToRoster({
+      name: 'Project metadata',
+      headers: parsed.headers,
+      rows: parsed.rows,
+      mapping: mapping.map,
+      source: 'csv',
+    });
+    expect(roster.projectMetadata).toEqual({
+      fundingStatements: ['Supported by Grant A'],
+      disclosureStatements: ['No competing interests'],
+    });
+  });
+
   it('detects tabular paste', () => {
     expect(pasteLooksTabular('a\tb\n1\t2\n')).toBe(true);
     expect(pasteLooksTabular('hello')).toBe(false);

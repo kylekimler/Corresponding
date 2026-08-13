@@ -80,6 +80,7 @@ export function migrateRosterSafe(raw: unknown): MigrateRosterResult {
             : new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         source: base.source ?? 'manual',
+        projectMetadata: base.projectMetadata,
       });
       if (repaired.success) {
         return {

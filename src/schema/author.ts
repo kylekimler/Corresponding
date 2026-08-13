@@ -35,6 +35,11 @@ export const RosterSourceSchema = z.enum([
 
 export const ROSTER_SCHEMA_VERSION = 1;
 
+export const ProjectMetadataSchema = z.object({
+  fundingStatements: z.array(z.string().min(1)).default([]),
+  disclosureStatements: z.array(z.string().min(1)).default([]),
+});
+
 export const RosterSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
@@ -43,11 +48,14 @@ export const RosterSchema = z.object({
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
   source: RosterSourceSchema,
+  /** Project-level submission metadata, distinct from individual identities. */
+  projectMetadata: ProjectMetadataSchema.optional(),
 });
 
 export type Affiliation = z.infer<typeof AffiliationSchema>;
 export type Author = z.infer<typeof AuthorSchema>;
 export type Roster = z.infer<typeof RosterSchema>;
+export type ProjectMetadata = z.infer<typeof ProjectMetadataSchema>;
 export type RosterSource = z.infer<typeof RosterSourceSchema>;
 
 export function primaryAffiliation(author: Author): Affiliation | undefined {

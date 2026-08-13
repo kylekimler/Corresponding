@@ -11,6 +11,8 @@ export type CanonicalColumn =
   | 'country'
   | 'isCorresponding'
   | 'sequence'
+  | 'fundingStatement'
+  | 'disclosureStatement'
   | 'ignore';
 
 export interface ColumnSuggestion {
@@ -77,10 +79,25 @@ const ALIASES: Record<Exclude<CanonicalColumn, 'ignore'>, string[]> = {
     'corr',
   ],
   sequence: ['sequence', 'order', 'author order', 'author_seq', 'seq', '#'],
+  fundingStatement: [
+    'support/funding statement',
+    'support funding statement',
+    'funding statement',
+    'funding',
+    'support statement',
+  ],
+  disclosureStatement: [
+    'conflicts of interest',
+    'conflict of interest',
+    'competing interests',
+    'competing interest statement',
+    'disclosure statement',
+    'disclosures',
+  ],
 };
 
 function normalizeHeader(h: string): string {
-  return h.trim().toLowerCase().replace(/\s+/g, ' ');
+  return h.trim().toLowerCase().replace(/[\/]+/g, ' ').replace(/\s+/g, ' ');
 }
 
 export function suggestColumnMapping(headers: string[]): ColumnMapping {
