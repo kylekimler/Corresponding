@@ -59,8 +59,20 @@ export default defineConfig({
             ],
           }
         : undefined,
+      icons: {
+        16: 'icons/corr-16.png',
+        32: 'icons/corr-32.png',
+        48: 'icons/corr-48.png',
+        128: 'icons/corr-128.png',
+      },
       action: {
         default_title: 'Corresponding',
+        default_icon: {
+          16: 'icons/corr-16.png',
+          32: 'icons/corr-32.png',
+          48: 'icons/corr-48.png',
+          128: 'icons/corr-128.png',
+        },
       },
     };
   },
