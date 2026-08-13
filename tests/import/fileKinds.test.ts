@@ -3,9 +3,10 @@ import { detectImportFileKind, excelImportStatus } from '@/import/fileKinds';
 import { sheetsChooserAvailability } from '@/sheets/types';
 
 describe('import file kinds + sheets chooser UX', () => {
-  it('detects csv and excel extensions', () => {
+  it('detects csv, excel, and DOCX extensions', () => {
     expect(detectImportFileKind({ name: 'authors.csv' })).toBe('csv');
     expect(detectImportFileKind({ name: 'authors.XLSX' })).toBe('excel');
+    expect(detectImportFileKind({ name: 'manuscript.docx' })).toBe('docx');
     expect(detectImportFileKind({ name: 'notes.txt' })).toBe('unknown');
   });
 

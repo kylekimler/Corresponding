@@ -8,6 +8,7 @@ import {
   type ColumnMapping,
 } from '@/import/columnMap';
 import { detectImportFileKind, excelImportStatus } from '@/import/fileKinds';
+import { extractDocxAuthorTable } from '@/import/docx';
 import { parsePastedTable } from '@/import/pasteTable';
 import { rowsToRoster } from '@/import/rosterFromTable';
 import { createEmptyRoster } from '@/roster/mutations';
@@ -68,7 +69,13 @@ async function requestActiveTab(
 }
 
 type View = 'main' | 'import' | 'manage' | 'advanced';
-type ImportMode = 'chooser' | 'paste' | 'csv' | 'sheets' | 'mapping';
+type ImportMode =
+  | 'chooser'
+  | 'paste'
+  | 'csv'
+  | 'docx'
+  | 'sheets'
+  | 'mapping';
 
 type PendingImport = {
   headers: string[];
@@ -367,7 +374,7 @@ export function App() {
     }
   }
 
-  async function handleCsvFile(file: File) {
+  async function handleImportFile(file: File) {
     setError('');
     const kind = detectImportFileKind(file);
     if (kind === 'excel') {
@@ -375,10 +382,26 @@ export function App() {
       return;
     }
     if (kind === 'unknown') {
-      setError('Use a .csv file, or paste from your spreadsheet.');
+      setError('Use a .csv or .docx file, or paste from your spreadsheet.');
       return;
     }
     try {
+      if (kind === 'docx') {
+        const extracted = extractDocxAuthorTable(await file.arrayBuffer());
+        const mapping = suggestColumnMapping(extracted.headers);
+        const name =
+          file.name.replace(/\.docx$/i, '') || 'Manuscript authors';
+        setImportMode('docx');
+        await importTable({
+          headers: extracted.headers,
+          rows: extracted.rows,
+          mapping,
+          name,
+          source: 'docx',
+          fileName: file.name,
+        });
+        return;
+      }
       const text = await file.text();
       const { headers, rows } = parseCsv(text);
       if (!headers.length || rows.length === 0) {
@@ -397,8 +420,12 @@ export function App() {
         source: 'csv',
         fileName: file.name,
       });
-    } catch {
-      setError('Could not read that file. Try CSV or paste instead.');
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Could not read that file. Try CSV, DOCX, or paste instead.',
+      );
     }
   }
 
@@ -868,9 +895,6 @@ export function App() {
                   {actionInFlight === 'fill' ? 'Filling…' : 'Fill'}
                 </button>
               </div>
-              <p className="safety-near-fill">
-                Preview to check for errors before the form gets filled.
-              </p>
               <div
                 className="action-feedback"
                 role="status"
@@ -964,6 +988,16 @@ export function App() {
               <strong>Upload CSV</strong>
               <span>Drag and drop or choose a file</span>
             </button>
+            <button
+              type="button"
+              className="import-option"
+              onClick={() => {
+                fileInputRef.current?.click();
+              }}
+            >
+              <strong>Upload manuscript (.docx)</strong>
+              <span>Extract a structured author table locally</span>
+            </button>
             <button type="button" className="import-option" disabled>
               <strong>Upload Excel</strong>
               <span>{excelStatus.reason}</span>
@@ -980,11 +1014,11 @@ export function App() {
             <input
               ref={fileInputRef}
               type="file"
-              accept=".csv,text/csv"
+              accept=".csv,.docx,text/csv,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
               hidden
               onChange={(e) => {
                 const f = e.target.files?.[0];
-                if (f) void handleCsvFile(f);
+                if (f) void handleImportFile(f);
                 e.target.value = '';
               }}
             />
@@ -1078,7 +1112,7 @@ export function App() {
                 e.preventDefault();
                 setDragOver(false);
                 const f = e.dataTransfer.files?.[0];
-                if (f) void handleCsvFile(f);
+                if (f) void handleImportFile(f);
               }}
             >
               <p>

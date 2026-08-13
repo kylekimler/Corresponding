@@ -4,7 +4,7 @@
  * (see docs/EXCEL_IMPORT.md).
  */
 
-export type ImportFileKind = 'csv' | 'excel' | 'unknown';
+export type ImportFileKind = 'csv' | 'excel' | 'docx' | 'unknown';
 
 export function detectImportFileKind(file: {
   name: string;
@@ -22,6 +22,13 @@ export function detectImportFileKind(file: {
     type.includes('ms-excel')
   ) {
     return 'excel';
+  }
+  if (
+    name.endsWith('.docx') ||
+    type ===
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  ) {
+    return 'docx';
   }
   return 'unknown';
 }

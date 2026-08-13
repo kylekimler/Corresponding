@@ -60,7 +60,7 @@ Status key: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked (exte
 
 ## Next five highest-value tasks
 
-1. Assess local DOCX front-matter author/affiliation extraction with anonymized manuscript fixtures
+1. Expand local DOCX import beyond structured author tables using anonymized paragraph/superscript fixtures
 2. Decide and enable safe local XLSX parsing
 3. eLife fixture investigation (bioRxiv/medRxiv capture-backed adapter complete)
 4. Raise coverage on migrate + capture redaction edge cases
@@ -83,6 +83,8 @@ Status key: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked (exte
 - [!] Implement eLife only after a real anonymized fixture exists.
 - [!] Validate and broaden Nature/eJournalPress only from real captured HTML.
 - [ ] Expand adversarial coverage for popup bridges, provenance, migration, redaction, and 1/75/500/1000-author flows.
+- [x] Local DOCX structured author-table extraction with mapping preview and no prose retention.
+- [!] Paragraph/superscript DOCX and PDF extraction require anonymized manuscript fixtures.
 
 ### Later
 

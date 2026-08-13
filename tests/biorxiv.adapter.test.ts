@@ -34,7 +34,10 @@ describe('bioRxiv repeated author dialog adapter', () => {
   });
 
   it('opens, fills, and saves exactly one dialog per author', async () => {
-    const harness = mountBiorxivFixture();
+    const harness = mountBiorxivFixture({
+      addRemountDelayMs: 20,
+      addLabelAfterSave: 'Add Another Author',
+    });
     const roster = makeRoster(makeNAuthors(3, { correspondingIndex: 2 }));
 
     const report = await biorxivAdapter.fillAsync!(

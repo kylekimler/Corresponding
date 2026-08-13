@@ -2,6 +2,8 @@ export interface BiorxivFixtureOptions {
   existingAuthors?: number;
   dialogOpen?: boolean;
   saveCloses?: boolean;
+  addRemountDelayMs?: number;
+  addLabelAfterSave?: string;
 }
 
 export interface BiorxivFixtureHarness {
@@ -129,6 +131,13 @@ export function mountBiorxivFixture(
     });
     renderRows();
     if (options.saveCloses !== false) setDialogOpen(false);
+    if (options.addRemountDelayMs !== undefined) {
+      add.style.display = 'none';
+      setTimeout(() => {
+        add.textContent = options.addLabelAfterSave ?? 'Add Author';
+        add.style.display = '';
+      }, options.addRemountDelayMs);
+    }
   });
   continueControl.addEventListener('click', (event) => {
     event.preventDefault();

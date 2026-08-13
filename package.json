@@ -28,6 +28,7 @@
     "security": "npm run lint:security && npm run semgrep && npm audit --omit=dev --audit-level=high"
   },
   "dependencies": {
+    "fflate": "^0.8.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "zod": "^3.24.2"

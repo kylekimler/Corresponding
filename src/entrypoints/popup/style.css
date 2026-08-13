@@ -357,13 +357,6 @@ input:not([type]) {
   }
 }
 
-.safety-near-fill {
-  margin: 8px 0 0;
-  font-size: 0.78rem;
-  color: var(--c-muted);
-  line-height: 1.35;
-}
-
 .overwrite {
   margin-bottom: 2px;
 }

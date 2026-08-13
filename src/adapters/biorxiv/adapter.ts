@@ -97,7 +97,9 @@ function addAuthorButton(doc: Document): HTMLButtonElement | null {
       (button) =>
         isVisible(button) &&
         !button.closest(DIALOG_SELECTOR) &&
-        normalizeText(button.textContent) === 'add author',
+        /^add (?:another )?(?:co-)?author$/.test(
+          normalizeText(button.textContent),
+        ),
     ) ?? null
   );
 }
@@ -338,8 +340,11 @@ async function waitFor(
 async function openAuthorDialog(doc: Document): Promise<HTMLElement> {
   const alreadyOpen = activeDialog(doc);
   if (alreadyOpen) return alreadyOpen;
-  const add = addAuthorButton(doc);
-  if (!add) throw new Error('Could not find bioRxiv Add Author');
+  await waitFor(
+    () => addAuthorButton(doc) !== null,
+    'Could not find bioRxiv Add Author after the author table refreshed',
+  );
+  const add = addAuthorButton(doc)!;
   assertSafeMutationTarget(add);
   add.click();
   await waitFor(

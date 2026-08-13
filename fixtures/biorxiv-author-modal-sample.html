@@ -46,6 +46,7 @@
         const saved = [];
         const dialog = document.querySelector('#author-dialog');
         const rows = document.querySelector('#author-rows');
+        const addButton = document.querySelector('#add-author');
         const continuation = document.querySelector('[name="CA_continue"]');
         window.__biorxivFixture = {
           saved,
@@ -67,7 +68,7 @@
             )
             .join('');
         }
-        document.querySelector('#add-author').addEventListener('click', () => {
+        addButton.addEventListener('click', () => {
           window.__biorxivFixture.addClicks += 1;
           reset();
           dialog.classList.add('v-dialog--active');
@@ -84,6 +85,11 @@
           });
           render();
           dialog.classList.remove('v-dialog--active');
+          addButton.style.display = 'none';
+          setTimeout(() => {
+            addButton.textContent = 'Add Another Author';
+            addButton.style.display = '';
+          }, 100);
         });
         continuation.addEventListener('click', (event) => {
           event.preventDefault();
