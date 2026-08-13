@@ -18,6 +18,8 @@ import type {
 const DIALOG_SELECTOR = '.v-dialog.v-dialog--active';
 const AUTHOR_TABLE_SELECTOR = 'table.v-datatable';
 const WAIT_TIMEOUT_MS = 10_000;
+const SETTLE_TIMEOUT_MS = 2_000;
+const SETTLE_INTERVAL_MS = 50;
 
 type AuthorField = {
   key: 'email' | 'givenName' | 'middleName' | 'familyName' | 'institution';
@@ -375,6 +377,10 @@ function correspondingCheckbox(dialog: HTMLElement): HTMLInputElement | null {
   );
 }
 
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function waitFor(
   predicate: () => boolean,
   message: string,
@@ -382,14 +388,20 @@ async function waitFor(
   const started = Date.now();
   while (Date.now() - started < WAIT_TIMEOUT_MS) {
     if (predicate()) return;
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    await delay(100);
   }
   throw new Error(message);
 }
 
-async function openAuthorDialog(doc: Document): Promise<HTMLElement> {
+interface OpenedDialog {
+  dialog: HTMLElement;
+  /** True when Corresponding opened it, so residual values are stale UI state. */
+  openedByUs: boolean;
+}
+
+async function openAuthorDialog(doc: Document): Promise<OpenedDialog> {
   const alreadyOpen = activeDialog(doc);
-  if (alreadyOpen) return alreadyOpen;
+  if (alreadyOpen) return { dialog: alreadyOpen, openedByUs: false };
   await waitFor(
     () => addAuthorButton(doc) !== null,
     'Could not find bioRxiv Add Author after the author table refreshed',
@@ -401,7 +413,94 @@ async function openAuthorDialog(doc: Document): Promise<HTMLElement> {
     () => activeDialog(doc) !== null,
     'bioRxiv Add Author dialog did not open',
   );
-  return activeDialog(doc)!;
+  return { dialog: activeDialog(doc)!, openedByUs: true };
+}
+
+/**
+ * bioRxiv reuses one dialog element and clears it asynchronously. Wait until
+ * the managed inputs stop changing so a late reset cannot wipe our values.
+ */
+async function waitForDialogSettled(dialog: HTMLElement): Promise<void> {
+  const snapshot = () =>
+    Array.from(dialog.querySelectorAll<HTMLInputElement>('input'))
+      .map((input) => `${input.name}=${input.value}`)
+      .join('|');
+  let previous = snapshot();
+  const started = Date.now();
+  while (Date.now() - started < SETTLE_TIMEOUT_MS) {
+    await delay(SETTLE_INTERVAL_MS);
+    const next = snapshot();
+    if (next === previous) return;
+    previous = next;
+  }
+}
+
+interface ResolvedField {
+  field: AuthorField;
+  input: HTMLInputElement | null;
+}
+
+function resolveAuthorFields(
+  dialog: HTMLElement,
+  author: Author,
+): ResolvedField[] {
+  return authorFields(author).map((field) => ({
+    field,
+    input: findField(dialog, field),
+  }));
+}
+
+/**
+ * Authoritative mode writes every roster value and clears managed fields with
+ * no value, so one author's leftovers cannot be saved as the next author.
+ * Preserve mode only applies to a dialog the user already had open.
+ */
+function writeAuthorFields(
+  resolved: ResolvedField[],
+  authoritative: boolean,
+  overwrite: boolean,
+): void {
+  for (const { field, input } of resolved) {
+    if (!input) continue;
+    const desired = field.value?.trim() ?? '';
+    const current = input.value.trim();
+    if (!desired) {
+      if (authoritative && current) setInputValue(input, '');
+      continue;
+    }
+    if (current === desired) continue;
+    if (current && !authoritative && !overwrite) continue;
+    setInputValue(input, desired);
+  }
+}
+
+/** Returns a human-readable mismatch, or null when the dialog is correct. */
+function authorFieldMismatch(
+  resolved: ResolvedField[],
+  author: Author,
+  authoritative: boolean,
+  overwrite: boolean,
+): string | null {
+  for (const { field, input } of resolved) {
+    const desired = field.value?.trim() ?? '';
+    if (!input) {
+      if (field.required) {
+        return `Could not find bioRxiv ${field.label} for author ${author.sequence}`;
+      }
+      continue;
+    }
+    const current = input.value.trim();
+    if (!desired) {
+      if (authoritative && current) {
+        return `${field.label} still holds a previous author's value`;
+      }
+      continue;
+    }
+    if (current === desired) continue;
+    if (current && !authoritative && !overwrite) continue;
+    return `${field.label} did not accept the roster value for author ${author.sequence}`;
+  }
+  return null;
 }
 
 async function saveAuthorDialog(
@@ -494,22 +593,29 @@ export const biorxivAdapter: PlatformAdapter = {
     let savedAuthors = 0;
     try {
       for (const author of authors) {
-        const dialog = await openAuthorDialog(doc);
-        for (const field of authorFields(author)) {
-          if (!field.value?.trim()) continue;
-          const input = findField(dialog, field);
-          if (!input) {
-            if (field.required) {
-              throw new Error(
-                `Could not find bioRxiv ${field.label} for author ${author.sequence}`,
-              );
-            }
-            continue;
-          }
-          const current = input.value.trim();
-          if (current && !options.overwrite) continue;
-          setInputValue(input, field.value);
+        const { dialog, openedByUs } = await openAuthorDialog(doc);
+        if (openedByUs) await waitForDialogSettled(dialog);
+
+        let resolved = resolveAuthorFields(dialog, author);
+        writeAuthorFields(resolved, openedByUs, options.overwrite);
+
+        // Re-read after a tick: the portal may reset fields asynchronously.
+        await delay(SETTLE_INTERVAL_MS);
+        resolved = resolveAuthorFields(dialog, author);
+        if (authorFieldMismatch(resolved, author, openedByUs, options.overwrite)) {
+          writeAuthorFields(resolved, openedByUs, options.overwrite);
+          await delay(SETTLE_INTERVAL_MS);
+          resolved = resolveAuthorFields(dialog, author);
         }
+        // Never save a dialog that does not match the roster author.
+        const mismatch = authorFieldMismatch(
+          resolved,
+          author,
+          openedByUs,
+          options.overwrite,
+        );
+        if (mismatch) throw new Error(mismatch);
+
         const corresponding = correspondingCheckbox(dialog);
         if (!corresponding) {
           throw new Error(

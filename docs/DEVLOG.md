@@ -4,6 +4,15 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-13 04:40 UTC
+- live result: Add Author matching now works; the second dialog opens. The next author was saved with the previous author's data.
+- root cause: bioRxiv reuses one dialog element, so a reopened dialog still holds the previous author's values. The fill loop applied the preserve rule (`current && !overwrite → skip`), which is meant to protect user-typed portal data, to stale UI state in a dialog Corresponding had just opened for a new author.
+- fix: Distinguish a dialog Corresponding opened from one the user already had open. For dialogs we open, write every roster value authoritatively and clear managed fields with no value, so nothing leaks between authors. Preserve/overwrite semantics still apply to a pre-existing dialog.
+- race hardening: Wait for the reused dialog's inputs to stop changing before writing, so an asynchronous framework reset cannot wipe values mid-fill.
+- correctness gate: Re-read and verify every managed field after writing, retry once, and refuse to click Save when the dialog does not match the roster author. Prefers a stopped fill over a wrong author.
+- tests: Reused-dialog leakage (verified failing against the previous behavior), delayed asynchronous reset, and refusal to save when a field rejects programmatic input.
+- verification: 194 Vitest tests, typecheck, production build, zero-warning security lint, and all four Playwright MV3 journeys passed. Live bioRxiv retry still required.
+
 ### 2026-08-13 04:30 UTC
 - diagnosis from live capture: The previous remount theory was wrong. A post-failure capture showed the real Add control renders as `[redacted] Add Author` — a Material icon ligature text node precedes the label — so exact whole-text matching could never find it. The capture also showed three `edit`/`delete` row pairs, i.e. earlier partial runs each left one saved author behind.
 - defect 1 (label): Button matching now reads a label from `aria-label`, or from a detached clone with icon/`svg`/`aria-hidden` nodes removed, and scans words for add + author/co-author. The portal DOM is never mutated to read a label.
