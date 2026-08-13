@@ -9,6 +9,7 @@ Chronological overnight / autonomous iteration log.
 - direct Fill: Fill no longer requires a user-triggered Preview. It reuses a matching clean Preview when available; otherwise it performs a fresh internal dry-run bound to the current roster/version, overwrite setting, and tab before any mutation. Blocking adapter errors still stop Fill.
 - sample UX: Development sample rosters now expose a prominent one-click removal control instead of appearing permanently stuck in local storage.
 - discovery: Added local DOCX front-matter author/affiliation extraction to the backlog for fixture-first assessment; no manuscript parser was introduced without evidence.
+- verification: 185 Vitest tests, typecheck, production build, zero-warning security lint, and all three Playwright MV3 journeys passed. Nature exercises visible Preview invalidation followed by direct Fill; bioRxiv exercises direct Fill with internal preflight.
 
 ### 2026-08-13 02:40 UTC
 - bug: Spreadsheet paste used `trim()`, which removed a leading tab from an unlabeled header column but not from following rows. Wide Google Sheets data shifted one column right, produced incorrect mappings (for example publication name as ORCID), then failed import validation without surfacing the rejected promise.
