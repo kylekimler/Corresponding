@@ -1,8 +1,4 @@
-import {
-  chromium,
-  test as base,
-  type BrowserContext,
-} from '@playwright/test';
+import { test as base, type BrowserContext } from '@playwright/test';
 import { E2E_EXTENSION_PATH } from './globalSetup';
 
 type ExtensionFixtures = {
@@ -11,8 +7,8 @@ type ExtensionFixtures = {
 };
 
 export const test = base.extend<ExtensionFixtures>({
-  context: async (_fixtures, use) => {
-    const context = await chromium.launchPersistentContext('', {
+  context: async ({ playwright }, use) => {
+    const context = await playwright.chromium.launchPersistentContext('', {
       channel: 'chromium',
       headless: !process.argv.includes('--headed'),
       args: [
