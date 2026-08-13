@@ -4,6 +4,15 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-13 04:30 UTC
+- diagnosis from live capture: The previous remount theory was wrong. A post-failure capture showed the real Add control renders as `[redacted] Add Author` — a Material icon ligature text node precedes the label — so exact whole-text matching could never find it. The capture also showed three `edit`/`delete` row pairs, i.e. earlier partial runs each left one saved author behind.
+- defect 1 (label): Button matching now reads a label from `aria-label`, or from a detached clone with icon/`svg`/`aria-hidden` nodes removed, and scans words for add + author/co-author. The portal DOM is never mutated to read a label.
+- defect 2 (visibility): `isVisible` only checked the element's own computed style, so children of `display: none` dialogs counted as visible and could be clicked. Visibility is now ancestor-aware.
+- hardening: Add Author candidates must also be enabled and non-forbidden. Word scanning replaces a backtracking-prone regex flagged by security lint.
+- recovery UX: The existing-authors refusal now names bioRxiv's own Delete controls, since partial runs leave rows behind.
+- tests: Added icon-ligature matching across repeated saves, hidden-decoy rejection, and recovery-message coverage; browser fixture now renders the icon ligature and a hidden decoy.
+- verification: 191 Vitest tests, typecheck, production build, zero-warning security lint, and all four Playwright MV3 journeys passed. Live bioRxiv retry still required.
+
 ### 2026-08-13 03:45 UTC
 - bioRxiv live follow-up: After one saved author, the portal closes the dialog before remounting its Add control. The orchestrator now waits for the refreshed external action and accepts the observed “Add Another Author” state instead of failing immediately.
 - popup: Removed the optional-Preview subtitle entirely.

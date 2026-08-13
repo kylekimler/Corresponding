@@ -98,7 +98,7 @@ describe('bioRxiv repeated author dialog adapter', () => {
       makeRoster(makeNAuthors(2)),
       { overwrite: false, dryRun: false },
     );
-    expect(report.errors.join(' ')).toMatch(/already contains 1 author/i);
+    expect(report.errors.join(' ')).toMatch(/already lists 1 author/i);
     expect(harness.addClicks()).toBe(0);
     expect(harness.saveClicks()).toBe(0);
   });
@@ -115,6 +115,52 @@ describe('bioRxiv repeated author dialog adapter', () => {
     expect(report.errors.join(' ')).toMatch(/Author 2 is missing Email/);
     expect(harness.addClicks()).toBe(0);
     expect(harness.saveClicks()).toBe(0);
+  });
+
+  it('finds Add Author when a Material icon ligature precedes the label', async () => {
+    const harness = mountBiorxivFixture({
+      addIconLigature: 'person_add',
+      addRemountDelayMs: 20,
+      addLabelAfterSave: 'Add Another Author',
+    });
+
+    const report = await biorxivAdapter.fillAsync!(
+      document,
+      makeRoster(makeNAuthors(3)),
+      { overwrite: false, dryRun: false },
+    );
+
+    expect(report.errors).toEqual([]);
+    expect(harness.addClicks()).toBe(3);
+    expect(harness.savedAuthors()).toHaveLength(3);
+  });
+
+  it('ignores a hidden decoy Add Author inside a closed dialog', async () => {
+    const harness = mountBiorxivFixture({
+      addIconLigature: 'person_add',
+      hiddenDecoyAddButton: true,
+    });
+    const decoy = document.getElementById('decoy-add-author') as HTMLElement;
+    const decoyClicks = vi.spyOn(decoy, 'click');
+
+    await biorxivAdapter.fillAsync!(document, makeRoster(makeNAuthors(2)), {
+      overwrite: false,
+      dryRun: false,
+    });
+
+    expect(decoyClicks).not.toHaveBeenCalled();
+    expect(harness.savedAuthors()).toHaveLength(2);
+  });
+
+  it('explains how to recover when authors already exist', () => {
+    mountBiorxivFixture({ existingAuthors: 3 });
+    const report = biorxivAdapter.fill(document, makeRoster(makeNAuthors(2)), {
+      overwrite: false,
+      dryRun: true,
+    });
+    expect(report.errors.join(' ')).toMatch(
+      /already lists 3 authors.*Delete controls/i,
+    );
   });
 
   it('never clicks page continuation or any submit control', async () => {

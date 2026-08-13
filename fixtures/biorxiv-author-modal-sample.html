@@ -12,8 +12,11 @@
   <body>
     <div id="submission_form">
       <main class="v-content">
+        <div class="v-dialog" style="display: none">
+          <button type="button" id="decoy-add-author">Add Author</button>
+        </div>
         <button type="button" class="v-btn theme--light primary" id="add-author">
-          Add Author
+          <i class="v-icon material-icons">person_add</i>Add Author
         </button>
         <table class="v-datatable v-table theme--light">
           <thead><tr><th>Author</th><th>Email</th></tr></thead>
@@ -87,7 +90,8 @@
           dialog.classList.remove('v-dialog--active');
           addButton.style.display = 'none';
           setTimeout(() => {
-            addButton.textContent = 'Add Another Author';
+            addButton.innerHTML =
+              '<i class="v-icon material-icons">person_add</i>Add Another Author';
             addButton.style.display = '';
           }, 100);
         });

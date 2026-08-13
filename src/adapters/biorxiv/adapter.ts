@@ -1,5 +1,9 @@
 import type { Author, Roster } from '@/schema/author';
-import { assertSafeMutationTarget, listDangerousControls } from '../safety';
+import {
+  assertSafeMutationTarget,
+  isForbiddenControl,
+  listDangerousControls,
+} from '../safety';
 import type {
   DetectResult,
   FieldAction,
@@ -33,12 +37,41 @@ function normalizeText(value: string | null | undefined): string {
   return (value ?? '').replace(/\s+/g, ' ').trim().toLowerCase();
 }
 
+/**
+ * Ancestor-aware visibility. A child of a `display: none` container keeps its
+ * own computed display, so checking only the element itself would treat
+ * closed-dialog and template controls as clickable.
+ */
 function isVisible(el: Element): boolean {
-  if ((el instanceof HTMLElement && el.hidden) || el.getAttribute('aria-hidden') === 'true') {
-    return false;
+  const view = el.ownerDocument.defaultView;
+  if (!view) return false;
+  for (
+    let node: Element | null = el;
+    node && node !== el.ownerDocument.documentElement.parentElement;
+    node = node.parentElement
+  ) {
+    if (node instanceof view.HTMLElement && node.hidden) return false;
+    if (node.getAttribute('aria-hidden') === 'true') return false;
+    const style = view.getComputedStyle(node);
+    if (style.display === 'none' || style.visibility === 'hidden') return false;
   }
-  const style = el.ownerDocument.defaultView?.getComputedStyle(el);
-  return style?.display !== 'none' && style?.visibility !== 'hidden';
+  return true;
+}
+
+/**
+ * Button text without icon ligatures. Vuetify renders Material icons as text
+ * nodes inside the button, so raw textContent looks like "person_addAdd Author".
+ * The clone is detached: the portal DOM is never modified to read a label.
+ */
+function buttonLabel(button: HTMLElement): string {
+  const aria = button.getAttribute('aria-label');
+  if (aria?.trim()) return normalizeText(aria);
+  const clone = button.cloneNode(true) as HTMLElement;
+  clone
+    .querySelectorAll('i, svg, .v-icon, [aria-hidden="true"]')
+    .forEach((node) => node.remove());
+  const stripped = normalizeText(clone.textContent);
+  return stripped || normalizeText(button.textContent);
 }
 
 function activeDialog(doc: Document): HTMLElement | null {
@@ -85,21 +118,36 @@ function findButton(
       (button) =>
         isVisible(button) &&
         !button.disabled &&
-        normalizeText(button.textContent) === desired,
+        buttonLabel(button) === desired,
     ) ?? null
   );
 }
 
+const AUTHOR_WORD_RE = /^co-?authors?$|^authors?$/;
+
+/**
+ * Accepts "Add Author", "Add Another Author", "Add New Co-Author", and icon
+ * ligature prefixes such as "person_add Add Author". Scanning words keeps the
+ * match linear instead of relying on a backtracking-prone pattern.
+ */
+function looksLikeAddAuthor(label: string): boolean {
+  const words = label.split(' ').filter(Boolean);
+  const addIndex = words.indexOf('add');
+  if (addIndex === -1) return false;
+  return words
+    .slice(addIndex + 1, addIndex + 4)
+    .some((word) => AUTHOR_WORD_RE.test(word));
+}
+
 function addAuthorButton(doc: Document): HTMLButtonElement | null {
-  const candidates = Array.from(doc.querySelectorAll<HTMLButtonElement>('button'));
   return (
-    candidates.find(
+    Array.from(doc.querySelectorAll<HTMLButtonElement>('button')).find(
       (button) =>
-        isVisible(button) &&
+        !button.disabled &&
         !button.closest(DIALOG_SELECTOR) &&
-        /^add (?:another )?(?:co-)?author$/.test(
-          normalizeText(button.textContent),
-        ),
+        !isForbiddenControl(button) &&
+        looksLikeAddAuthor(buttonLabel(button)) &&
+        isVisible(button),
     ) ?? null
   );
 }
@@ -259,11 +307,13 @@ function report(
   const existing = existingAuthorCount(doc);
   if (existing > 0) {
     errors.push(
-      `bioRxiv already contains ${existing} author${existing === 1 ? '' : 's'}; refusing to append possible duplicates`,
+      `bioRxiv already lists ${existing} author${existing === 1 ? '' : 's'}. Remove them with bioRxiv's own Delete controls, then Fill again.`,
     );
   }
   if (!activeDialog(doc) && !addAuthorButton(doc)) {
-    errors.push('Could not find the visible bioRxiv Add Author control');
+    errors.push(
+      'Could not find a visible bioRxiv Add Author control on this page. Scroll the author step into view, or open the author dialog yourself and Fill again.',
+    );
   }
   const plans = buildPlans(authors, options, activeDialog(doc));
   const dangerous = listDangerousControls(doc);
