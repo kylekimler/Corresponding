@@ -4,6 +4,13 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-13 01:00 UTC
+- changed: Added an official Playwright MV3 end-to-end environment for remote Cursor terminals. It launches current bundled Chromium with an isolated persistent context, loads a test copy of the production extension, and intercepts the pinned localhost fixture without another server.
+- safety gate: E2E setup rejects production manifests with host permissions, automatic content scripts, or permissions beyond `activeTab`, `storage`, and `scripting`. Only the ignored `.wxt/` test copy receives a localhost host grant because programmatic popup tabs do not receive a toolbar `activeTab` gesture.
+- browser journey: Production popup imports CSV, proves Preview is dry, proves overwrite changes invalidate Preview, fills only safe author blocks, validates the linked conflict, and confirms submit/certify/copyright/payment controls were never clicked.
+- developer experience: `test:e2e`, headed, UI, and report scripts; retained trace/screenshot/video on failure; README guidance for remote testing and safe bioRxiv compatibility capture.
+- verification: Playwright 1.62.1 with Chrome for Testing 151; E2E passed. Typecheck, 173 Vitest tests, production build, and lint passed.
+
 ### 2026-08-12 23:20 UTC
 - changed: Bound every successful Preview to roster ID + `updatedAt`, overwrite setting, and the active tab ID + URL. Fill stays disabled for stale/missing Preview state, and the bridge rechecks the expected tab immediately before sending a mutating request.
 - UX: Sample onboarding is development-build only; selector confidence is shown separately from block completeness; every author block remains inspectable in a bounded scroll region; action errors now appear beside Preview/Fill in an accessible live region.
