@@ -4,6 +4,15 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-13 18:05 UTC
+- reported: the six-author example set was still not visible. Confirmed the production bundle contained both the new data and label, so this was reachability, not a build problem.
+- root cause: the example-authors button only ever rendered inside the empty state. Once any roster is saved — which is the normal state after testing — that branch never renders and the button cannot be reached.
+- fix: Added "Add example authors" to the roster menu so it is reachable whenever a roster already exists.
+- stale copies: Importing the example set now replaces any previously stored example roster, so a 3-author copy saved earlier cannot shadow the current 6-author set. Imported rosters of the user's own are untouched.
+- wording: Development-only phrasing replaced now that the example set is available in every build.
+- tests: Replacement of a stale example roster while preserving user imports, plus a browser journey that imports a CSV first and then reaches the example set through the menu.
+- verification: 201 Vitest tests, typecheck, production build, zero-warning security lint, and six Playwright MV3 journeys passed.
+
 ### 2026-08-13 17:45 UTC
 - diagnostic resolved: `fields at Save: Email=present, First Name=present, Last Name=present, Institution=present` with bioRxiv still reporting the first name missing proves the DOM held the values while the portal's model did not. `execCommand` also needs a focused document, which an open popup denies, so the earlier change silently fell back to the previous behaviour.
 - bioRxiv: Input strategies now escalate — `insertText`, native setter, `setRangeText`, then per-character key events — and the portal's own field validation decides whether a strategy was accepted. Values present in the field while validation still says "required" now advance to the next strategy instead of saving.
