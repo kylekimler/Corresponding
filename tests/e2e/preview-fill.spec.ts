@@ -5,6 +5,8 @@ import { expect, test } from './extension.fixture';
 
 const FIXTURE_URL =
   'http://localhost:3000/fixtures/nature-mts-sample.html';
+const BIORXIV_FIXTURE_URL =
+  'http://localhost:3000/fixtures/biorxiv-author-modal-sample.html';
 const PROTECTED_CONTROL_IDS = [
   'save_authors',
   'final_submit',
@@ -13,7 +15,11 @@ const PROTECTED_CONTROL_IDS = [
   'pay_apc',
 ];
 
-async function keepFixtureActive(fixture: Page, popup: Page): Promise<void> {
+async function keepFixtureActive(
+  fixture: Page,
+  popup: Page,
+  expectedUrl = FIXTURE_URL,
+): Promise<void> {
   await fixture.bringToFront();
   await expect
     .poll(() =>
@@ -25,7 +31,7 @@ async function keepFixtureActive(fixture: Page, popup: Page): Promise<void> {
         return tab?.url;
       }),
     )
-    .toBe(FIXTURE_URL);
+    .toBe(expectedUrl);
 }
 
 async function openFixtureAndPopup(
@@ -238,4 +244,75 @@ test('wide Excel-style paste defaults extra columns to Ignore and imports', asyn
   await expect(popup.getByRole('button', { name: /Duplicate|Export|Edit/ })).toHaveCount(
     0,
   );
+});
+
+test('bioRxiv modal workflow saves each author and never continues the page', async ({
+  context,
+  extensionId,
+}) => {
+  const fixtureHtml = await readFile(
+    path.resolve('fixtures/biorxiv-author-modal-sample.html'),
+    'utf8',
+  );
+  await context.route(BIORXIV_FIXTURE_URL, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'text/html',
+      body: fixtureHtml,
+    }),
+  );
+  const fixture = await context.newPage();
+  await fixture.goto(BIORXIV_FIXTURE_URL);
+  const popup = await context.newPage();
+  await popup.goto(`chrome-extension://${extensionId}/popup.html`);
+  await keepFixtureActive(fixture, popup, BIORXIV_FIXTURE_URL);
+  await popup.reload();
+  await expect(
+    popup.getByText('bioRxiv / medRxiv', { exact: true }),
+  ).toBeVisible();
+
+  await popup.getByRole('button', { name: 'Import authors' }).click();
+  await popup
+    .locator('input[type="file"]')
+    .setInputFiles(path.resolve('fixtures/sample-authors.csv'));
+  await expect(popup.getByText('3 authors', { exact: true })).toBeVisible();
+
+  const preview = popup.getByRole('button', { name: 'Preview', exact: true });
+  const fill = popup.getByRole('button', { name: 'Fill', exact: true });
+  await expect(fill).toBeDisabled();
+  await keepFixtureActive(fixture, popup, BIORXIV_FIXTURE_URL);
+  await preview.click();
+  await expect(popup.getByText(/Preview ready — .*form unchanged/).first()).toBeVisible();
+  await expect(fill).toBeEnabled();
+  await keepFixtureActive(fixture, popup, BIORXIV_FIXTURE_URL);
+  await fill.click();
+
+  await expect(
+    popup.getByText(/Fill complete\. Validation finished/),
+  ).toBeVisible();
+  await expect(popup.getByText('3 authors look filled')).toBeVisible();
+  const state = await fixture.evaluate(() => {
+    return (
+      window as typeof window & {
+        __biorxivFixture: {
+          saved: Array<{
+            firstName: string;
+            lastName: string;
+            corresponding: boolean;
+          }>;
+          continueClicks: number;
+          addClicks: number;
+          saveClicks: number;
+        };
+      }
+    ).__biorxivFixture;
+  });
+  expect(state.saved).toHaveLength(3);
+  expect(state.saved[0]).toEqual(
+    expect.objectContaining({ firstName: 'Ada', lastName: 'Lovelace' }),
+  );
+  expect(state.saved.filter((author) => author.corresponding)).toHaveLength(1);
+  expect(state.addClicks).toBe(3);
+  expect(state.saveClicks).toBe(3);
+  expect(state.continueClicks).toBe(0);
 });

@@ -1,3 +1,4 @@
+import { biorxivAdapter } from './biorxiv/adapter';
 import { natureMtsAdapter } from './nature-mts/adapter';
 import {
   eJournalPressGenericStub,
@@ -12,6 +13,7 @@ import type {
 } from './types';
 
 const adapters: PlatformAdapter[] = [
+  biorxivAdapter,
   natureMtsAdapter,
   eJournalPressGenericStub,
   scholarOneStub,

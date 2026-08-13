@@ -30,6 +30,12 @@ export function normalizeControlText(raw: string): string {
 }
 
 export function isForbiddenControl(el: Element): boolean {
+  if (
+    (el instanceof HTMLInputElement || el instanceof HTMLButtonElement) &&
+    el.type === 'submit'
+  ) {
+    return true;
+  }
   const attrs = normalizeControlText(
     [
       el.id,

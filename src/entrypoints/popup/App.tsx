@@ -130,6 +130,8 @@ export function App() {
     overwrite,
     activeTarget,
   );
+  const previewAllowsFill =
+    previewIsCurrent && (previewSession?.report.errors.length ?? 0) === 0;
   const preview = previewIsCurrent ? previewSession?.report ?? null : null;
   const previewSummary = useMemo(
     () => (preview ? summarizePreview(preview, detected) : null),
@@ -461,9 +463,10 @@ export function App() {
     if (!selected) return;
     setActionError('');
     setActionInFlight('fill');
-    if (!previewSession || !previewIsCurrent) {
+    if (!previewSession || !previewAllowsFill) {
       reportActionError(
-        'Preview this roster and active page with the current settings before filling.',
+        previewSession?.report.errors[0] ??
+          'Preview this roster and active page with the current settings before filling.',
       );
       setActionStatus('');
       setActionInFlight(null);
@@ -772,7 +775,7 @@ export function App() {
                   }`}
                   disabled={
                     !selected ||
-                    !previewIsCurrent ||
+                    !previewAllowsFill ||
                     actionInFlight !== null ||
                     detectStatus === 'unknown' ||
                     detectStatus === 'loading'

@@ -48,7 +48,7 @@ Privacy draft, CWS permission explanation, threat model, release checklist, vers
 
 ### Soon
 
-- Investigate bioRxiv/medRxiv and eLife through public research and redacted fixture capture; implement only after fixture evidence.
+- Complete live smoke validation of the capture-backed bioRxiv/medRxiv modal adapter; investigate eLife and implement only after fixture evidence.
 - Validate Nature/eJournalPress against a real anonymized capture and expand only tested platform-family patterns.
 - Add collaborator/project readiness concepts incrementally after the Fill workflow is dependable.
 - Improve coverage on popup browser bridges, migrations, redaction, DOM chaos, and large-roster edge cases.

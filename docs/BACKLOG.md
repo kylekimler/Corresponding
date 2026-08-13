@@ -61,7 +61,7 @@ Status key: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked (exte
 ## Next five highest-value tasks
 
 1. Decide and enable safe local XLSX parsing
-2. bioRxiv/medRxiv + eLife fixture investigation (no selectors without evidence)
+2. eLife fixture investigation (bioRxiv/medRxiv capture-backed adapter complete)
 3. Raise coverage on migrate + capture redaction edge cases
 4. Add inline “why unresolved” evidence in Preview
 5. Add toast-style fill confirmation with counts only
@@ -78,9 +78,9 @@ Status key: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked (exte
 
 ### Soon
 
-- [ ] bioRxiv/medRxiv public workflow research + redacted compatibility capture plan.
+- [x] bioRxiv/medRxiv redacted capture + repeated-modal adapter and fixture.
 - [ ] eLife public workflow research + redacted compatibility capture plan.
-- [!] Implement those adapters only after real anonymized fixtures exist.
+- [!] Implement eLife only after a real anonymized fixture exists.
 - [!] Validate and broaden Nature/eJournalPress only from real captured HTML.
 - [ ] Expand adversarial coverage for popup bridges, provenance, migration, redaction, and 1/75/500/1000-author flows.
 

@@ -21,6 +21,7 @@ export interface PreviewSummary {
   evidence: string[];
   conflictLabels: string[];
   unresolvedLabels: string[];
+  errors: string[];
   authorGroups: AuthorPreviewGroup[];
   /** Short human status for the banner. */
   headline: string;
@@ -136,7 +137,9 @@ export function summarizePreview(
     .slice(0, 12);
 
   const headline = report.dryRun
-    ? `Preview ready — ${totalMappings} mappings, form unchanged`
+    ? report.errors.length > 0
+      ? `Preview found ${report.errors.length} blocking issue${report.errors.length === 1 ? '' : 's'} — form unchanged`
+      : `Preview ready — ${totalMappings} mappings, form unchanged`
     : `Fill complete — ${report.filled + report.overwritten} fields written`;
 
   return {
@@ -155,6 +158,7 @@ export function summarizePreview(
     evidence: detected?.evidence?.slice(0, 6) ?? [],
     conflictLabels,
     unresolvedLabels,
+    errors: report.errors.slice(0, 12),
     authorGroups: summarizeAuthorGroups(report.plans, report.platformId),
     headline,
   };

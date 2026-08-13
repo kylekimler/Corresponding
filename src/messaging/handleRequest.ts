@@ -3,12 +3,12 @@ import { probeForm } from '@/diagnostics/formProbe';
 import type { ExtensionResponse } from './protocol';
 import { parseExtensionRequest } from './validate';
 
-/** Synchronous request handler shared by the injected Chrome message listener. */
-export function handleExtensionRequest(
+/** Request handler shared by the injected Chrome message listener. */
+export async function handleExtensionRequest(
   message: unknown,
   doc: Document,
   pageUrl: string,
-): ExtensionResponse {
+): Promise<ExtensionResponse> {
   const parsed = parseExtensionRequest(message);
   if (!parsed.ok) {
     return { type: 'ERROR', message: parsed.error };
@@ -50,12 +50,13 @@ export function handleExtensionRequest(
           };
         }
         const adapter = defaultRegistry.require(detected.platformId);
+        const result = adapter.fill(doc, msg.roster, {
+          overwrite: msg.overwrite,
+          dryRun: true,
+        });
         return {
           type: 'FILL_RESULT',
-          result: adapter.fill(doc, msg.roster, {
-            overwrite: msg.overwrite,
-            dryRun: true,
-          }),
+          result,
         };
       }
       case 'FILL': {
@@ -68,12 +69,16 @@ export function handleExtensionRequest(
           };
         }
         const adapter = defaultRegistry.require(detected.platformId);
+        const options = {
+          overwrite: msg.overwrite,
+          dryRun: false,
+        };
+        const result = adapter.fillAsync
+          ? await adapter.fillAsync(doc, msg.roster, options)
+          : adapter.fill(doc, msg.roster, options);
         return {
           type: 'FILL_RESULT',
-          result: adapter.fill(doc, msg.roster, {
-            overwrite: msg.overwrite,
-            dryRun: false,
-          }),
+          result,
         };
       }
       case 'VALIDATE': {

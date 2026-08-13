@@ -4,9 +4,9 @@ import { handleExtensionRequest } from '@/messaging/handleRequest';
 import { createSampleRoster } from '@/roster/sample';
 
 describe('content message handler', () => {
-  it('returns PONG through the Chrome sendResponse-compatible handler', () => {
+  it('returns PONG through the Chrome sendResponse-compatible handler', async () => {
     expect(
-      handleExtensionRequest(
+      await handleExtensionRequest(
         { type: 'PING' },
         document,
         'https://journal.example/submit',
@@ -14,8 +14,8 @@ describe('content message handler', () => {
     ).toEqual({ type: 'PONG' });
   });
 
-  it('refuses malformed messages', () => {
-    const response = handleExtensionRequest(
+  it('refuses malformed messages', async () => {
+    const response = await handleExtensionRequest(
       { type: 'FILL' },
       document,
       'https://journal.example/submit',
@@ -23,14 +23,14 @@ describe('content message handler', () => {
     expect(response.type).toBe('ERROR');
   });
 
-  it('keeps Preview dry and applies Fill on a detected fixture', () => {
+  it('keeps Preview dry and applies Fill on a detected fixture', async () => {
     mountNatureMtsFixture({ slots: 3 });
     const roster = createSampleRoster();
     const firstName = () =>
       (document.getElementById('contrib_auth_1_first_nm') as HTMLInputElement)
         .value;
 
-    const preview = handleExtensionRequest(
+    const preview = await handleExtensionRequest(
       { type: 'PREVIEW', roster, overwrite: false },
       document,
       'http://localhost:3000/fixtures/nature-mts-sample.html',
@@ -38,7 +38,7 @@ describe('content message handler', () => {
     expect(preview.type).toBe('FILL_RESULT');
     expect(firstName()).toBe('');
 
-    const fill = handleExtensionRequest(
+    const fill = await handleExtensionRequest(
       { type: 'FILL', roster, overwrite: false },
       document,
       'http://localhost:3000/fixtures/nature-mts-sample.html',

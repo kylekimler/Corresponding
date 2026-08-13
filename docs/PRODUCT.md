@@ -21,7 +21,7 @@ A Chrome Manifest V3 extension that:
 7. Validates the resulting form.
 8. Leaves final submission, certification, payment, and legal actions to the human.
 
-## First supported platform
+## Supported platform adapters
 
 Nature MTS / eJournalPress, based on observed DOM field IDs such as:
 
@@ -30,10 +30,16 @@ Nature MTS / eJournalPress, based on observed DOM field IDs such as:
 - `contrib_auth_{n}_*`
 - `current_contrib_auth_{n}_author_pid`
 
-This is the first implemented adapter, not the strategic destination order.
-Near-term coverage priority is bioRxiv/medRxiv, eLife, then broader real-world
-Nature/eJournalPress validation. New adapters still require anonymized fixture
-evidence before selectors are implemented.
+This was the first implemented adapter, not the strategic destination order.
+Near-term coverage priority is live bioRxiv/medRxiv validation, eLife fixture
+capture, then broader real-world Nature/eJournalPress validation. New adapters
+still require anonymized fixture evidence before selectors are implemented.
+
+bioRxiv/medRxiv author entry is now implemented from redacted live structural
+captures as a repeated-modal workflow. It fills and saves author dialogs only;
+it refuses pages that already contain author rows and never clicks page
+continuation or submission controls. Automated fixture verification is complete;
+live smoke validation remains pending.
 
 ## Non-goals (v0)
 
