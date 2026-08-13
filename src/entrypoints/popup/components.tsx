@@ -114,6 +114,16 @@ export function PreviewResultCard(props: { summary: PreviewSummary }) {
           Evidence: {s.evidence.slice(0, 4).join(', ')}
         </p>
       )}
+      {s.errors.length > 0 && (
+        <div>
+          <p className="danger gentle-issue-pulse tight">Fill blocked</p>
+          <ul className="compact">
+            {s.errors.map((error) => (
+              <li key={error}>{error}</li>
+            ))}
+          </ul>
+        </div>
+      )}
       {s.authorGroups.length > 0 && (
         <details
           className="author-confidence"

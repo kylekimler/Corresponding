@@ -6,7 +6,11 @@ You import authors once (CSV, saved local roster, or future Google Sheets read-o
 
 ## Status
 
-Active development. First supported platform: **Nature MTS / eJournalPress** (synthetic DOM fixture based on observed field IDs).
+Active development. Supported adapters:
+
+- **Nature MTS / eJournalPress** — synthetic fixture based on observed field IDs
+- **bioRxiv / medRxiv author entry** — capture-backed repeated Add Author dialog;
+  automated fixture coverage complete, first live smoke pending
 
 ## Quick start
 

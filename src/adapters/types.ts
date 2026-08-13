@@ -1,6 +1,7 @@
 import type { Author, Roster } from '@/schema/author';
 
 export type PlatformId =
+  | 'biorxiv'
   | 'nature-mts'
   | 'ejournalpress-generic'
   | 'scholarone'
@@ -95,6 +96,12 @@ export interface PlatformAdapter {
   detect(doc: Document): DetectResult;
   inspect(doc: Document): InspectReport;
   fill(doc: Document, roster: Roster, options: FillOptions): FillReport;
+  /** Optional orchestrator for portals that commit one modal per author. */
+  fillAsync?(
+    doc: Document,
+    roster: Roster,
+    options: FillOptions,
+  ): Promise<FillReport>;
   validate(doc: Document, roster: Roster): ValidateReport;
 }
 

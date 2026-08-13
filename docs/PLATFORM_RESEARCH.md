@@ -6,13 +6,16 @@ Research date: 2026-08-12. Based on public documentation and vendor marketing pa
 
 ## bioRxiv / medRxiv
 
-- **Current status:** Priority platform; no adapter yet.
-- **Observed workflow evidence needed:** A redacted compatibility capture of
-  the author-entry page with its repeated author dialog closed, plus a second
-  capture with one empty dialog open.
-- **Likely interaction shape:** Repeated, user-opened author dialogs require a
-  deterministic one-author-at-a-time state machine. This is an architectural
-  observation only; selectors and button behavior must come from the captures.
+- **Current status:** Capture-backed adapter implemented; synthetic modal
+  fixture and automated browser journey pass. First live smoke is pending.
+- **Observed workflow evidence:** Redacted closed/open captures confirm the
+  `.v-dialog.v-dialog--active` editor, visible external Add Author action,
+  dialog Save action, stable `firstName`/`lastName`/`affiliation` names, and
+  page-level `CA_continue`.
+- **Interaction shape:** Deterministic one-author-at-a-time state machine.
+  Preview never opens the dialog. Fill preflights the complete roster, refuses
+  pages with existing author rows, then opens, fills, and saves one dialog per
+  author.
 - **Safety:** Never save an incomplete author merely to capture the page. Never
   touch manuscript submission, certification, license, or payment controls.
 

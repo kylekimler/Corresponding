@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Synthetic bioRxiv repeated author dialog</title>
+    <style>
+      .v-dialog { display: none; border: 1px solid #888; padding: 1rem; }
+      .v-dialog--active { display: block; }
+      .v-input { margin: 0.4rem 0; }
+    </style>
+  </head>
+  <body>
+    <div id="submission_form">
+      <main class="v-content">
+        <button type="button" class="v-btn theme--light primary" id="add-author">
+          Add Author
+        </button>
+        <table class="v-datatable v-table theme--light">
+          <thead><tr><th>Author</th><th>Email</th></tr></thead>
+          <tbody id="author-rows"><tr><td colspan="2">No authors added</td></tr></tbody>
+        </table>
+      </main>
+      <div class="v-dialog__content">
+        <div class="v-dialog" id="author-dialog">
+          <div class="v-card">
+            <div class="v-card__text">
+              <label><input type="checkbox" id="consortium" /> Change to a Collaborative Group/Consortium</label>
+              <label><input type="checkbox" id="corresponding" /> Mark as Corresponding Author</label>
+              <div class="v-input"><label>Email</label><input type="text" id="email" /></div>
+              <div class="v-input"><label>First Name</label><input type="text" name="firstName" /></div>
+              <div class="v-input"><label>Middle Name(s)/Initial(s)</label><input type="text" id="middle-name" /></div>
+              <div class="v-input"><label>Last Name</label><input type="text" name="lastName" /></div>
+              <div class="v-input"><label>Institution</label><input type="text" name="affiliation" /></div>
+            </div>
+            <div class="v-card__actions">
+              <button type="button" class="v-btn primary" id="save-author">Save</button>
+              <button type="button" class="v-btn" id="cancel-author">Cancel</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <input type="submit" name="CA_continue" value="Save and Continue" />
+    </div>
+    <script>
+      (() => {
+        const saved = [];
+        const dialog = document.querySelector('#author-dialog');
+        const rows = document.querySelector('#author-rows');
+        const continuation = document.querySelector('[name="CA_continue"]');
+        window.__biorxivFixture = {
+          saved,
+          continueClicks: 0,
+          addClicks: 0,
+          saveClicks: 0,
+        };
+        function reset() {
+          dialog.querySelectorAll('input').forEach((input) => {
+            if (input.type === 'checkbox') input.checked = false;
+            else input.value = '';
+          });
+        }
+        function render() {
+          rows.innerHTML = saved
+            .map(
+              (author) =>
+                `<tr><td>${author.firstName} ${author.lastName}</td><td>${author.email}</td></tr>`,
+            )
+            .join('');
+        }
+        document.querySelector('#add-author').addEventListener('click', () => {
+          window.__biorxivFixture.addClicks += 1;
+          reset();
+          dialog.classList.add('v-dialog--active');
+        });
+        document.querySelector('#save-author').addEventListener('click', () => {
+          window.__biorxivFixture.saveClicks += 1;
+          saved.push({
+            email: document.querySelector('#email').value,
+            firstName: document.querySelector('[name="firstName"]').value,
+            middleName: document.querySelector('#middle-name').value,
+            lastName: document.querySelector('[name="lastName"]').value,
+            affiliation: document.querySelector('[name="affiliation"]').value,
+            corresponding: document.querySelector('#corresponding').checked,
+          });
+          render();
+          dialog.classList.remove('v-dialog--active');
+        });
+        continuation.addEventListener('click', (event) => {
+          event.preventDefault();
+          window.__biorxivFixture.continueClicks += 1;
+        });
+      })();
+    </script>
+  </body>
+</html>

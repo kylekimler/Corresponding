@@ -8,10 +8,17 @@ export default defineContentScript({
   main() {
     browser.runtime.onMessage.addListener(
       (message: unknown, _sender, sendResponse) => {
-        // Chrome ignores arbitrary return objects from onMessage listeners.
-        // Respond synchronously through sendResponse instead.
-        sendResponse(handleExtensionRequest(message, document, location.href));
-        return false;
+        // Keep Chrome's response channel open for modal-based adapters that
+        // save one author at a time.
+        void handleExtensionRequest(message, document, location.href)
+          .then(sendResponse)
+          .catch((error: unknown) =>
+            sendResponse({
+              type: 'ERROR',
+              message: error instanceof Error ? error.message : String(error),
+            }),
+          );
+        return true;
       },
     );
   },
