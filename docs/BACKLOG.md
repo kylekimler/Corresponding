@@ -34,7 +34,7 @@ Status key: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked (exte
 
 ## Local remaining (not blocked)
 
-- [x] Compact first-use popup + Import authors (paste/CSV) + Manage roster
+- [x] Compact first-use popup + Import authors (paste/CSV) + read-only review
 - [x] Preview result card with mapping breakdown (exact/semantic/…)
 - [x] CSV mapping data preview
 - [x] Empty-state one-click sample roster import

@@ -4,6 +4,18 @@
 
 Research date: 2026-08-12. Based on public documentation and vendor marketing pages — not authenticated portal access.
 
+## bioRxiv / medRxiv
+
+- **Current status:** Priority platform; no adapter yet.
+- **Observed workflow evidence needed:** A redacted compatibility capture of
+  the author-entry page with its repeated author dialog closed, plus a second
+  capture with one empty dialog open.
+- **Likely interaction shape:** Repeated, user-opened author dialogs require a
+  deterministic one-author-at-a-time state machine. This is an architectural
+  observation only; selectors and button behavior must come from the captures.
+- **Safety:** Never save an incomplete author merely to capture the page. Never
+  touch manuscript submission, certification, license, or payment controls.
+
 ## ScholarOne Manuscripts (Clarivate)
 
 - **Terminology:** Manuscript Central, ScholarOne Manuscripts, center sites often `*.manuscriptcentral.com`.

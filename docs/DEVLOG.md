@@ -4,6 +4,14 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-13 01:30 UTC
+- import reliability: Reproduced the supplied HGCA workbook's 17-column header shape. Unknown, ambiguous, duplicate-affiliation, and administrative columns now default to Ignore; required name columns remain detected. Mapping updates use functional state so a final selection cannot be lost before Import.
+- interaction feedback: Preview/Fill show working labels, busy states, and tactile button response. Inline input/action errors use a brief low-intensity red pulse with reduced-motion support.
+- example fixture: Removed the deliberately linked second-author PID from the default Nature demo so the ordinary three-author example is a successful fill; linked-account refusal remains covered by dedicated adapter/security tests.
+- workflow simplification: Replaced roster CRUD/edit/export controls with a read-only imported-author review and issue summary. Source corrections happen in the spreadsheet followed by re-import.
+- Sheets: Made clipboard import explicitly Google Sheets/Excel friendly. Configured builds now support read-only Google Sheet URL import through Chrome Identity; unconfigured builds retain the three-permission/no-host-permission manifest and direct users to private clipboard paste.
+- bioRxiv intake: Added reviewed capture download, an unsupported-portal capture entry point, and two-state instructions for the author page plus empty repeated-author dialog. No selectors were guessed without the captures.
+
 ### 2026-08-13 01:00 UTC
 - changed: Added an official Playwright MV3 end-to-end environment for remote Cursor terminals. It launches current bundled Chromium with an isolated persistent context, loads a test copy of the production extension, and intercepts the pinned localhost fixture without another server.
 - safety gate: E2E setup rejects production manifests with host permissions, automatic content scripts, or permissions beyond `activeTab`, `storage`, and `scripting`. Only the ignored `.wxt/` test copy receives a localhost host grant because programmatic popup tabs do not receive a toolbar `activeTab` gesture.

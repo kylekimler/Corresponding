@@ -186,7 +186,7 @@ export function PreviewResultCard(props: { summary: PreviewSummary }) {
 export function AttentionList(props: {
   items: AuthorAttention[];
   totalAuthors: number;
-  onManage: () => void;
+  onReview: () => void;
 }) {
   if (props.items.length === 0) return null;
   const shown = props.items.slice(0, 8);
@@ -213,8 +213,8 @@ export function AttentionList(props: {
           +{props.items.length - shown.length} more
         </p>
       )}
-      <button type="button" className="linkish" onClick={props.onManage}>
-        Fix in Manage roster →
+      <button type="button" className="linkish" onClick={props.onReview}>
+        Review import summary →
       </button>
     </section>
   );

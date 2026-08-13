@@ -91,9 +91,13 @@ permission, automatic content script, or permissions beyond `activeTab`,
 bioRxiv filling is not implemented yet. On a live author-entry page, the current
 safe test is: detection reports unsupported, Preview refuses without mutation,
 Fill stays unavailable, and Advanced → Capture diagnostic produces structural
-metadata with values redacted. Review a capture for names, emails, manuscript
-titles, credentials, and tokens before sharing it. Do not automate login, final
-submission, certification, copyright, payment, or legal actions.
+metadata with values redacted. Download one reviewed capture with the author
+dialog closed, then click **Add author**, leave the empty dialog open, and
+download a second capture. Do not save the empty author. Review both files for
+names, emails, manuscript titles, credentials, and tokens before sharing them.
+Raw HTML or a Chrome-console dump is not required and can leak authenticated
+page data. Do not automate login, final submission, certification, copyright,
+payment, or legal actions.
 
 An authenticated live bioRxiv workflow still requires a visible local browser.
 Use the dedicated WXT profile locally, or load `.output/chrome-mv3` unpacked into

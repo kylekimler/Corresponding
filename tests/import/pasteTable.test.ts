@@ -59,6 +59,53 @@ describe('paste from spreadsheet', () => {
     const mapping = suggestColumnMapping(parsed.headers);
     expect(mapping.requiresConfirmation).toBe(true);
     expect(mappingIsComplete(mapping.map)).toBe(false);
+    expect(Object.values(mapping.map)).toEqual(['ignore', 'ignore', 'ignore']);
+  });
+
+  it('defaults unrelated workbook columns to Ignore and remains importable', () => {
+    const headers = [
+      'Order',
+      'Author type',
+      'Given name',
+      'Family name',
+      'Name on paper',
+      'ORCID',
+      'Email (portal)',
+      'Affiliation numbers',
+      'Affiliation 1',
+      'Affiliation 2',
+      'Affiliation 3',
+      'Affiliation 4',
+      'Affiliation 5',
+      'Equal contribution',
+      'Joint supervision',
+      'Portal status',
+      'Notes',
+    ];
+
+    const mapping = suggestColumnMapping(headers);
+
+    expect(mapping.map).toEqual({
+      0: 'sequence',
+      1: 'ignore',
+      2: 'givenName',
+      3: 'familyName',
+      4: 'ignore',
+      5: 'orcid',
+      6: 'email',
+      7: 'ignore',
+      8: 'institution',
+      9: 'ignore',
+      10: 'ignore',
+      11: 'ignore',
+      12: 'ignore',
+      13: 'ignore',
+      14: 'ignore',
+      15: 'ignore',
+      16: 'ignore',
+    });
+    expect(mappingIsComplete(mapping.map)).toBe(true);
+    expect(Object.keys(mapping.map)).toHaveLength(headers.length);
   });
 
   it('detects tabular paste', () => {

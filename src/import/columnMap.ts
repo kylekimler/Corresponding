@@ -123,7 +123,7 @@ export function suggestColumnMapping(headers: string[]): ColumnMapping {
 
     if (unique.length === 1) {
       const only = unique[0]!;
-      if (used.has(only) && only !== 'institution') {
+      if (used.has(only)) {
         ambiguous = true;
         requiresConfirmation = true;
       } else {
@@ -138,9 +138,10 @@ export function suggestColumnMapping(headers: string[]): ColumnMapping {
       requiresConfirmation = true;
     }
 
-    if (suggested) {
-      map[columnIndex] = suggested;
-    }
+    // Every visible select has a safe value. Unknown, ambiguous, duplicate,
+    // and blank columns default to Ignore instead of making people classify
+    // unrelated spreadsheet administration columns one by one.
+    map[columnIndex] = suggested ?? 'ignore';
 
     suggestions.push({
       header,

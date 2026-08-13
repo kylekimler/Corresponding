@@ -10,24 +10,17 @@ import {
 import { detectImportFileKind, excelImportStatus } from '@/import/fileKinds';
 import { parsePastedTable } from '@/import/pasteTable';
 import { rowsToRoster } from '@/import/rosterFromTable';
-import {
-  addAuthor,
-  createEmptyRoster,
-  removeAuthor,
-  reorderAuthors,
-  renameRoster,
-  setCorrespondingAuthor,
-  updateAuthor,
-} from '@/roster/mutations';
-import { normalizeOrcid } from '@/schema/orcid';
+import { createEmptyRoster } from '@/roster/mutations';
 import { createRosterStore } from '@/roster/storage';
 import {
   importSampleRosterOnce,
   sampleFillBlockReason,
 } from '@/roster/sample';
-import type { Author, Roster, RosterSource } from '@/schema/author';
+import type { Roster, RosterSource } from '@/schema/author';
 import { previewCapture } from '@/diagnostics/capture';
 import { createChromeGoogleSheetsClient } from '@/sheets/chromeClient';
+import { sanitizeSheetsError } from '@/sheets/errors';
+import { loadSheetPreview } from '@/sheets/importFlow';
 import { sheetsChooserAvailability } from '@/sheets/types';
 import {
   auditRecordFromFillReport,
@@ -68,7 +61,7 @@ const popupPreferences = createPopupPreferences();
 const showSampleOnboarding = import.meta.env.DEV;
 
 type View = 'main' | 'import' | 'manage' | 'advanced';
-type ImportMode = 'chooser' | 'paste' | 'csv' | 'mapping';
+type ImportMode = 'chooser' | 'paste' | 'csv' | 'sheets' | 'mapping';
 
 type PendingImport = {
   headers: string[];
@@ -98,16 +91,19 @@ export function App() {
   const [error, setError] = useState('');
   const [actionStatus, setActionStatus] = useState('');
   const [actionError, setActionError] = useState('');
+  const [actionInFlight, setActionInFlight] = useState<
+    'preview' | 'fill' | null
+  >(null);
+  const [actionIssuePulse, setActionIssuePulse] = useState(0);
   const [pending, setPending] = useState<PendingImport | null>(null);
   const [pasteText, setPasteText] = useState('');
+  const [sheetUrl, setSheetUrl] = useState('');
+  const [sheetLoading, setSheetLoading] = useState(false);
   const [csvMeta, setCsvMeta] = useState<{ name: string; rows: number } | null>(
     null,
   );
   const [dragOver, setDragOver] = useState(false);
   const [diagText, setDiagText] = useState('');
-  const [renameValue, setRenameValue] = useState('');
-  const [editingAuthorId, setEditingAuthorId] = useState('');
-  const [authorDraft, setAuthorDraft] = useState<Partial<Author>>({});
   const [menuOpen, setMenuOpen] = useState(false);
   const [sampleCreating, setSampleCreating] = useState(false);
   const [auditCount, setAuditCount] = useState(0);
@@ -201,6 +197,11 @@ export function App() {
     }
   }
 
+  function reportActionError(message: string) {
+    setActionError(message);
+    setActionIssuePulse((pulse) => pulse + 1);
+  }
+
   useEffect(() => {
     void refreshRosters();
     void runDetect();
@@ -236,11 +237,6 @@ export function App() {
   }, [previewSession, previewIsCurrent]);
 
   useEffect(() => {
-    setRenameValue(selected?.name ?? '');
-    setEditingAuthorId('');
-  }, [selected?.id]);
-
-  useEffect(() => {
     if (!menuOpen) return;
     function onDoc(e: MouseEvent) {
       if (!menuRef.current?.contains(e.target as Node)) setMenuOpen(false);
@@ -254,6 +250,7 @@ export function App() {
     setStatus('');
     setImportMode('chooser');
     setPasteText('');
+    setSheetUrl('');
     setCsvMeta(null);
     setPending(null);
     setView('import');
@@ -300,11 +297,14 @@ export function App() {
   }
 
   function updateMapping(columnIndex: number, value: CanonicalColumn) {
-    if (!pending) return;
-    const map = { ...pending.mapping.map, [columnIndex]: value };
-    setPending({
-      ...pending,
-      mapping: { ...pending.mapping, map },
+    setError('');
+    setPending((current) => {
+      if (!current) return current;
+      const map = { ...current.mapping.map, [columnIndex]: value };
+      return {
+        ...current,
+        mapping: { ...current.mapping, map },
+      };
     });
   }
 
@@ -323,6 +323,26 @@ export function App() {
       name: 'Pasted authors',
       source: 'csv',
     });
+  }
+
+  async function handleGoogleSheetImport() {
+    setError('');
+    setStatus('');
+    setSheetLoading(true);
+    try {
+      const preview = await loadSheetPreview(sheetsClient, sheetUrl);
+      await importTable({
+        headers: preview.headers,
+        rows: preview.rows,
+        mapping: preview.mapping,
+        name: `Google Sheet · ${preview.selectedTab.title}`,
+        source: 'google_sheets',
+      });
+    } catch (err) {
+      setError(sanitizeSheetsError(err));
+    } finally {
+      setSheetLoading(false);
+    }
   }
 
   async function handleCsvFile(file: File) {
@@ -384,105 +404,17 @@ export function App() {
     }
   }
 
-  async function saveRename() {
-    if (!selected) return;
-    try {
-      const next = renameRoster(selected, renameValue);
-      await store.save(next);
-      await refreshRosters(next.id);
-      setStatus('Roster renamed.');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    }
-  }
-
-  async function duplicateSelected() {
-    if (!selected) return;
-    const dup = await store.duplicate(selected.id);
-    await refreshRosters(dup.id);
-    setStatus(`Duplicated as “${dup.name}”.`);
-  }
-
-  async function deleteSelected() {
-    if (!selected) return;
-    if (!confirm(`Delete local roster “${selected.name}”?`)) return;
-    await store.remove(selected.id);
-    await refreshRosters();
-    setView('main');
-    setStatus('Roster deleted.');
-  }
-
-  async function exportSelected(kind: 'json' | 'csv') {
-    if (!selected) return;
-    if (kind === 'json') {
-      downloadText(
-        `${selected.name}.json`,
-        await store.exportJson(selected.id),
-        'application/json',
-      );
-    } else {
-      downloadText(
-        `${selected.name}.csv`,
-        await store.exportCsv(selected.id),
-        'text/csv',
-      );
-    }
-    setStatus(`Exported ${kind.toUpperCase()}.`);
-  }
-
-  async function moveAuthor(fromIndex: number, toIndex: number) {
-    if (!selected) return;
-    const next = reorderAuthors(selected, fromIndex, toIndex);
-    await store.save(next);
-    await refreshRosters(next.id);
-  }
-
-  async function saveAuthorEdit() {
-    if (!selected || !editingAuthorId) return;
-    let next = updateAuthor(selected, editingAuthorId, {
-      givenName: authorDraft.givenName,
-      middleName: authorDraft.middleName,
-      familyName: authorDraft.familyName,
-      email: authorDraft.email,
-      orcid: normalizeOrcid(authorDraft.orcid),
-    });
-    if (authorDraft.isCorresponding) {
-      next = setCorrespondingAuthor(next, editingAuthorId);
-    }
-    await store.save(next);
-    setEditingAuthorId('');
-    await refreshRosters(next.id);
-    setStatus('Author updated.');
-  }
-
-  async function addBlankAuthor() {
-    if (!selected) return;
-    const next = addAuthor(selected);
-    await store.save(next);
-    const created = next.authors[next.authors.length - 1]!;
-    setEditingAuthorId(created.id);
-    setAuthorDraft(created);
-    await refreshRosters(next.id);
-  }
-
-  async function deleteAuthor(authorId: string) {
-    if (!selected) return;
-    const next = removeAuthor(selected, authorId);
-    await store.save(next);
-    if (editingAuthorId === authorId) setEditingAuthorId('');
-    await refreshRosters(next.id);
-  }
-
   async function runPreview() {
     if (!selected) return;
     setActionError('');
+    setActionInFlight('preview');
     setActionStatus('Running preview…');
     setValidation(null);
     try {
       const target = await getActiveTabTarget();
       if (!target) {
         setActiveTarget(null);
-        setActionError(
+        reportActionError(
           'Open a journal submission form in an http(s) tab, then Preview again.',
         );
         setActionStatus('');
@@ -498,7 +430,7 @@ export function App() {
       );
       if (res.type === 'ERROR') {
         setPreviewSession(null);
-        setActionError(res.message);
+        reportActionError(res.message);
         setActionStatus('');
         return;
       }
@@ -518,19 +450,23 @@ export function App() {
       }
     } catch (err) {
       setPreviewSession(null);
-      setActionError(err instanceof Error ? err.message : String(err));
+      reportActionError(err instanceof Error ? err.message : String(err));
       setActionStatus('');
+    } finally {
+      setActionInFlight(null);
     }
   }
 
   async function runFill() {
     if (!selected) return;
     setActionError('');
+    setActionInFlight('fill');
     if (!previewSession || !previewIsCurrent) {
-      setActionError(
+      reportActionError(
         'Preview this roster and active page with the current settings before filling.',
       );
       setActionStatus('');
+      setActionInFlight(null);
       return;
     }
     const expectedTarget = {
@@ -545,8 +481,9 @@ export function App() {
         hasSuccessfulPreview && (await isActiveDevelopmentFixtureTab()),
       );
       if (blockReason) {
-        setActionError(blockReason);
+        reportActionError(blockReason);
         setActionStatus('');
+        setActionInFlight(null);
         return;
       }
     }
@@ -563,7 +500,7 @@ export function App() {
       );
       if (res.type === 'ERROR') {
         setPreviewSession(null);
-        setActionError(res.message);
+        reportActionError(res.message);
         setActionStatus('');
         return;
       }
@@ -575,12 +512,16 @@ export function App() {
           expectedTarget,
         );
         if (v.type === 'ERROR') {
-          setActionError(`Fields were filled, but validation failed: ${v.message}`);
+          reportActionError(
+            `Fields were filled, but validation failed: ${v.message}`,
+          );
           setActionStatus('Fill complete. Review every field before submitting.');
           return;
         }
         if (v.type !== 'VALIDATE_RESULT') {
-          setActionError('Fields were filled, but validation returned no result.');
+          reportActionError(
+            'Fields were filled, but validation returned no result.',
+          );
           setActionStatus('Fill complete. Review every field before submitting.');
           return;
         }
@@ -594,8 +535,10 @@ export function App() {
       }
     } catch (err) {
       setPreviewSession(null);
-      setActionError(err instanceof Error ? err.message : String(err));
+      reportActionError(err instanceof Error ? err.message : String(err));
       setActionStatus('');
+    } finally {
+      setActionInFlight(null);
     }
   }
 
@@ -658,6 +601,15 @@ export function App() {
         {detectStatus === 'error' && (
           <button type="button" className="linkish" onClick={() => void runDetect()}>
             Retry detection
+          </button>
+        )}
+        {(detectStatus === 'unknown' || detectStatus === 'error') && (
+          <button
+            type="button"
+            className="linkish compatibility-link"
+            onClick={() => setView('advanced')}
+          >
+            Capture compatibility info
           </button>
         )}
 
@@ -735,17 +687,7 @@ export function App() {
                           setView('manage');
                         }}
                       >
-                        Manage roster
-                      </button>
-                      <button
-                        type="button"
-                        role="menuitem"
-                        onClick={() => {
-                          setMenuOpen(false);
-                          void createRoster();
-                        }}
-                      >
-                        New roster
+                        Review imported authors
                       </button>
                       <button
                         type="button"
@@ -799,7 +741,7 @@ export function App() {
             <AttentionList
               items={attention}
               totalAuthors={selected.authors.length}
-              onManage={() => setView('manage')}
+              onReview={() => setView('manage')}
             />
 
             <section className="panel actions-panel">
@@ -814,23 +756,31 @@ export function App() {
               <div className="primary-actions">
                 <button
                   type="button"
-                  className="secondary"
-                  disabled={!selected}
+                  className={`secondary action-button ${
+                    actionInFlight === 'preview' ? 'action-button-working' : ''
+                  }`}
+                  disabled={!selected || actionInFlight !== null}
+                  aria-busy={actionInFlight === 'preview'}
                   onClick={() => void runPreview()}
                 >
-                  Preview
+                  {actionInFlight === 'preview' ? 'Previewing…' : 'Preview'}
                 </button>
                 <button
                   type="button"
+                  className={`action-button ${
+                    actionInFlight === 'fill' ? 'action-button-working' : ''
+                  }`}
                   disabled={
                     !selected ||
                     !previewIsCurrent ||
+                    actionInFlight !== null ||
                     detectStatus === 'unknown' ||
                     detectStatus === 'loading'
                   }
+                  aria-busy={actionInFlight === 'fill'}
                   onClick={() => void runFill()}
                 >
-                  Fill
+                  {actionInFlight === 'fill' ? 'Filling…' : 'Fill'}
                 </button>
               </div>
               <p className="safety-near-fill">
@@ -843,7 +793,14 @@ export function App() {
                 aria-atomic="true"
               >
                 {actionStatus && <p className="ok tight">{actionStatus}</p>}
-                {actionError && <p className="danger tight">{actionError}</p>}
+                {actionError && (
+                  <p
+                    key={actionIssuePulse}
+                    className="danger gentle-issue-pulse tight"
+                  >
+                    {actionError}
+                  </p>
+                )}
               </div>
             </section>
 
@@ -871,7 +828,7 @@ export function App() {
               className="linkish manage-link"
               onClick={() => setView('manage')}
             >
-              Manage roster →
+              Review imported authors →
             </button>
           </>
         )}
@@ -908,8 +865,8 @@ export function App() {
               className="import-option"
               onClick={() => setImportMode('paste')}
             >
-              <strong>Paste from spreadsheet</strong>
-              <span>Copy a table from Sheets, Excel, or Numbers</span>
+              <strong>Paste Google Sheet or Excel table</strong>
+              <span>Select the table, copy, and paste — no sign-in needed</span>
             </button>
             <button
               type="button"
@@ -926,7 +883,12 @@ export function App() {
               <strong>Upload Excel</strong>
               <span>{excelStatus.reason}</span>
             </button>
-            <button type="button" className="import-option" disabled={!sheetsUi.enabled}>
+            <button
+              type="button"
+              className="import-option"
+              disabled={!sheetsUi.enabled}
+              onClick={() => setImportMode('sheets')}
+            >
               <strong>{sheetsUi.label}</strong>
               <span>{sheetsUi.hint}</span>
             </button>
@@ -947,7 +909,8 @@ export function App() {
         {importMode === 'paste' && (
           <section className="panel">
             <p className="muted">
-              Paste a header row and author rows. Tabs from spreadsheet copy work best.
+              Paste the copied table, including its header row. Unrecognized
+              columns default to Ignore.
             </p>
             <textarea
               className="paste-target"
@@ -965,6 +928,46 @@ export function App() {
               <button
                 type="button"
                 className="secondary"
+                onClick={() => setImportMode('chooser')}
+              >
+                Cancel
+              </button>
+            </div>
+          </section>
+        )}
+
+        {importMode === 'sheets' && (
+          <section className="panel">
+            <h2>Import Google Sheet</h2>
+            <p className="muted">
+              Paste the URL of a spreadsheet you can access. Corresponding
+              signs in with Google, reads it once, and stores the imported
+              roster locally. It never writes to the sheet.
+            </p>
+            <input
+              type="url"
+              className="sheet-url"
+              aria-label="Google Sheet URL"
+              placeholder="https://docs.google.com/spreadsheets/d/…"
+              value={sheetUrl}
+              onChange={(event) => {
+                setSheetUrl(event.target.value);
+                setError('');
+              }}
+            />
+            <div className="row">
+              <button
+                type="button"
+                disabled={!sheetUrl.trim() || sheetLoading}
+                aria-busy={sheetLoading}
+                onClick={() => void handleGoogleSheetImport()}
+              >
+                {sheetLoading ? 'Connecting…' : 'Import read-only'}
+              </button>
+              <button
+                type="button"
+                className="secondary"
+                disabled={sheetLoading}
                 onClick={() => setImportMode('chooser')}
               >
                 Cancel
@@ -1060,6 +1063,15 @@ export function App() {
                 />
               </div>
             ))}
+            {error && (
+              <p
+                className="danger gentle-issue-pulse mapping-feedback"
+                role="alert"
+                aria-live="assertive"
+              >
+                {error}
+              </p>
+            )}
             <div className="row">
               <button type="button" onClick={() => void confirmMapping()}>
                 Import
@@ -1079,12 +1091,12 @@ export function App() {
         )}
 
         {status && <p className="ok">{status}</p>}
-        {error && <p className="danger">{error}</p>}
+        {error && importMode !== 'mapping' && <p className="danger">{error}</p>}
       </div>
     );
   }
 
-  /* ---------------- MANAGE ROSTER ---------------- */
+  /* ---------------- REVIEW IMPORT ---------------- */
   if (view === 'manage') {
     return (
       <div className="app">
@@ -1092,199 +1104,64 @@ export function App() {
           <button type="button" className="linkish" onClick={() => setView('main')}>
             ← Back
           </button>
-          <h1>Manage roster</h1>
+          <h1>Review imported authors</h1>
         </header>
 
         {!selected ? (
           <p className="warn">No roster selected.</p>
         ) : (
-          <>
-            <section className="panel">
-              <div className="row">
-                <input
-                  aria-label="Rename roster"
-                  value={renameValue}
-                  onChange={(e) => setRenameValue(e.target.value)}
-                  style={{ flex: 1 }}
-                />
-                <button type="button" className="secondary" onClick={() => void saveRename()}>
-                  Rename
-                </button>
-              </div>
-              <div className="row" style={{ marginTop: 8 }}>
-                <button type="button" className="secondary" onClick={() => void duplicateSelected()}>
-                  Duplicate
-                </button>
-                <button type="button" className="secondary" onClick={() => void exportSelected('json')}>
-                  Export JSON
-                </button>
-                <button type="button" className="secondary" onClick={() => void exportSelected('csv')}>
-                  Export CSV
-                </button>
-                <button type="button" className="secondary" onClick={() => void deleteSelected()}>
-                  Delete
-                </button>
-              </div>
-            </section>
-
-            <section className="panel">
-              <div className="row" style={{ marginBottom: 8 }}>
-                <button type="button" className="secondary" onClick={() => void addBlankAuthor()}>
-                  Add author
-                </button>
-                <button type="button" className="secondary" onClick={openImport}>
-                  Import authors
-                </button>
-              </div>
-
-              {attention.length > 0 && (
-                <>
-                  <h2>Needs attention</h2>
-                  <ul className="attention-list">
-                    {attention.map(({ author, reasons }) => (
-                        <li key={author.id}>
-                          <div className="attention-name">
-                            {author.sequence}. {author.givenName} {author.familyName}
-                          </div>
-                          <div className="attention-reasons">{reasons.join(' · ')}</div>
-                          <button
-                            type="button"
-                            className="linkish"
-                            onClick={() => {
-                              setEditingAuthorId(author.id);
-                              setAuthorDraft(author);
-                            }}
-                          >
-                            Edit
-                          </button>
-                        </li>
-                      ))}
-                  </ul>
-                </>
-              )}
-
-              <details className="author-all">
-                <summary>
-                  All authors ({sortedAuthors.length})
-                </summary>
-                <ul className="compact author-list">
-                  {sortedAuthors.map((author, index) => (
+          <section className="panel">
+            <div className="review-summary">
+              <strong>{selected.name}</strong>
+              <span className="muted">
+                {selected.authors.length} authors · {attention.length} flagged
+              </span>
+            </div>
+            <p className="muted">
+              This is a read-only preview of what Corresponding imported. Fix
+              source data in your spreadsheet, then import it again.
+            </p>
+            {attention.length > 0 && (
+              <div className="review-issues">
+                <h2>Import summary</h2>
+                <ul className="attention-list">
+                  {attention.map(({ author, reasons }) => (
                     <li key={author.id}>
-                      <div className="row">
-                        <span style={{ flex: 1 }}>
-                          {author.sequence}. {author.givenName} {author.familyName}
-                          {author.isCorresponding ? ' (corr)' : ''}
-                        </span>
-                        <button
-                          type="button"
-                          className="secondary"
-                          disabled={index === 0}
-                          onClick={() => void moveAuthor(index, index - 1)}
-                        >
-                          Up
-                        </button>
-                        <button
-                          type="button"
-                          className="secondary"
-                          disabled={index === sortedAuthors.length - 1}
-                          onClick={() => void moveAuthor(index, index + 1)}
-                        >
-                          Down
-                        </button>
-                        <button
-                          type="button"
-                          className="secondary"
-                          onClick={() => {
-                            setEditingAuthorId(author.id);
-                            setAuthorDraft(author);
-                          }}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          className="secondary"
-                          onClick={() => void deleteAuthor(author.id)}
-                        >
-                          Remove
-                        </button>
+                      <div className="attention-name">
+                        {author.sequence}. {author.givenName} {author.familyName}
+                      </div>
+                      <div className="attention-reasons">
+                        {reasons.join(' · ')}
                       </div>
                     </li>
                   ))}
                 </ul>
-              </details>
-
-              {editingAuthorId && (
-                <div className="edit-author">
-                  <div className="row" style={{ marginBottom: 6 }}>
-                    <input
-                      placeholder="Given"
-                      value={authorDraft.givenName ?? ''}
-                      onChange={(e) =>
-                        setAuthorDraft((d) => ({ ...d, givenName: e.target.value }))
-                      }
-                    />
-                    <input
-                      placeholder="Family"
-                      value={authorDraft.familyName ?? ''}
-                      onChange={(e) =>
-                        setAuthorDraft((d) => ({ ...d, familyName: e.target.value }))
-                      }
-                    />
-                  </div>
-                  <div className="row" style={{ marginBottom: 6 }}>
-                    <input
-                      placeholder="Email"
-                      value={authorDraft.email ?? ''}
-                      onChange={(e) =>
-                        setAuthorDraft((d) => ({ ...d, email: e.target.value }))
-                      }
-                      style={{ flex: 1 }}
-                    />
-                  </div>
-                  <div className="row" style={{ marginBottom: 6 }}>
-                    <input
-                      placeholder="ORCID"
-                      value={authorDraft.orcid ?? ''}
-                      onChange={(e) =>
-                        setAuthorDraft((d) => ({ ...d, orcid: e.target.value }))
-                      }
-                      style={{ flex: 1 }}
-                    />
-                  </div>
-                  <label className="checkbox">
-                    <input
-                      type="checkbox"
-                      checked={Boolean(authorDraft.isCorresponding)}
-                      onChange={(e) =>
-                        setAuthorDraft((d) => ({
-                          ...d,
-                          isCorresponding: e.target.checked,
-                        }))
-                      }
-                    />
-                    Corresponding author
-                  </label>
-                  <div className="row" style={{ marginTop: 8 }}>
-                    <button type="button" onClick={() => void saveAuthorEdit()}>
-                      Save author
-                    </button>
-                    <button
-                      type="button"
-                      className="secondary"
-                      onClick={() => setEditingAuthorId('')}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              )}
-            </section>
-          </>
+              </div>
+            )}
+            <details className="author-all" open={sortedAuthors.length <= 10}>
+              <summary>Imported authors ({sortedAuthors.length})</summary>
+              <ol className="review-author-list">
+                {sortedAuthors.map((author) => (
+                  <li key={author.id}>
+                    <div className="review-author-name">
+                      {author.givenName} {author.middleName} {author.familyName}
+                      {author.isCorresponding ? ' · corresponding' : ''}
+                    </div>
+                    <div className="muted">
+                      {author.email || 'No email'}
+                      {author.affiliations[0]?.institution
+                        ? ` · ${author.affiliations[0].institution}`
+                        : ''}
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </details>
+            <button type="button" onClick={openImport}>
+              Import updated spreadsheet
+            </button>
+          </section>
         )}
-
-        {status && <p className="ok">{status}</p>}
-        {error && <p className="danger">{error}</p>}
       </div>
     );
   }
@@ -1301,7 +1178,9 @@ export function App() {
       <section className="panel">
         <h2>Compatibility capture</h2>
         <p className="muted">
-          Structural field metadata only. Values are redacted. Review before sharing.
+          Structural field metadata only. Values are redacted. For a repeated
+          author dialog, capture once before opening it and once while an empty
+          dialog is open.
         </p>
         <button type="button" className="secondary" onClick={() => void runDiagnostic()}>
           Capture diagnostic
@@ -1310,6 +1189,19 @@ export function App() {
           <>
             <p className="ok">Confirm no names/emails/passwords appear:</p>
             <textarea className="mapping" readOnly value={diagText} />
+            <button
+              type="button"
+              className="secondary"
+              onClick={() =>
+                downloadText(
+                  'corresponding-redacted-compatibility-capture.json',
+                  diagText,
+                  'application/json',
+                )
+              }
+            >
+              Download reviewed capture
+            </button>
           </>
         )}
       </section>

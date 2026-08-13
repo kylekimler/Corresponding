@@ -1,4 +1,5 @@
 import { defineConfig } from 'wxt';
+import { loadEnv } from 'vite';
 import { serveFixturesPlugin } from './dev/serveFixturesPlugin';
 
 /** Pinned so `webExt.startUrls` always matches the WXT Vite server. */
@@ -30,15 +31,37 @@ export default defineConfig({
     chromiumArgs: ['--user-data-dir=./.wxt/chrome-data'],
     startUrls: [NATURE_FIXTURE_URL],
   },
-  manifest: {
-    name: 'Corresponding',
-    description:
-      'Maintain one scientific identity and fill manuscript author forms locally. Never submits or certifies for you.',
-    version: '0.1.0',
-    permissions: ['activeTab', 'storage', 'scripting'],
-    // No host_permissions: rely on activeTab for the current tab only.
-    action: {
-      default_title: 'Corresponding',
-    },
+  manifest: ({ mode }) => {
+    const googleClientId = loadEnv(mode, process.cwd(), 'VITE_')
+      .VITE_GOOGLE_OAUTH_CLIENT_ID;
+    const sheetsEnabled = Boolean(googleClientId?.trim());
+    return {
+      name: 'Corresponding',
+      description:
+        'Maintain one scientific identity and fill manuscript author forms locally. Never submits or certifies for you.',
+      version: '0.1.0',
+      permissions: [
+        'activeTab',
+        'storage',
+        'scripting',
+        ...(sheetsEnabled ? (['identity'] as const) : []),
+      ],
+      // Google access exists only in explicitly configured builds. Default
+      // production builds retain no host permissions.
+      host_permissions: sheetsEnabled
+        ? ['https://sheets.googleapis.com/*']
+        : undefined,
+      oauth2: sheetsEnabled
+        ? {
+            client_id: googleClientId,
+            scopes: [
+              'https://www.googleapis.com/auth/spreadsheets.readonly',
+            ],
+          }
+        : undefined,
+      action: {
+        default_title: 'Corresponding',
+      },
+    };
   },
 });

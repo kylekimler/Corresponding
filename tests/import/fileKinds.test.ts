@@ -18,9 +18,9 @@ describe('import file kinds + sheets chooser UX', () => {
   it('never exposes OAuth credentials in scientist-facing sheets copy', () => {
     const off = sheetsChooserAvailability(false);
     expect(off.enabled).toBe(false);
-    expect(off.label).toBe('Choose Google Sheet');
+    expect(off.label).toBe('Import Google Sheet');
     expect(off.hint.toLowerCase()).not.toMatch(/oauth|client id|api key|credential/);
-    expect(off.hint).toMatch(/coming soon/i);
+    expect(off.hint).toMatch(/paste/i);
 
     const on = sheetsChooserAvailability(true);
     expect(on.enabled).toBe(true);
