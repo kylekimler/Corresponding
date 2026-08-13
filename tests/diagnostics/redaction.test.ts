@@ -36,4 +36,40 @@ describe('diagnostics redaction', () => {
     expect(findLeakedSecrets(text, planted)).toEqual([]);
     assertNoLeakedSecrets(text, planted);
   });
+
+  it('captures repeated-dialog actions without leaking button PII', () => {
+    document.body.innerHTML = `
+      <button id="add-author-17">Add author</button>
+      <div role="dialog">
+        <input id="author-17-first" aria-label="Given name" />
+        <button id="save-author-17">Save author</button>
+        <button id="edit-author-17">Edit Ada Lovelace</button>
+        <button id="final-submit">Final Submit Manuscript</button>
+      </div>
+    `;
+
+    const capture = captureForm(document);
+    const text = previewCapture(capture);
+
+    expect(capture.controlCount).toBe(4);
+    expect(capture.controls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          idPattern: 'add-author-#',
+          actionLabel: 'Add author',
+        }),
+        expect.objectContaining({
+          idPattern: 'save-author-#',
+          actionLabel: 'Save author',
+        }),
+        expect.objectContaining({
+          idPattern: 'final-submit',
+          category: 'submit_or_legal',
+        }),
+      ]),
+    );
+    expect(text.toLowerCase()).not.toContain('ada');
+    expect(text.toLowerCase()).not.toContain('lovelace');
+    expect(text).toContain('action="Edit [redacted]"');
+  });
 });

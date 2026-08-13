@@ -79,13 +79,13 @@ export function sheetsChooserAvailability(configured: boolean): {
   if (configured) {
     return {
       enabled: true,
-      label: 'Choose Google Sheet',
-      hint: 'Sign in with Google and pick a spreadsheet.',
+      label: 'Import Google Sheet',
+      hint: 'Paste a Sheet URL and sign in read-only.',
     };
   }
   return {
     enabled: false,
-    label: 'Choose Google Sheet',
-    hint: 'Coming soon — use Paste or Upload CSV for now.',
+    label: 'Import Google Sheet',
+    hint: 'Direct connection is unavailable in this build — paste the table above.',
   };
 }

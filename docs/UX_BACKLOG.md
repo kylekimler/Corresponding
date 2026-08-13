@@ -23,7 +23,7 @@ Prioritized friction for a first-time scientist. Status: `[ ]` open · `[x]` fix
 
 - [x] Status: ready · need attention · conflicts
 - [x] Attention-first list (ready authors collapsed)
-- [x] Manage roster secondary screen (CRUD / export / full list)
+- [x] Read-only imported-author review with issue summary and full list
 - [x] Persist last-selected roster id across popup opens
 
 ## Preview

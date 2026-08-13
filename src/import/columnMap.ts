@@ -110,6 +110,12 @@ export function suggestColumnMapping(headers: string[]): ColumnMapping {
     if (candidates.length === 0 && norm) {
       (Object.keys(ALIASES) as Array<Exclude<CanonicalColumn, 'ignore'>>).forEach(
         (col) => {
+          if (
+            col === 'institution' &&
+            /\b(numbers?|ids?)\b/.test(norm)
+          ) {
+            return;
+          }
           if (ALIASES[col].some((a) => norm.includes(a) || a.includes(norm))) {
             candidates.push(col);
           }
@@ -123,7 +129,7 @@ export function suggestColumnMapping(headers: string[]): ColumnMapping {
 
     if (unique.length === 1) {
       const only = unique[0]!;
-      if (used.has(only) && only !== 'institution') {
+      if (used.has(only)) {
         ambiguous = true;
         requiresConfirmation = true;
       } else {
@@ -138,9 +144,10 @@ export function suggestColumnMapping(headers: string[]): ColumnMapping {
       requiresConfirmation = true;
     }
 
-    if (suggested) {
-      map[columnIndex] = suggested;
-    }
+    // Every visible select has a safe value. Unknown, ambiguous, duplicate,
+    // and blank columns default to Ignore instead of making people classify
+    // unrelated spreadsheet administration columns one by one.
+    map[columnIndex] = suggested ?? 'ignore';
 
     suggestions.push({
       header,

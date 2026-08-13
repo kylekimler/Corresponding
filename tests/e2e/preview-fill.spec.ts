@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import type { Page } from '@playwright/test';
+import type { BrowserContext, Page } from '@playwright/test';
 import { expect, test } from './extension.fixture';
 
 const FIXTURE_URL =
@@ -28,10 +28,10 @@ async function keepFixtureActive(fixture: Page, popup: Page): Promise<void> {
     .toBe(FIXTURE_URL);
 }
 
-test('production popup previews, fills, validates, and preserves protected controls', async ({
-  context,
-  extensionId,
-}) => {
+async function openFixtureAndPopup(
+  context: BrowserContext,
+  extensionId: string,
+): Promise<{ fixture: Page; popup: Page }> {
   const fixtureHtml = await readFile(
     path.resolve('fixtures/nature-mts-sample.html'),
     'utf8',
@@ -46,6 +46,21 @@ test('production popup previews, fills, validates, and preserves protected contr
 
   const fixture = await context.newPage();
   await fixture.goto(FIXTURE_URL);
+  const popup = await context.newPage();
+  await popup.goto(`chrome-extension://${extensionId}/popup.html`);
+  await keepFixtureActive(fixture, popup);
+  await popup.reload();
+  await expect(
+    popup.getByText('Nature MTS / eJournalPress', { exact: true }),
+  ).toBeVisible();
+  return { fixture, popup };
+}
+
+test('production popup previews, fills, validates, and preserves protected controls', async ({
+  context,
+  extensionId,
+}) => {
+  const { fixture, popup } = await openFixtureAndPopup(context, extensionId);
   await fixture.evaluate((controlIds) => {
     const trackedWindow = window as typeof window & {
       correspondingProtectedClicks: string[];
@@ -61,15 +76,6 @@ test('production popup previews, fills, validates, and preserves protected contr
       trackedWindow.correspondingProtectedClicks.push('form-submit');
     });
   }, PROTECTED_CONTROL_IDS);
-
-  const popup = await context.newPage();
-  await popup.goto(`chrome-extension://${extensionId}/popup.html`);
-  await keepFixtureActive(fixture, popup);
-  await popup.reload();
-
-  await expect(
-    popup.getByText('Nature MTS / eJournalPress', { exact: true }),
-  ).toBeVisible();
 
   await popup.getByRole('button', { name: 'Import authors' }).click();
   await expect(popup.getByText('Upload CSV', { exact: true })).toBeVisible();
@@ -117,13 +123,13 @@ test('production popup previews, fills, validates, and preserves protected contr
   await fill.click();
 
   await expect(
-    popup.getByText(/Fill complete\. Validation found issues/),
+    popup.getByText(/Fill complete\. Validation finished/),
   ).toBeVisible();
   await expect(
     popup.getByRole('heading', { name: 'After fill — validation' }),
   ).toBeVisible();
-  await expect(popup.getByText('2 authors look filled')).toBeVisible();
-  await expect(popup.getByText('1 conflicts')).toBeVisible();
+  await expect(popup.getByText('3 authors look filled')).toBeVisible();
+  await expect(popup.getByText('0 conflicts')).toBeVisible();
 
   await expect(fixture.locator('#corr_auth_first_nm')).toHaveValue('Ada');
   await expect(fixture.locator('#corr_auth_email')).toHaveValue(
@@ -135,7 +141,10 @@ test('production popup previews, fills, validates, and preserves protected contr
   await expect(fixture.locator('#contrib_auth_1_email')).toHaveValue(
     'ada@example.org',
   );
-  await expect(fixture.locator('#contrib_auth_2_first_nm')).toHaveValue('');
+  await expect(fixture.locator('#contrib_auth_2_first_nm')).toHaveValue('Alan');
+  await expect(fixture.locator('#contrib_auth_2_email')).toHaveValue(
+    'alan@example.org',
+  );
   await expect(fixture.locator('#contrib_auth_3_first_nm')).toHaveValue('田中');
   await expect(fixture.locator('#contrib_auth_3_last_nm')).toHaveValue('Müller');
   await expect(fixture.locator('#certify_accuracy')).not.toBeChecked();
@@ -149,4 +158,84 @@ test('production popup previews, fills, validates, and preserves protected contr
       }),
     )
     .toEqual([]);
+});
+
+test('wide Excel-style paste defaults extra columns to Ignore and imports', async ({
+  context,
+  extensionId,
+}) => {
+  const { popup } = await openFixtureAndPopup(context, extensionId);
+  const headers = [
+    'Order',
+    'Author type',
+    'Given name',
+    'Family name',
+    'Name on paper',
+    'ORCID',
+    'Email (portal)',
+    'Affiliation numbers',
+    'Affiliation 1',
+    'Affiliation 2',
+    'Affiliation 3',
+    'Affiliation 4',
+    'Affiliation 5',
+    'Equal contribution',
+    'Joint supervision',
+    'Portal status',
+    'Notes',
+  ];
+  const row = [
+    '1',
+    'Researcher',
+    'Ada',
+    'Lovelace',
+    'Ada Lovelace',
+    '0000-0002-1825-0097',
+    'ada@example.org',
+    '1',
+    'Analytical Engines Institute',
+    '',
+    '',
+    '',
+    '',
+    '',
+    '',
+    'Ready',
+    'Imported from workbook',
+  ];
+
+  await popup.getByRole('button', { name: 'Import authors' }).click();
+  await popup
+    .getByRole('button', { name: /Paste Google Sheet or Excel table/ })
+    .click();
+  await popup
+    .getByLabel('Paste spreadsheet table')
+    .fill(`${headers.join('\t')}\n${row.join('\t')}`);
+  await popup.getByRole('button', { name: 'Continue' }).click();
+
+  const mappings = popup.getByLabel('Column mapping');
+  await expect(mappings).toHaveCount(headers.length);
+  await expect(mappings.nth(2)).toHaveValue('givenName');
+  await expect(mappings.nth(3)).toHaveValue('familyName');
+  await expect(mappings.nth(8)).toHaveValue('institution');
+  for (const index of [1, 4, 7, 9, 10, 11, 12, 13, 14, 15, 16]) {
+    await expect(mappings.nth(index)).toHaveValue('ignore');
+  }
+
+  await mappings.nth(16).selectOption('city');
+  await mappings.nth(16).selectOption('ignore');
+  await popup.getByRole('button', { name: 'Import', exact: true }).click();
+
+  await expect(popup.getByText('1 authors', { exact: true })).toBeVisible();
+  await expect(popup.getByText(/Map at least First\/Given name/)).toHaveCount(0);
+  await popup
+    .getByRole('button', { name: 'Review imported authors →' })
+    .click();
+  await expect(
+    popup.getByRole('heading', { name: 'Review imported authors' }),
+  ).toBeVisible();
+  await expect(popup.getByText(/Ada Lovelace/)).toBeVisible();
+  await expect(popup.getByRole('button', { name: /Duplicate|Export|Edit/ })).toHaveCount(
+    0,
+  );
 });
