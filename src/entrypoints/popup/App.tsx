@@ -1144,7 +1144,9 @@ export function App() {
                 {sortedAuthors.map((author) => (
                   <li key={author.id}>
                     <div className="review-author-name">
-                      {author.givenName} {author.middleName} {author.familyName}
+                      {[author.givenName, author.middleName, author.familyName]
+                        .filter(Boolean)
+                        .join(' ')}
                       {author.isCorresponding ? ' · corresponding' : ''}
                     </div>
                     <div className="muted">
