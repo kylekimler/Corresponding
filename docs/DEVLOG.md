@@ -9,7 +9,8 @@ Chronological overnight / autonomous iteration log.
 - adapter: Added `biorxiv` detection, dry Preview, complete-roster preflight, and an asynchronous one-dialog-per-author Fill orchestrator. It refuses to append when author rows already exist, requires names/email/institution before mutation, preserves an already-open first dialog, and never automates ORCID authorization.
 - safety: All submit-type controls are now forbidden regardless of label. `CA_continue` is detected but never clicked. The popup blocks Fill when Preview reports adapter errors.
 - fixtures/tests: Added capture-derived unit and browser fixtures covering closed/open dialogs, multi-author order, corresponding status, existing-author refusal, missing-data refusal, validation, and zero page-continuation clicks.
-- status: Automated verification pending; first live bioRxiv smoke remains required before claiming live validation.
+- verification: 182 Vitest tests, typecheck, production build, zero-warning security lint, and three Playwright MV3 journeys passed, including production popup → bioRxiv Preview → three modal saves → validation with zero `CA_continue` clicks.
+- status: First authenticated live bioRxiv smoke remains required before claiming live validation.
 
 ### 2026-08-13 01:30 UTC
 - import reliability: Reproduced the supplied HGCA workbook's 17-column header shape. Unknown, ambiguous, duplicate-affiliation, and administrative columns now default to Ignore; required name columns remain detected. Mapping updates use functional state so a final selection cannot be lost before Import.
