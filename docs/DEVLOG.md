@@ -4,6 +4,10 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-13 02:30 UTC
+- branding: Added a “Corr” extension icon using the popup's mint, cream, parchment, and pale-sage gradient with dark forest serif lettering.
+- assets: Retained 1024px source artwork under `assets/brand`; generated Lanczos-resized Chrome icons at 16/32/48/128px and wired both extension and toolbar manifest icons.
+
 ### 2026-08-13 02:20 UTC
 - bug: Extension reload/update could leave a popup promise with an undefined or malformed tab response, and an anonymous popup path still read `.type` directly.
 - fix: Every popup request now normalizes responses again at the component boundary; response envelopes require their expected payload; interrupted update messaging becomes a user-facing reconnect instruction. Diagnostic capture now catches rejected browser calls instead of producing an unhandled promise.
