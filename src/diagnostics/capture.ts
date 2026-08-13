@@ -161,9 +161,11 @@ function redactControlLabel(raw: string): string | undefined {
       : '[redacted]',
   );
   return redacted
-    .join(' ')
-    .replace(/(?:\[redacted\]\s*)+/g, '[redacted] ')
-    .trim();
+    .filter(
+      (word, index) =>
+        word !== '[redacted]' || redacted[index - 1] !== '[redacted]',
+    )
+    .join(' ');
 }
 
 export function captureForm(
