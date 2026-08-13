@@ -17,13 +17,37 @@ describe('sample roster', () => {
     expect(roster.name).toBe('Sample research team');
     expect(roster.source).toBe('sample');
     expect(roster.createdAt).toBe(now);
-    expect(roster.authors).toHaveLength(3);
-    expect(roster.authors.map((author) => author.sequence)).toEqual([1, 2, 3]);
-    expect(roster.authors.filter((author) => author.isCorresponding)).toHaveLength(1);
+    expect(roster.authors).toHaveLength(6);
+    expect(roster.authors.map((author) => author.sequence)).toEqual([
+      1, 2, 3, 4, 5, 6,
+    ]);
     expect(roster.authors.every((author) => author.email?.endsWith('@example.org'))).toBe(
       true,
     );
-    expect(readyAuthorCount(roster.authors)).toBe(3);
+    expect(readyAuthorCount(roster.authors)).toBe(6);
+  });
+
+  it('models shared first authors and shared corresponding authors', () => {
+    const roster = createSampleRoster();
+    const shared = roster.authors.filter((author) => author.equalContribution);
+    const corresponding = roster.authors.filter(
+      (author) => author.isCorresponding,
+    );
+
+    // Two co-first authors lead the list.
+    expect(shared.map((author) => author.sequence)).toEqual([1, 2]);
+    // Two shared corresponding authors close it.
+    expect(corresponding.map((author) => author.sequence)).toEqual([5, 6]);
+    expect(
+      roster.authors.map((author) => author.familyName),
+    ).toEqual([
+      'Lovelace',
+      'Turing',
+      'Wu',
+      'du Châtelet',
+      'Franklin',
+      'Hopper',
+    ]);
   });
 
   it('saves as a normal local roster and creates fresh ids each time', async () => {
@@ -40,7 +64,7 @@ describe('sample roster', () => {
     const saved = await store.list();
     expect(saved).toHaveLength(1);
     expect(saved[0]?.id).toBe(first.id);
-    expect(saved[0]?.authors).toHaveLength(3);
+    expect(saved[0]?.authors).toHaveLength(6);
   });
 
   it('atomically ignores a reentrant sample-import click', async () => {

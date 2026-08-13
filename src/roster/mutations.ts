@@ -87,6 +87,7 @@ export function addAuthor(
     orcid: partial?.orcid,
     isCorresponding:
       partial?.isCorresponding ?? roster.authors.length === 0,
+    equalContribution: partial?.equalContribution ?? false,
     affiliations: partial?.affiliations ?? [],
     sequence,
   };

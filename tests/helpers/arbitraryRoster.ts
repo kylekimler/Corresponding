@@ -66,6 +66,7 @@ export function authorArb(sequence: number): fc.Arbitrary<Author> {
       { nil: undefined },
     ),
     isCorresponding: fc.boolean(),
+    equalContribution: fc.boolean(),
     affiliations: fc.array(affiliationArb, { minLength: 0, maxLength: 3 }),
     sequence: fc.constant(sequence),
   }).map((a) => {

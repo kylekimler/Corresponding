@@ -11,8 +11,13 @@ const SAMPLE_HEADERS = [
   'City',
   'Country',
   'Corresponding',
+  'Equal contribution',
 ];
 
+/**
+ * Shaped like a real six-author paper: two shared first authors, ordered third
+ * and fourth authors, then two shared corresponding senior authors.
+ */
 const SAMPLE_ROWS = [
   [
     'Ada',
@@ -22,6 +27,7 @@ const SAMPLE_ROWS = [
     'Analytical Engines Institute',
     'London',
     'United Kingdom',
+    '',
     'yes',
   ],
   [
@@ -33,6 +39,7 @@ const SAMPLE_ROWS = [
     'Bletchley',
     'United Kingdom',
     '',
+    'yes',
   ],
   [
     'Chien-Shiung',
@@ -42,6 +49,40 @@ const SAMPLE_ROWS = [
     'Physics Research Laboratory',
     'New York',
     'United States',
+    '',
+    '',
+  ],
+  [
+    'Émilie',
+    '',
+    'du Châtelet',
+    'emilie@example.org',
+    'Institut de Physique Théorique',
+    'Paris',
+    'France',
+    '',
+    '',
+  ],
+  [
+    'Rosalind',
+    'Elsie',
+    'Franklin',
+    'rosalind@example.org',
+    'Structural Biology Unit',
+    'London',
+    'United Kingdom',
+    'yes',
+    '',
+  ],
+  [
+    'Grace',
+    'Brewster',
+    'Hopper',
+    'grace@example.org',
+    'Naval Computing Laboratory',
+    'Arlington',
+    'United States',
+    'yes',
     '',
   ],
 ];
@@ -55,6 +96,7 @@ const SAMPLE_MAPPING = {
   5: 'city',
   6: 'country',
   7: 'isCorresponding',
+  8: 'equalContribution',
 } as const;
 
 /**

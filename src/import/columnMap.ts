@@ -10,6 +10,7 @@ export type CanonicalColumn =
   | 'state'
   | 'country'
   | 'isCorresponding'
+  | 'equalContribution'
   | 'sequence'
   | 'fundingStatement'
   | 'disclosureStatement'
@@ -77,6 +78,14 @@ const ALIASES: Record<Exclude<CanonicalColumn, 'ignore'>, string[]> = {
     'is_corresponding',
     'is corresponding',
     'corr',
+  ],
+  equalContribution: [
+    'equal contribution',
+    'equal contributor',
+    'co-first author',
+    'co first author',
+    'shared first author',
+    'joint first author',
   ],
   sequence: ['sequence', 'order', 'author order', 'author_seq', 'seq', '#'],
   fundingStatement: [

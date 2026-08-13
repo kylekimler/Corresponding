@@ -1293,6 +1293,7 @@ export function App() {
                         .filter(Boolean)
                         .join(' ')}
                       {author.isCorresponding ? ' · corresponding' : ''}
+                      {author.equalContribution ? ' · equal contribution' : ''}
                     </div>
                     <div className="muted">
                       {author.email || 'No email'}
