@@ -12,6 +12,10 @@ export interface BiorxivFixtureOptions {
   staleValuesOnReopen?: boolean;
   /** Clear the reused dialog asynchronously, as a reactive framework would. */
   resetDelayMs?: number;
+  /** Commit the saved author to the table asynchronously, as a server would. */
+  commitDelayMs?: number;
+  /** Show bioRxiv's hash error when Add is clicked before the commit lands. */
+  errorOnEarlyAdd?: boolean;
 }
 
 export interface BiorxivFixtureHarness {
@@ -42,6 +46,7 @@ export function mountBiorxivFixture(
 
   document.body.innerHTML = `
     <div id="submission_form">
+      <div class="v-alert error--text" id="portal-error" style="display: none"></div>
       ${decoyMarkup}
       <main class="v-content">
         <button type="button" class="v-btn theme--light primary" id="add-author">
@@ -97,6 +102,7 @@ export function mountBiorxivFixture(
   let addClicks = 0;
   let saveClicks = 0;
   let continueClicks = 0;
+  let commitPending = false;
 
   function renderRows() {
     rows.innerHTML =
@@ -124,6 +130,12 @@ export function mountBiorxivFixture(
 
   add.addEventListener('click', () => {
     addClicks += 1;
+    if (options.errorOnEarlyAdd && commitPending) {
+      const banner = document.getElementById('portal-error')!;
+      banner.textContent = 'Author does not exists hash do not match';
+      banner.style.display = 'block';
+      return;
+    }
     if (options.staleValuesOnReopen) {
       // Reused dialog keeps the previous author's values.
       setDialogOpen(true);
@@ -139,7 +151,7 @@ export function mountBiorxivFixture(
   });
   save.addEventListener('click', () => {
     saveClicks += 1;
-    saved.push({
+    const record = {
       email: (document.getElementById('email') as HTMLInputElement).value,
       firstName: (
         document.querySelector('input[name="firstName"]') as HTMLInputElement
@@ -156,8 +168,7 @@ export function mountBiorxivFixture(
       corresponding: (
         document.getElementById('corresponding') as HTMLInputElement
       ).checked,
-    });
-    renderRows();
+    };
     if (options.saveCloses !== false) setDialogOpen(false);
     if (options.addRemountDelayMs !== undefined) {
       add.style.display = 'none';
@@ -165,6 +176,18 @@ export function mountBiorxivFixture(
         add.innerHTML = `${iconMarkup}${options.addLabelAfterSave ?? 'Add Author'}`;
         add.style.display = '';
       }, options.addRemountDelayMs);
+    }
+
+    const commit = () => {
+      saved.push(record);
+      commitPending = false;
+      renderRows();
+    };
+    if (options.commitDelayMs !== undefined) {
+      commitPending = true;
+      setTimeout(commit, options.commitDelayMs);
+    } else {
+      commit();
     }
   });
   continueControl.addEventListener('click', (event) => {

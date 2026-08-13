@@ -4,6 +4,14 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-13 04:50 UTC
+- live result: Authors now fill correctly, but bioRxiv showed its own red banner, "Author does not exists hash do not match", when the second dialog opened.
+- root cause: `saveAuthorDialog` treated dialog closure as success. Closure is client-side only; bioRxiv commits the author asynchronously afterwards. Clicking Add Author inside that window made the portal reconcile against a record it had not stored yet.
+- fix: Saving now waits for the author to appear in bioRxiv's own author table before the next dialog is opened, instead of trusting dialog closure.
+- portal errors: Corresponding now reads bioRxiv's visible error banner, stops immediately, and surfaces the portal's wording instead of continuing and compounding the failure. A banner present before Fill starts is treated as baseline so unrelated notices cannot block a run.
+- tests: Asynchronous commit with an early-add error banner (verified failing when the commit gate is removed), and abort-on-banner coverage that proves no further authors are attempted.
+- verification: 196 Vitest tests, typecheck, production build, zero-warning security lint, and all four Playwright MV3 journeys passed. Live bioRxiv retry still required.
+
 ### 2026-08-13 04:40 UTC
 - live result: Add Author matching now works; the second dialog opens. The next author was saved with the previous author's data.
 - root cause: bioRxiv reuses one dialog element, so a reopened dialog still holds the previous author's values. The fill loop applied the preserve rule (`current && !overwrite → skip`), which is meant to protect user-typed portal data, to stale UI state in a dialog Corresponding had just opened for a new author.

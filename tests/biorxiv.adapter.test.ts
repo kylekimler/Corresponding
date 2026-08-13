@@ -4,6 +4,9 @@ import { mountBiorxivFixture } from '@/adapters/biorxiv/fixture';
 import { isForbiddenControl } from '@/adapters/safety';
 import { makeNAuthors, makeRoster } from './helpers/roster';
 
+const normalizeText = (value: string | null | undefined) =>
+  (value ?? '').replace(/\s+/g, ' ').trim();
+
 describe('bioRxiv repeated author dialog adapter', () => {
   it('detects the captured author-entry structure', () => {
     mountBiorxivFixture();
@@ -216,6 +219,47 @@ describe('bioRxiv repeated author dialog adapter', () => {
       }),
     ).rejects.toThrow(/did not accept the roster value/i);
     expect(harness.saveClicks()).toBe(0);
+  });
+
+  it('waits for each author to be committed before adding the next', async () => {
+    const harness = mountBiorxivFixture({
+      commitDelayMs: 150,
+      errorOnEarlyAdd: true,
+      addIconLigature: 'person_add',
+    });
+
+    const report = await biorxivAdapter.fillAsync!(
+      document,
+      makeRoster(makeNAuthors(3)),
+      { overwrite: false, dryRun: false },
+    );
+
+    expect(report.errors).toEqual([]);
+    expect(harness.savedAuthors().map((author) => author.firstName)).toEqual([
+      'Given1',
+      'Given2',
+      'Given3',
+    ]);
+    expect(
+      normalizeText(document.getElementById('portal-error')?.textContent),
+    ).toBe('');
+  });
+
+  it('stops and surfaces a bioRxiv error banner instead of continuing', async () => {
+    const harness = mountBiorxivFixture({ commitDelayMs: 50 });
+    const banner = document.getElementById('portal-error')!;
+    document.getElementById('save-author')!.addEventListener('click', () => {
+      banner.textContent = 'Author does not exists hash do not match';
+      banner.style.display = 'block';
+    });
+
+    await expect(
+      biorxivAdapter.fillAsync!(document, makeRoster(makeNAuthors(3)), {
+        overwrite: false,
+        dryRun: false,
+      }),
+    ).rejects.toThrow(/Author does not exists hash do not match/i);
+    expect(harness.addClicks()).toBe(1);
   });
 
   it('explains how to recover when authors already exist', () => {
