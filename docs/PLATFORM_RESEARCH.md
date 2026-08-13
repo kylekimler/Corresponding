@@ -16,6 +16,15 @@ Research date: 2026-08-12. Based on public documentation and vendor marketing pa
   Preview never opens the dialog. Fill preflights the complete roster, refuses
   pages with existing author rows, then opens, fills, and saves one dialog per
   author.
+- **Email lookup:** Entering an author email triggers a directory lookup that
+  re-renders the dialog and offers "fetch author data" via a FILL INFO control.
+  Anything written during that window is discarded, so email must be entered
+  first and the lookup must finish before the remaining fields are written.
+  Corresponding never accepts the offer: it would replace roster values with the
+  portal's own record.
+- **Import Authors:** The page also exposes a bulk Import Authors control. That
+  is the portal-supported route for large rosters and is the most promising next
+  step; it needs its own redacted capture before implementation.
 - **Safety:** Never save an incomplete author merely to capture the page. Never
   touch manuscript submission, certification, license, or payment controls.
 

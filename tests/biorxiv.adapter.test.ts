@@ -307,6 +307,47 @@ describe('bioRxiv repeated author dialog adapter', () => {
     expect(harness.saveClicks()).toBeGreaterThan(2);
   });
 
+  it('waits for the email author lookup before writing the other fields', async () => {
+    const harness = mountBiorxivFixture({
+      emailLookupMs: 200,
+      validateOnSave: true,
+      rowActionControls: true,
+    });
+
+    const report = await biorxivAdapter.fillAsync!(
+      document,
+      makeRoster(makeNAuthors(3)),
+      { overwrite: false, dryRun: false },
+    );
+
+    expect(report.errors).toEqual([]);
+    // Names survive the lookup that clears fields written too early.
+    expect(harness.savedAuthors()).toEqual([
+      expect.objectContaining({ firstName: 'Given1', lastName: 'Family1' }),
+      expect.objectContaining({ firstName: 'Given2', lastName: 'Family2' }),
+      expect.objectContaining({ firstName: 'Given3', lastName: 'Family3' }),
+    ]);
+    expect(report.warnings.join(' ')).toMatch(
+      /recognised 3 emails and offered its own author record/i,
+    );
+    // The invariant: nothing is typed into name fields while the portal's
+    // lookup is still in flight and liable to discard it.
+    expect(harness.namesWrittenDuringLookup()).toBe(0);
+  }, 20_000);
+
+  it('never accepts bioRxiv\u2019s offer to overwrite roster values', async () => {
+    mountBiorxivFixture({ emailLookupMs: 120 });
+    const fillInfo = document.getElementById('fill-info') as HTMLElement;
+    const fillInfoClicks = vi.spyOn(fillInfo, 'click');
+
+    await biorxivAdapter.fillAsync!(document, makeRoster(makeNAuthors(1)), {
+      overwrite: false,
+      dryRun: false,
+    });
+
+    expect(fillInfoClicks).not.toHaveBeenCalled();
+  }, 20_000);
+
   it('stops and surfaces a bioRxiv error banner instead of continuing', async () => {
     const harness = mountBiorxivFixture({ commitDelayMs: 50 });
     const banner = document.getElementById('portal-error')!;

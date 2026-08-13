@@ -26,6 +26,9 @@ const COMMIT_RECHECK_TIMEOUT_MS = 1_500;
 const COMMIT_FALLBACK_SETTLE_MS = 1_200;
 /** Longer than one frame so a late re-render is seen before Save. */
 const WRITE_VERIFY_DELAY_MS = 150;
+/** Generous: the email lookup is a network round trip. */
+const LOOKUP_TIMEOUT_MS = 6_000;
+const LOOKUP_INTERVAL_MS = 120;
 
 type AuthorField = {
   key: 'email' | 'givenName' | 'middleName' | 'familyName' | 'institution';
@@ -557,6 +560,55 @@ async function waitForDialogSettled(dialog: HTMLElement): Promise<void> {
   }
 }
 
+/**
+ * Entering an email makes bioRxiv look the author up in its own directory and
+ * re-render the dialog when the result arrives. Writing the remaining fields
+ * during that window loses them, so wait for the whole dialog to stop changing,
+ * not just its input values.
+ */
+async function waitForLookupSettled(
+  doc: Document,
+  dialog: HTMLElement,
+): Promise<void> {
+  const snapshot = () =>
+    [
+      dialog.querySelectorAll('*').length,
+      normalizeText(dialog.textContent).length,
+      Array.from(dialog.querySelectorAll<HTMLInputElement>('input'))
+        .map((input) => `${input.name}=${input.value}`)
+        .join('|'),
+      // The result appears in a panel beside the dialog.
+      lookupOfferPresent(doc) ? 'offer' : '',
+    ].join('#');
+
+  let previous = snapshot();
+  let stableSamples = 0;
+  const started = Date.now();
+  while (Date.now() - started < LOOKUP_TIMEOUT_MS) {
+    await delay(LOOKUP_INTERVAL_MS);
+    const next = snapshot();
+    if (next === previous) {
+      stableSamples += 1;
+      if (stableSamples >= 2) return;
+    } else {
+      stableSamples = 0;
+      previous = next;
+    }
+  }
+}
+
+/**
+ * bioRxiv's "fetch author data" offer. Corresponding never accepts it: that
+ * would replace the roster's values with the portal's own record.
+ */
+function lookupOfferPresent(doc: Document): boolean {
+  return Array.from(doc.querySelectorAll<HTMLElement>('div, span, p')).some(
+    (node) =>
+      isVisible(node) &&
+      /fetch author data|found author/i.test(normalizeText(node.textContent)),
+  );
+}
+
 interface ResolvedField {
   field: AuthorField;
   input: HTMLInputElement | null;
@@ -582,8 +634,10 @@ function writeAuthorFields(
   authoritative: boolean,
   overwrite: boolean,
   strategy: InputStrategy,
+  only?: (field: AuthorField) => boolean,
 ): void {
   for (const { field, input } of resolved) {
+    if (only && !only(field)) continue;
     if (!input) continue;
     const desired = field.value?.trim() ?? '';
     const current = input.value.trim();
@@ -780,6 +834,7 @@ export const biorxivAdapter: PlatformAdapter = {
     const baselineError = portalErrorText(doc);
     let savedAuthors = 0;
     let unconfirmedCommits = 0;
+    let lookupOffers = 0;
     let confirmTimeoutMs = COMMIT_CONFIRM_TIMEOUT_MS;
     try {
       for (const author of authors) {
@@ -792,6 +847,7 @@ export const biorxivAdapter: PlatformAdapter = {
 
         let commit: CommitResult = 'rejected';
         let lastMismatch: string | null = null;
+        let sawLookupOffer = false;
         // The portal's own validation is the only reliable signal that it
         // accepted our text, so escalate input strategies until it agrees.
         for (const strategy of INPUT_STRATEGIES) {
@@ -800,7 +856,28 @@ export const biorxivAdapter: PlatformAdapter = {
           }
 
           let resolved = resolveAuthorFields(dialog, author);
-          writeAuthorFields(resolved, openedByUs, options.overwrite, strategy);
+
+          // Email first, alone: it starts bioRxiv's author lookup, which
+          // re-renders the dialog and would discard anything written meanwhile.
+          writeAuthorFields(
+            resolved,
+            openedByUs,
+            options.overwrite,
+            strategy,
+            (field) => field.key === 'email',
+          );
+          await waitForLookupSettled(doc, dialog);
+          sawLookupOffer = sawLookupOffer || lookupOfferPresent(doc);
+
+          // Re-resolve: the lookup may have replaced the input elements.
+          resolved = resolveAuthorFields(dialog, author);
+          writeAuthorFields(
+            resolved,
+            openedByUs,
+            options.overwrite,
+            strategy,
+            (field) => field.key !== 'email',
+          );
 
           // Re-read after a tick: the portal may reset fields asynchronously.
           await delay(WRITE_VERIFY_DELAY_MS);
@@ -857,6 +934,7 @@ export const biorxivAdapter: PlatformAdapter = {
           unconfirmedCommits += 1;
           confirmTimeoutMs = COMMIT_RECHECK_TIMEOUT_MS;
         }
+        if (sawLookupOffer) lookupOffers += 1;
         savedAuthors += 1;
       }
       lastFill.set(doc, { rosterId: roster.id, savedAuthors });
@@ -869,6 +947,11 @@ export const biorxivAdapter: PlatformAdapter = {
           ...(unconfirmedCommits > 0
             ? [
                 `Could not read bioRxiv's author list for ${unconfirmedCommits} of ${savedAuthors} authors; confirm the list matches your roster`,
+              ]
+            : []),
+          ...(lookupOffers > 0
+            ? [
+                `bioRxiv recognised ${lookupOffers} email${lookupOffers === 1 ? '' : 's'} and offered its own author record; your roster values were kept and Fetch/Fill Info was not used`,
               ]
             : []),
         ],

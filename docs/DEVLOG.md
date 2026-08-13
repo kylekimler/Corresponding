@@ -4,6 +4,14 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-13 18:20 UTC
+- root cause found, from a user screenshot: entering an author email makes bioRxiv look the author up in its own directory. When the result arrives it re-renders the dialog and offers "fetch author data" via FILL INFO. Everything written during that window is discarded, which is exactly the "typed then vanished, first name required" failure. Earlier fixes treated the symptom.
+- fix: Email is now written alone, then Corresponding waits for the whole dialog to stop changing — element count, text length, input values, and the presence of the offer panel — before writing names and institution. Fields are re-resolved afterwards because the lookup can replace the input elements.
+- never accept the offer: FILL INFO would replace roster values with the portal's record, so it is never clicked. A warning reports how many emails bioRxiv recognised and states that roster values were kept.
+- CSV verified against the real 76-author file: 28 columns including trailing blanks, a multi-line quoted funding statement, and a leading blank column all parse correctly into 76 authors with name, ORCID, affiliation, funding, disclosure, and email mapped. The reported "only did the first one" was the bioRxiv fill, not the import.
+- regression test strengthened: the first version still passed with the wait removed because the verify-and-rewrite loop masked it. It now asserts the ordering invariant directly — zero name writes while a lookup is in flight — which fails with 9 racing writes when the wait is removed.
+- verification: 203 Vitest tests, typecheck, production build, zero-warning security lint, and six Playwright MV3 journeys passed.
+
 ### 2026-08-13 18:05 UTC
 - reported: the six-author example set was still not visible. Confirmed the production bundle contained both the new data and label, so this was reachability, not a build problem.
 - root cause: the example-authors button only ever rendered inside the empty state. Once any roster is saved — which is the normal state after testing — that branch never renders and the button cannot be reached.

@@ -29,6 +29,12 @@ export interface BiorxivFixtureOptions {
    * the values even though the DOM still showed them.
    */
   wipeOnFirstSave?: boolean;
+  /**
+   * Look the author up when an email is entered and, after this delay, show a
+   * "fetch author data" offer while clearing the other fields — bioRxiv's real
+   * behaviour, which discards anything written during the lookup.
+   */
+  emailLookupMs?: number;
 }
 
 export interface BiorxivFixtureHarness {
@@ -43,6 +49,8 @@ export interface BiorxivFixtureHarness {
   addClicks(): number;
   saveClicks(): number;
   continueClicks(): number;
+  /** Name fields written while an email lookup was still in flight. */
+  namesWrittenDuringLookup(): number;
 }
 
 export function mountBiorxivFixture(
@@ -60,6 +68,10 @@ export function mountBiorxivFixture(
   document.body.innerHTML = `
     <div id="submission_form">
       <div class="v-alert error--text" id="portal-error" style="display: none"></div>
+      <div id="author-lookup" style="display: none">
+        <span>Found author Example Person, Example Institute. Click to fetch author data.</span>
+        <button type="button" id="fill-info">FILL INFO</button>
+      </div>
       ${
         options.hiddenImportTable
           ? `<div class="v-dialog" style="display: none">
@@ -129,6 +141,8 @@ export function mountBiorxivFixture(
   let commitPending = false;
   let lateResetDone = false;
   let wipedOnce = false;
+  let lookupInFlight = false;
+  let namesWrittenDuringLookup = 0;
 
   function renderRows() {
     const actions = options.rowActionControls
@@ -264,6 +278,41 @@ export function mountBiorxivFixture(
   firstNameInput.addEventListener('input', clearValidation);
   firstNameInput.addEventListener('blur', clearValidation);
 
+  if (options.emailLookupMs !== undefined) {
+    const emailInput = document.getElementById('email') as HTMLInputElement;
+    const lookupPanel = document.getElementById('author-lookup')!;
+    let pending: ReturnType<typeof setTimeout> | undefined;
+
+    for (const selector of [
+      'input[name="firstName"]',
+      'input[name="lastName"]',
+      'input[name="affiliation"]',
+    ]) {
+      document.querySelector(selector)?.addEventListener('input', () => {
+        if (lookupInFlight) namesWrittenDuringLookup += 1;
+      });
+    }
+
+    emailInput.addEventListener('input', () => {
+      if (!emailInput.value.trim()) return;
+      if (pending) clearTimeout(pending);
+      lookupInFlight = true;
+      lookupPanel.style.display = 'none';
+      pending = setTimeout(() => {
+        lookupInFlight = false;
+        // The lookup re-renders the dialog, discarding unrelated fields.
+        for (const name of ['firstName', 'lastName', 'affiliation']) {
+          const field = document.querySelector<HTMLInputElement>(
+            `input[name="${name}"]`,
+          );
+          if (field) field.value = '';
+        }
+        (document.getElementById('middle-name') as HTMLInputElement).value = '';
+        lookupPanel.style.display = 'block';
+      }, options.emailLookupMs);
+    });
+  }
+
   renderRows();
   setDialogOpen(options.dialogOpen === true);
 
@@ -272,5 +321,6 @@ export function mountBiorxivFixture(
     addClicks: () => addClicks,
     saveClicks: () => saveClicks,
     continueClicks: () => continueClicks,
+    namesWrittenDuringLookup: () => namesWrittenDuringLookup,
   };
 }
