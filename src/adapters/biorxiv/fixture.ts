@@ -16,6 +16,10 @@ export interface BiorxivFixtureOptions {
   commitDelayMs?: number;
   /** Show bioRxiv's hash error when Add is clicked before the commit lands. */
   errorOnEarlyAdd?: boolean;
+  /** Hidden import-preview data table rendered before the author list. */
+  hiddenImportTable?: boolean;
+  /** Render row actions as icon-only edit/delete controls, as bioRxiv does. */
+  rowActionControls?: boolean;
 }
 
 export interface BiorxivFixtureHarness {
@@ -47,6 +51,16 @@ export function mountBiorxivFixture(
   document.body.innerHTML = `
     <div id="submission_form">
       <div class="v-alert error--text" id="portal-error" style="display: none"></div>
+      ${
+        options.hiddenImportTable
+          ? `<div class="v-dialog" style="display: none">
+               <table class="v-datatable v-table theme--light" id="import-preview">
+                 <thead><tr><th>Author</th><th>Email</th></tr></thead>
+                 <tbody><tr><td colspan="2">No data available</td></tr></tbody>
+               </table>
+             </div>`
+          : ''
+      }
       ${decoyMarkup}
       <main class="v-content">
         <button type="button" class="v-btn theme--light primary" id="add-author">
@@ -105,13 +119,17 @@ export function mountBiorxivFixture(
   let commitPending = false;
 
   function renderRows() {
+    const actions = options.rowActionControls
+      ? `<td><button type="button"><i class="v-icon">edit</i></button>` +
+        `<button type="button"><i class="v-icon">delete</i></button></td>`
+      : '';
     rows.innerHTML =
       saved.length === 0
         ? '<tr><td colspan="2">No authors added</td></tr>'
         : saved
             .map(
               (author) =>
-                `<tr><td>${author.firstName} ${author.lastName}</td><td>${author.email}</td></tr>`,
+                `<tr>${actions}<td>${author.firstName} ${author.lastName}</td><td>${author.email}</td></tr>`,
             )
             .join('');
   }

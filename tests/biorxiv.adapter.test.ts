@@ -245,6 +245,45 @@ describe('bioRxiv repeated author dialog adapter', () => {
     ).toBe('');
   });
 
+  it('confirms commits past a hidden import-preview table', async () => {
+    const harness = mountBiorxivFixture({
+      hiddenImportTable: true,
+      rowActionControls: true,
+      commitDelayMs: 120,
+      errorOnEarlyAdd: true,
+      addIconLigature: 'person_add',
+    });
+
+    const report = await biorxivAdapter.fillAsync!(
+      document,
+      makeRoster(makeNAuthors(3)),
+      { overwrite: false, dryRun: false },
+    );
+
+    expect(report.errors).toEqual([]);
+    expect(harness.savedAuthors()).toHaveLength(3);
+    expect(report.warnings.join(' ')).not.toMatch(/Could not read/i);
+  });
+
+  // Exercises the deliberate slow path: full confirm timeout, then settle.
+  it('continues when the author list cannot be counted at all', async () => {
+    const harness = mountBiorxivFixture();
+    // Author rows render somewhere Corresponding cannot count.
+    document.getElementById('author-rows')!.remove();
+
+    const report = await biorxivAdapter.fillAsync!(
+      document,
+      makeRoster(makeNAuthors(1)),
+      { overwrite: false, dryRun: false },
+    );
+
+    expect(report.errors).toEqual([]);
+    expect(harness.savedAuthors()).toHaveLength(1);
+    expect(report.warnings.join(' ')).toMatch(
+      /Could not read bioRxiv's author list for 1 of 1/i,
+    );
+  }, 15_000);
+
   it('stops and surfaces a bioRxiv error banner instead of continuing', async () => {
     const harness = mountBiorxivFixture({ commitDelayMs: 50 });
     const banner = document.getElementById('portal-error')!;

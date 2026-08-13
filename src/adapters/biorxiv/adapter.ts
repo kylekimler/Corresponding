@@ -20,6 +20,10 @@ const AUTHOR_TABLE_SELECTOR = 'table.v-datatable';
 const WAIT_TIMEOUT_MS = 10_000;
 const SETTLE_TIMEOUT_MS = 2_000;
 const SETTLE_INTERVAL_MS = 50;
+const COMMIT_CONFIRM_TIMEOUT_MS = 8_000;
+/** Shorter wait once row counting has proven unreliable on this page. */
+const COMMIT_RECHECK_TIMEOUT_MS = 1_500;
+const COMMIT_FALLBACK_SETTLE_MS = 1_200;
 
 type AuthorField = {
   key: 'email' | 'givenName' | 'middleName' | 'familyName' | 'institution';
@@ -154,15 +158,39 @@ function addAuthorButton(doc: Document): HTMLButtonElement | null {
   );
 }
 
-function existingAuthorCount(doc: Document): number {
-  const table = doc.querySelector(AUTHOR_TABLE_SELECTOR);
-  if (!table || !isVisible(table)) return 0;
+function authorTableRowCount(doc: Document): number {
+  // Import-authors previews add their own hidden data tables, so the first
+  // match in the document is not necessarily the visible author list.
+  const table = Array.from(
+    doc.querySelectorAll<HTMLTableElement>(AUTHOR_TABLE_SELECTOR),
+  ).find((candidate) => !candidate.closest(DIALOG_SELECTOR) && isVisible(candidate));
+  if (!table) return 0;
   return Array.from(table.querySelectorAll('tbody > tr')).filter((row) => {
     if (!isVisible(row) || row.classList.contains('v-datatable__progress')) {
       return false;
     }
     return row.querySelectorAll(':scope > td').length > 1;
   }).length;
+}
+
+/**
+ * Each committed author row carries its own edit and delete controls. Counting
+ * them is independent of table markup, so detection survives layout changes.
+ */
+function authorRowControlCount(doc: Document): number {
+  const labels = Array.from(
+    doc.querySelectorAll<HTMLElement>('button, [role="button"]'),
+  )
+    .filter((el) => !el.closest(DIALOG_SELECTOR) && isVisible(el))
+    .map(buttonLabel);
+  const edits = labels.filter((label) => label === 'edit').length;
+  const deletes = labels.filter((label) => label === 'delete').length;
+  return Math.min(edits, deletes);
+}
+
+/** Best available count of authors bioRxiv has actually committed. */
+function existingAuthorCount(doc: Document): number {
+  return Math.max(authorTableRowCount(doc), authorRowControlCount(doc));
 }
 
 function sortedAuthors(roster: Roster): Author[] {
@@ -521,11 +549,17 @@ function portalErrorText(doc: Document): string {
  * committed until it appears in the table, and clicking Add before then makes
  * the portal reconcile against a record it has not stored yet.
  */
+/**
+ * Confirming the commit prevents the next Add click from racing bioRxiv's
+ * save. When the row cannot be counted the save may still have succeeded, so
+ * an undetectable commit settles and continues instead of failing the run.
+ */
 async function saveAuthorDialog(
   doc: Document,
   dialog: HTMLElement,
   baselineError: string,
-): Promise<void> {
+  confirmTimeoutMs: number,
+): Promise<'confirmed' | 'unconfirmed'> {
   const before = existingAuthorCount(doc);
   const save = findButton(dialog, 'Save');
   if (!save) throw new Error('Could not find the active bioRxiv author Save button');
@@ -533,17 +567,25 @@ async function saveAuthorDialog(
   save.click();
 
   const started = Date.now();
-  while (Date.now() - started < WAIT_TIMEOUT_MS) {
+  while (Date.now() - started < confirmTimeoutMs) {
     const error = portalErrorText(doc);
     if (error && error !== baselineError) {
       throw new Error(`bioRxiv reported: ${error}`);
     }
-    if (activeDialog(doc) === null && existingAuthorCount(doc) > before) return;
+    if (activeDialog(doc) === null && existingAuthorCount(doc) > before) {
+      return 'confirmed';
+    }
     await delay(100);
   }
-  throw new Error(
-    'bioRxiv did not confirm the saved author in its author list; review the page before filling again',
-  );
+
+  // A dialog still open after Save means bioRxiv rejected the author.
+  if (activeDialog(doc) !== null) {
+    throw new Error(
+      'bioRxiv kept the author dialog open after Save; review its validation messages',
+    );
+  }
+  await delay(COMMIT_FALLBACK_SETTLE_MS);
+  return 'unconfirmed';
 }
 
 export const biorxivAdapter: PlatformAdapter = {
@@ -622,6 +664,8 @@ export const biorxivAdapter: PlatformAdapter = {
     // A pre-existing banner must not block the run, so only new text is fatal.
     const baselineError = portalErrorText(doc);
     let savedAuthors = 0;
+    let unconfirmedCommits = 0;
+    let confirmTimeoutMs = COMMIT_CONFIRM_TIMEOUT_MS;
     try {
       for (const author of authors) {
         const { dialog, openedByUs } = await openAuthorDialog(doc);
@@ -658,7 +702,16 @@ export const biorxivAdapter: PlatformAdapter = {
           );
         }
         setCheckbox(corresponding, author.isCorresponding);
-        await saveAuthorDialog(doc, dialog, baselineError);
+        const commit = await saveAuthorDialog(
+          doc,
+          dialog,
+          baselineError,
+          confirmTimeoutMs,
+        );
+        if (commit === 'unconfirmed') {
+          unconfirmedCommits += 1;
+          confirmTimeoutMs = COMMIT_RECHECK_TIMEOUT_MS;
+        }
         savedAuthors += 1;
       }
       lastFill.set(doc, { rosterId: roster.id, savedAuthors });
@@ -668,6 +721,11 @@ export const biorxivAdapter: PlatformAdapter = {
         warnings: [
           ...preflight.warnings,
           `Saved ${savedAuthors} author dialogs; page continuation remained untouched`,
+          ...(unconfirmedCommits > 0
+            ? [
+                `Could not read bioRxiv's author list for ${unconfirmedCommits} of ${savedAuthors} authors; confirm the list matches your roster`,
+              ]
+            : []),
         ],
       };
     } catch (error) {
