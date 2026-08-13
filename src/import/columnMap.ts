@@ -110,6 +110,12 @@ export function suggestColumnMapping(headers: string[]): ColumnMapping {
     if (candidates.length === 0 && norm) {
       (Object.keys(ALIASES) as Array<Exclude<CanonicalColumn, 'ignore'>>).forEach(
         (col) => {
+          if (
+            col === 'institution' &&
+            /\b(numbers?|ids?)\b/.test(norm)
+          ) {
+            return;
+          }
           if (ALIASES[col].some((a) => norm.includes(a) || a.includes(norm))) {
             candidates.push(col);
           }
