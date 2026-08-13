@@ -7,6 +7,7 @@ Chronological overnight / autonomous iteration log.
 ### 2026-08-13 02:30 UTC
 - branding: Added a “Corr” extension icon using the popup's mint, cream, parchment, and pale-sage gradient with dark forest serif lettering.
 - assets: Retained 1024px source artwork under `assets/brand`; generated Lanczos-resized Chrome icons at 16/32/48/128px and wired both extension and toolbar manifest icons.
+- verification: Production build ships all four icon sizes; 183 Vitest tests, typecheck, zero-warning security lint, and all three Playwright MV3 journeys passed. Permissions remain `activeTab`, `storage`, and `scripting`.
 
 ### 2026-08-13 02:20 UTC
 - bug: Extension reload/update could leave a popup promise with an undefined or malformed tab response, and an anonymous popup path still read `.type` directly.
