@@ -38,6 +38,20 @@ Platform-independent scholarly author metadata. All imports normalize into this 
 | `createdAt` | ISO datetime | yes | |
 | `updatedAt` | ISO datetime | yes | |
 | `source` | enum | yes | `manual` \| `sample` \| `csv` \| `google_sheets` \| `json` \| `duplicate` |
+| `projectMetadata` | object | no | Project-level funding/support and disclosure statements imported with the roster |
+
+### Project metadata
+
+Project-level statements are not attributed to an individual author:
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `fundingStatements` | string[] | Unique non-empty support/funding statements from mapped columns |
+| `disclosureStatements` | string[] | Unique non-empty conflict/competing-interest/disclosure statements |
+
+Adapters may map these only when fixture evidence identifies the corresponding
+journal fields. Importing them does not authorize certification or legal
+attestation.
 
 ## Common import column aliases
 
@@ -52,6 +66,8 @@ Recognized headings (non-exhaustive; mapping UI must show final mapping):
 - Country: `Country`
 - Middle: `Middle name`, `Middle Name`, `middle_name`
 - Corresponding: `Corresponding`, `Corresponding Author`, `is_corresponding`
+- Funding: `Support/Funding Statement`, `Funding Statement`, `Funding`
+- Disclosure: `Conflicts of Interest`, `Competing Interests`, `Disclosure Statement`
 
 **Never silently guess an ambiguous column mapping.** Show the mapping to the user and require confirmation when confidence is not unique.
 

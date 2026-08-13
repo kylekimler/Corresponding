@@ -115,16 +115,18 @@ export function parseTsv(text: string): CsvParseResult {
  * Falls back to CSV when tabs are absent.
  */
 export function parsePastedTable(text: string): PasteParseResult {
-  const trimmed = text.trim();
-  if (!trimmed) {
+  // Do not trim tabs: a leading blank spreadsheet header is a real column.
+  // Trimming it shifts only the header row and corrupts every mapping below it.
+  const normalized = text.replace(/^\uFEFF/, '');
+  if (!normalized.trim()) {
     return { headers: [], rows: [], delimiter: 'unknown', rowCount: 0 };
   }
 
-  const sample = splitLines(trimmed).slice(0, 12);
+  const sample = splitLines(normalized).slice(0, 12);
   const delimiter = detectDelimiter(sample);
 
   const parsed =
-    delimiter === 'comma' ? parseCsv(trimmed) : parseTsv(trimmed);
+    delimiter === 'comma' ? parseCsv(normalized) : parseTsv(normalized);
 
   return {
     ...parsed,

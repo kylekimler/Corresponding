@@ -119,6 +119,7 @@ export function App() {
   const sampleCreatingRef = useRef(false);
 
   const selected = rosters.find((r) => r.id === selectedId) ?? null;
+  const projectMetadata = selected?.projectMetadata;
   const sortedAuthors = useMemo(
     () =>
       selected
@@ -302,10 +303,19 @@ export function App() {
       setError('Map at least First/Given name and Last/Family name.');
       return;
     }
-    await importTable({
-      ...pending,
-      mapping: { ...pending.mapping, requiresConfirmation: false },
-    });
+    setError('');
+    setStatus('Importing…');
+    try {
+      await importTable({
+        ...pending,
+        mapping: { ...pending.mapping, requiresConfirmation: false },
+      });
+    } catch {
+      setStatus('');
+      setError(
+        'Import failed. Check that mapped email and ORCID columns contain the expected values.',
+      );
+    }
   }
 
   function updateMapping(columnIndex: number, value: CanonicalColumn) {
@@ -1158,6 +1168,32 @@ export function App() {
                   ))}
                 </ul>
               </div>
+            )}
+            {(projectMetadata?.fundingStatements.length ||
+              projectMetadata?.disclosureStatements.length) && (
+              <details className="project-metadata-review">
+                <summary>Project statements</summary>
+                {projectMetadata.fundingStatements.length > 0 && (
+                  <>
+                    <h2>Support / funding</h2>
+                    <ul className="compact">
+                      {projectMetadata.fundingStatements.map((statement) => (
+                          <li key={statement}>{statement}</li>
+                        ))}
+                    </ul>
+                  </>
+                )}
+                {projectMetadata.disclosureStatements.length > 0 && (
+                  <>
+                    <h2>Conflicts / disclosures</h2>
+                    <ul className="compact">
+                      {projectMetadata.disclosureStatements.map((statement) => (
+                          <li key={statement}>{statement}</li>
+                        ))}
+                    </ul>
+                  </>
+                )}
+              </details>
             )}
             <details className="author-all" open={sortedAuthors.length <= 10}>
               <summary>Imported authors ({sortedAuthors.length})</summary>

@@ -39,13 +39,21 @@ describe('identity migration', () => {
   });
 
   it('round-trips through toSimpleRoster without losing v1 fields', () => {
-    const identity = fromSimpleRoster(v1Roster);
+    const withMetadata = {
+      ...v1Roster,
+      projectMetadata: {
+        fundingStatements: ['Supported by Grant A'],
+        disclosureStatements: ['No competing interests'],
+      },
+    };
+    const identity = fromSimpleRoster(withMetadata);
     const back = toSimpleRoster(identity);
     expect(back.schemaVersion).toBe(ROSTER_SCHEMA_VERSION);
     expect(back.authors[0]?.givenName).toBe('Jane');
     expect(back.authors[0]?.email).toBe('jane.doe@example.org');
     expect(back.authors[0]?.orcid).toBe('0000-0001-2345-6789');
     expect(back.authors[0]?.affiliations[0]?.institution).toBe('Example University');
+    expect(back.projectMetadata).toEqual(withMetadata.projectMetadata);
   });
 
   it('parseCompatibleIdentity accepts v1 and v2 documents', () => {
