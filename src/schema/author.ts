@@ -28,6 +28,7 @@ export const RosterSourceSchema = z.enum([
   'manual',
   'sample',
   'csv',
+  'docx',
   'google_sheets',
   'json',
   'duplicate',

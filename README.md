@@ -183,6 +183,17 @@ No broad host permissions for form filling. Author PII is not sent to a journal-
 7. Review validation summary (`filled` / `preserved` / `missing email` / `conflicts`).
 8. Complete submission and legal steps yourself.
 
+### Manuscript author-table import
+
+**Upload manuscript (.docx)** parses the Word archive locally and looks only
+for a table with separate given-name and family-name columns. The extracted
+table uses the same mapping/review flow as spreadsheet paste. Manuscript prose
+is not returned by the parser or stored.
+
+Paragraph-style front matter, superscript-only affiliation layouts, PDF, and
+OCR intentionally fail closed until anonymized fixtures establish reliable
+rules.
+
 ## Architecture
 
 - `src/schema` — canonical Author / Roster model (Zod)

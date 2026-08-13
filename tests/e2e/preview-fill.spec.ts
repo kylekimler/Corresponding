@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
+import { strToU8, zipSync } from 'fflate';
 import type { BrowserContext, Page } from '@playwright/test';
 import { expect, test } from './extension.fixture';
 
@@ -237,6 +238,48 @@ test('wide Excel-style paste defaults extra columns to Ignore and imports', asyn
   await expect(popup.getByRole('button', { name: /Duplicate|Export|Edit/ })).toHaveCount(
     0,
   );
+});
+
+test('DOCX manuscript author table imports locally through the popup', async ({
+  context,
+  extensionId,
+}) => {
+  const { popup } = await openFixtureAndPopup(context, extensionId);
+  const cell = (text: string) =>
+    `<w:tc><w:p><w:r><w:t>${text}</w:t></w:r></w:p></w:tc>`;
+  const documentXml = `<?xml version="1.0" encoding="UTF-8"?>
+    <w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+      <w:body>
+        <w:p><w:r><w:t>Manuscript body is discarded</w:t></w:r></w:p>
+        <w:tbl>
+          <w:tr>${cell('First name')}${cell('Last name')}${cell('Email')}${cell('Affiliation 1')}</w:tr>
+          <w:tr>${cell('Ada')}${cell('Lovelace')}${cell('ada@example.org')}${cell('Analytical Engines')}</w:tr>
+          <w:tr>${cell('Alan')}${cell('Turing')}${cell('alan@example.org')}${cell('Bletchley Park')}</w:tr>
+        </w:tbl>
+      </w:body>
+    </w:document>`;
+  const docx = zipSync({
+    'word/document.xml': strToU8(documentXml),
+  });
+
+  await popup.getByRole('button', { name: 'Import authors' }).click();
+  await popup.locator('input[type="file"]').setInputFiles({
+    name: 'manuscript.docx',
+    mimeType:
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    buffer: Buffer.from(docx),
+  });
+
+  await expect(popup.getByText('2 authors', { exact: true })).toBeVisible();
+  await popup
+    .getByRole('button', { name: 'Review imported authors →' })
+    .click();
+  await expect(
+    popup.locator('.review-author-name').filter({ hasText: 'Ada Lovelace' }),
+  ).toBeVisible();
+  await expect(
+    popup.locator('.review-author-name').filter({ hasText: 'Alan Turing' }),
+  ).toBeVisible();
 });
 
 test('bioRxiv modal workflow saves each author and never continues the page', async ({

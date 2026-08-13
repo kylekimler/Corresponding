@@ -4,6 +4,14 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-13 03:45 UTC
+- bioRxiv live follow-up: After one saved author, the portal closes the dialog before remounting its Add control. The orchestrator now waits for the refreshed external action and accepts the observed “Add Another Author” state instead of failing immediately.
+- popup: Removed the optional-Preview subtitle entirely.
+- manuscript import phase 1: Added local DOCX archive parsing with `fflate`, strict compressed/XML size limits, and deterministic extraction of structured author tables. The parser returns only the selected table; manuscript prose is discarded and never stored.
+- fail-closed scope: DOCX tables must expose separate given/family columns. Paragraph front matter, superscript-only layouts, PDF, and OCR remain blocked pending anonymized fixtures.
+- tests: Added delayed post-save Add remount coverage, label-variant coverage, DOCX selection among unrelated tables, blank-column preservation, paragraph-layout refusal, malformed archive refusal, and production popup DOCX upload.
+- verification: 188 Vitest tests, typecheck, production build, zero-warning security lint, zero production dependency vulnerabilities, and all four Playwright MV3 journeys passed.
+
 ### 2026-08-13 02:50 UTC
 - copy: Changed the popup purpose line to “Giving scientists more time to do science.” Replaced mandatory-sounding safety copy with optional Preview guidance.
 - direct Fill: Fill no longer requires a user-triggered Preview. It reuses a matching clean Preview when available; otherwise it performs a fresh internal dry-run bound to the current roster/version, overwrite setting, and tab before any mutation. Blocking adapter errors still stop Fill.

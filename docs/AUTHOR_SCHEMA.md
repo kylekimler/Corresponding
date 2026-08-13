@@ -37,7 +37,7 @@ Platform-independent scholarly author metadata. All imports normalize into this 
 | `schemaVersion` | number | yes | For local migrations |
 | `createdAt` | ISO datetime | yes | |
 | `updatedAt` | ISO datetime | yes | |
-| `source` | enum | yes | `manual` \| `sample` \| `csv` \| `google_sheets` \| `json` \| `duplicate` |
+| `source` | enum | yes | `manual` \| `sample` \| `csv` \| `docx` \| `google_sheets` \| `json` \| `duplicate` |
 | `projectMetadata` | object | no | Project-level funding/support and disclosure statements imported with the roster |
 
 ### Project metadata

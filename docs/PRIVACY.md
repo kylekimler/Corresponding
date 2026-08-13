@@ -13,6 +13,8 @@ Corresponding is a local-first browser extension. Author roster data stays on yo
 On your device, the extension may store:
 
 - Saved author rosters (names, emails, affiliations, ORCID, corresponding-author flags, and related scholarly metadata you import or enter)
+- Structured author/project metadata extracted locally from a user-selected
+  DOCX author table. Full manuscript prose is not retained.
 - Column-mapping preferences for CSV/Sheets imports
 - Extension settings (e.g., overwrite preference)
 
@@ -32,6 +34,8 @@ The extension does **not** intentionally read, store, or transmit:
 ## Network activity
 
 - Form filling runs in the active tab using on-demand scripting (`activeTab`). Author data is not sent to a journal-autofill server.
+- DOCX parsing runs locally in the extension. The selected file is not uploaded
+  to Corresponding.
 - Optional Google Sheets import (when configured) uses Chrome Identity OAuth with the minimum Google Sheets **read-only** scope to fetch sheet rows you explicitly select. Those rows are normalized locally into the author schema. No write access to Google Sheets is requested.
 - The extension does not load remotely hosted executable code for its fill logic.
 
