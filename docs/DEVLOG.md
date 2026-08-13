@@ -4,6 +4,15 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-13 14:55 UTC
+- live result: Author saved correctly and appeared in bioRxiv's list, but Corresponding reported "did not confirm the saved author". A screenshot proved the fill succeeded and only detection failed.
+- root cause: `existingAuthorCount` used `querySelector`, taking the first `table.v-datatable` in the document. bioRxiv's Import Authors feature contributes a hidden preview table, so the visible author list was never counted and the gate could never observe the commit.
+- fix: Select the first visible, non-dialog author table instead of the first match, and add a markup-independent second signal that counts visible edit/delete row-action pairs.
+- policy fix: A detection failure is no longer reported as a fill failure. When the dialog closes with no portal error, Corresponding settles, continues, and warns that it could not read the author list. A dialog still open after Save remains a genuine error.
+- pacing: The first unreadable commit shortens later confirm waits, so an undetectable page does not pay the full timeout per author.
+- tests: Hidden import-preview table with icon-only row actions (verified failing against the previous detection), and an uncountable author list that still completes with a warning.
+- verification: 198 Vitest tests, typecheck, production build, zero-warning security lint, and all four Playwright MV3 journeys passed.
+
 ### 2026-08-13 04:50 UTC
 - live result: Authors now fill correctly, but bioRxiv showed its own red banner, "Author does not exists hash do not match", when the second dialog opened.
 - root cause: `saveAuthorDialog` treated dialog closure as success. Closure is client-side only; bioRxiv commits the author asynchronously afterwards. Clicking Add Author inside that window made the portal reconcile against a record it had not stored yet.
