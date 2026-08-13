@@ -282,6 +282,25 @@ test('DOCX manuscript author table imports locally through the popup', async ({
   ).toBeVisible();
 });
 
+test('the import page accepts a CSV file directly', async ({
+  context,
+  extensionId,
+}) => {
+  // A popup is destroyed by the native file dialog, so file selection lives on
+  // this page instead.
+  const page = await context.newPage();
+  await page.goto(`chrome-extension://${extensionId}/import.html`);
+
+  await expect(
+    page.getByRole('heading', { name: 'Import authors' }),
+  ).toBeVisible();
+  await page
+    .locator('input[type="file"]')
+    .setInputFiles(path.resolve('fixtures/sample-authors.csv'));
+
+  await expect(page.getByText('3 authors', { exact: true })).toBeVisible();
+});
+
 test('bioRxiv modal workflow saves each author and never continues the page', async ({
   context,
   extensionId,

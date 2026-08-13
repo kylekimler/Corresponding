@@ -4,6 +4,15 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-13 17:45 UTC
+- diagnostic resolved: `fields at Save: Email=present, First Name=present, Last Name=present, Institution=present` with bioRxiv still reporting the first name missing proves the DOM held the values while the portal's model did not. `execCommand` also needs a focused document, which an open popup denies, so the earlier change silently fell back to the previous behaviour.
+- bioRxiv: Input strategies now escalate — `insertText`, native setter, `setRangeText`, then per-character key events — and the portal's own field validation decides whether a strategy was accepted. Values present in the field while validation still says "required" now advance to the next strategy instead of saving.
+- exhaustion path: When no strategy is accepted, the error names that and points at bioRxiv's own Import Authors control, which is the portal-supported bulk route.
+- CSV stall root cause: Chrome destroys an extension popup when the native file dialog takes focus, so the chosen file was never read. Added an `import.html` extension page that reuses the same UI and storage; the popup now opens it for file selection and keeps working drag-and-drop.
+- sample availability: Example authors are available in every build, relabelled "Try six example authors". Filling them into a non-fixture page now asks for confirmation instead of being blocked outright, which had made real end-to-end testing impossible.
+- fixture realism: The author dialog now clears a field's validation message once valid input arrives, matching reactive frameworks and making strategy escalation testable.
+- verification: 200 Vitest tests, typecheck, production build, zero-warning security lint, and five Playwright MV3 journeys passed. Manifest permissions unchanged; creating a tab needs no extra permission.
+
 ### 2026-08-13 17:20 UTC
 - sample roster: Extended to six authors shaped like a real paper — two shared first authors, ordered third and fourth, then two shared corresponding senior authors. Includes an accented name for encoding coverage.
 - schema: Added canonical optional `equalContribution`, and mapped the workbook columns that already carry it (`Equal contribution`, `Co-first author`, `Shared first author`) instead of discarding them. Shared first authorship now appears in the read-only import review.

@@ -250,6 +250,20 @@ export function mountBiorxivFixture(
     continueClicks += 1;
   });
 
+  // Reactive frameworks clear a field's validation message once it is valid
+  // again, which is how Corresponding can tell the value was accepted.
+  const firstNameInput = document.querySelector(
+    'input[name="firstName"]',
+  ) as HTMLInputElement;
+  const clearValidation = () => {
+    if (!firstNameInput.value.trim()) return;
+    const validation = document.getElementById('dialog-validation')!;
+    validation.textContent = '';
+    validation.style.display = 'none';
+  };
+  firstNameInput.addEventListener('input', clearValidation);
+  firstNameInput.addEventListener('blur', clearValidation);
+
   renderRows();
   setDialogOpen(options.dialogOpen === true);
 
