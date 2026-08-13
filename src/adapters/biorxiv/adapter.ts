@@ -503,17 +503,46 @@ function authorFieldMismatch(
   return null;
 }
 
+const PORTAL_ERROR_SELECTOR =
+  '.v-alert, [role="alert"], .error--text, .red--text';
+
+/** bioRxiv's own visible error banner text, if any. */
+function portalErrorText(doc: Document): string {
+  for (const node of Array.from(doc.querySelectorAll(PORTAL_ERROR_SELECTOR))) {
+    if (!(node instanceof HTMLElement) || !isVisible(node)) continue;
+    const text = normalizeText(node.textContent);
+    if (text.length >= 8) return text.slice(0, 200);
+  }
+  return '';
+}
+
+/**
+ * A closed dialog only means bioRxiv accepted the click. The author is not
+ * committed until it appears in the table, and clicking Add before then makes
+ * the portal reconcile against a record it has not stored yet.
+ */
 async function saveAuthorDialog(
   doc: Document,
   dialog: HTMLElement,
+  baselineError: string,
 ): Promise<void> {
+  const before = existingAuthorCount(doc);
   const save = findButton(dialog, 'Save');
   if (!save) throw new Error('Could not find the active bioRxiv author Save button');
   assertSafeMutationTarget(save);
   save.click();
-  await waitFor(
-    () => activeDialog(doc) === null,
-    'bioRxiv did not close the author dialog after Save; review its validation messages',
+
+  const started = Date.now();
+  while (Date.now() - started < WAIT_TIMEOUT_MS) {
+    const error = portalErrorText(doc);
+    if (error && error !== baselineError) {
+      throw new Error(`bioRxiv reported: ${error}`);
+    }
+    if (activeDialog(doc) === null && existingAuthorCount(doc) > before) return;
+    await delay(100);
+  }
+  throw new Error(
+    'bioRxiv did not confirm the saved author in its author list; review the page before filling again',
   );
 }
 
@@ -590,11 +619,17 @@ export const biorxivAdapter: PlatformAdapter = {
     if (options.dryRun || preflight.errors.length > 0) return preflight;
 
     const authors = sortedAuthors(roster);
+    // A pre-existing banner must not block the run, so only new text is fatal.
+    const baselineError = portalErrorText(doc);
     let savedAuthors = 0;
     try {
       for (const author of authors) {
         const { dialog, openedByUs } = await openAuthorDialog(doc);
         if (openedByUs) await waitForDialogSettled(dialog);
+        const openError = portalErrorText(doc);
+        if (openError && openError !== baselineError) {
+          throw new Error(`bioRxiv reported: ${openError}`);
+        }
 
         let resolved = resolveAuthorFields(dialog, author);
         writeAuthorFields(resolved, openedByUs, options.overwrite);
@@ -623,7 +658,7 @@ export const biorxivAdapter: PlatformAdapter = {
           );
         }
         setCheckbox(corresponding, author.isCorresponding);
-        await saveAuthorDialog(doc, dialog);
+        await saveAuthorDialog(doc, dialog, baselineError);
         savedAuthors += 1;
       }
       lastFill.set(doc, { rosterId: roster.id, savedAuthors });
