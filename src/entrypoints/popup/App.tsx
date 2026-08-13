@@ -459,7 +459,7 @@ export function App({ surface = 'popup' }: { surface?: 'popup' | 'page' } = {}) 
       const roster = await importSampleRosterOnce(store, sampleCreatingRef);
       if (!roster) return;
       await refreshRosters(roster.id);
-      setStatus('Sample roster added. Preview it on the local test fixture.');
+      setStatus(`Example roster ready: ${roster.authors.length} authors.`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not add the sample roster.');
     } finally {
@@ -473,7 +473,7 @@ export function App({ surface = 'popup' }: { surface?: 'popup' | 'page' } = {}) 
     setPreviewSession(null);
     setValidation(null);
     await refreshRosters();
-    setStatus('Development sample removed from this browser.');
+    setStatus('Example authors removed from this browser.');
   }
 
   async function runPreview() {
@@ -804,6 +804,19 @@ export function App({ surface = 'popup' }: { surface?: 'popup' | 'page' } = {}) 
                       >
                         Review imported authors
                       </button>
+                      {showSampleOnboarding && (
+                        <button
+                          type="button"
+                          role="menuitem"
+                          disabled={sampleCreating}
+                          onClick={() => {
+                            setMenuOpen(false);
+                            void addSampleRoster();
+                          }}
+                        >
+                          Add example authors
+                        </button>
+                      )}
                       <button
                         type="button"
                         role="menuitem"
@@ -842,7 +855,7 @@ export function App({ surface = 'popup' }: { surface?: 'popup' | 'page' } = {}) 
                   className="linkish sample-remove"
                   onClick={() => void removeSelectedSample()}
                 >
-                  Remove development sample
+                  Remove example authors
                 </button>
               )}
 

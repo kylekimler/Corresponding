@@ -67,6 +67,24 @@ describe('sample roster', () => {
     expect(saved[0]?.authors).toHaveLength(6);
   });
 
+  it('replaces a stale example roster instead of stacking duplicates', async () => {
+    const store = createMemoryRosterStore();
+    // An older example roster already saved in this browser.
+    const stale = { ...createSampleRoster(), authors: [] };
+    await store.importRoster(stale);
+    // An imported roster of the user's own must survive.
+    const imported = { ...createSampleRoster(), source: 'csv' as const };
+    await store.importRoster(imported);
+
+    const fresh = await importSampleRosterOnce(store, { current: false });
+
+    const saved = await store.list();
+    expect(saved.filter((roster) => roster.source === 'sample')).toHaveLength(1);
+    expect(saved.some((roster) => roster.id === stale.id)).toBe(false);
+    expect(saved.some((roster) => roster.id === imported.id)).toBe(true);
+    expect(fresh?.authors).toHaveLength(6);
+  });
+
   it('atomically ignores a reentrant sample-import click', async () => {
     const store = createMemoryRosterStore();
     const lock = { current: false };

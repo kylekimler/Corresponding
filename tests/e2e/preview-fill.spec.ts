@@ -282,6 +282,26 @@ test('DOCX manuscript author table imports locally through the popup', async ({
   ).toBeVisible();
 });
 
+test('example authors stay reachable once a roster already exists', async ({
+  context,
+  extensionId,
+}) => {
+  const page = await context.newPage();
+  await page.goto(`chrome-extension://${extensionId}/import.html`);
+  await page
+    .locator('input[type="file"]')
+    .setInputFiles(path.resolve('fixtures/sample-authors.csv'));
+  await expect(page.getByText('3 authors', { exact: true })).toBeVisible();
+
+  // With a roster selected the empty state is gone, so the sample has to be
+  // reachable from the roster menu.
+  await page.getByRole('button', { name: 'Roster menu' }).click();
+  await page.getByRole('menuitem', { name: 'Add example authors' }).click();
+
+  await expect(page.getByText('6 authors', { exact: true })).toBeVisible();
+  await expect(page.getByText(/Example roster ready: 6 authors/)).toBeVisible();
+});
+
 test('the import page accepts a CSV file directly', async ({
   context,
   extensionId,

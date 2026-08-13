@@ -116,7 +116,8 @@ export function createSampleRoster(now?: string): Roster {
 
 /**
  * Atomically import at most one sample for a UI action, even if a user clicks
- * twice before React has rerendered.
+ * twice before React has rerendered. Any previous example roster is replaced so
+ * the current example set is always what appears, never a stale stored copy.
  */
 export async function importSampleRosterOnce(
   store: RosterStore,
@@ -125,6 +126,10 @@ export async function importSampleRosterOnce(
   if (lock.current) return undefined;
   lock.current = true;
   try {
+    const existing = await store.list();
+    for (const roster of existing) {
+      if (roster.source === 'sample') await store.remove(roster.id);
+    }
     return await store.importRoster(createSampleRoster());
   } finally {
     lock.current = false;
