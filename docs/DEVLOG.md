@@ -8,6 +8,7 @@ Chronological overnight / autonomous iteration log.
 - bug: Extension reload/update could leave a popup promise with an undefined or malformed tab response, and an anonymous popup path still read `.type` directly.
 - fix: Every popup request now normalizes responses again at the component boundary; response envelopes require their expected payload; interrupted update messaging becomes a user-facing reconnect instruction. Diagnostic capture now catches rejected browser calls instead of producing an unhandled promise.
 - tests: Added undefined, null, missing-type, missing-result, and malformed-error response coverage.
+- verification: 183 Vitest tests, typecheck, production build, zero-warning security lint, and all three Playwright MV3 journeys passed.
 
 ### 2026-08-13 02:10 UTC
 - evidence: Reviewed redacted bioRxiv author-page captures with the repeated editor closed/open plus values-free visibility/ancestry output. Confirmed the active Vuetify dialog, stable field names/labels, external Add Author, dialog Save, empty author table, and page-level `CA_continue`.
