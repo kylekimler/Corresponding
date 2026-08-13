@@ -20,6 +20,11 @@ export const AuthorSchema = z.object({
     .transform((v) => (v === '' ? undefined : v)),
   orcid: z.string().optional(),
   isCorresponding: z.boolean().default(false),
+  /**
+   * Shared/co-first or otherwise equally contributing author. Canonical data
+   * only: no portal field is filled from it without fixture evidence.
+   */
+  equalContribution: z.boolean().default(false),
   affiliations: z.array(AffiliationSchema).default([]),
   sequence: z.number().int().positive(),
 });

@@ -4,6 +4,13 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-13 17:20 UTC
+- sample roster: Extended to six authors shaped like a real paper — two shared first authors, ordered third and fourth, then two shared corresponding senior authors. Includes an accented name for encoding coverage.
+- schema: Added canonical optional `equalContribution`, and mapped the workbook columns that already carry it (`Equal contribution`, `Co-first author`, `Shared first author`) instead of discarding them. Shared first authorship now appears in the read-only import review.
+- deliberate limit: No portal field is filled from `equalContribution`. Nature and bioRxiv fixtures show no such control, so it stays canonical data until fixture evidence exists.
+- multiple corresponding authors: Documented as supported. The Nature adapter still fills its single corresponding block from the first flagged author; bioRxiv marks each flagged author individually.
+- verification: 200 Vitest tests, typecheck, production build, zero-warning security lint, and all four Playwright MV3 journeys passed.
+
 ### 2026-08-13 17:15 UTC
 - live result: Author 2 still rejected with "the first name field is required" after the retry. Not a sample-data problem: the sample author has a first name, and author 1 saves from the same roster.
 - input fidelity: Writing now tries `document.execCommand('insertText')` first, which routes through the browser's own editing pipeline so reactive bindings observe it as real typing, then falls back to the native setter and `setRangeText`. Each strategy is verified against the field before moving on.

@@ -75,6 +75,7 @@ export function rowsToRoster(input: {
       email: email || undefined,
       orcid: normalizeOrcid(cell(row, input.mapping, 'orcid')),
       isCorresponding: truthy(cell(row, input.mapping, 'isCorresponding')),
+      equalContribution: truthy(cell(row, input.mapping, 'equalContribution')),
       affiliations,
       sequence: Number.isFinite(sequence) && sequence > 0 ? sequence : i + 1,
     };

@@ -78,7 +78,7 @@ describe('first-use journey', () => {
 
     const validation = natureMtsAdapter.validate(document, roster);
     expect(validation.summary.conflicts).toBe(0);
-    expect(validation.summary.filledLike).toBe(3);
+    expect(validation.summary.filledLike).toBe(roster.authors.length);
   });
 
   it.each([3, 75, 500])(

@@ -99,7 +99,7 @@ describe('paste from spreadsheet', () => {
       10: 'ignore',
       11: 'ignore',
       12: 'ignore',
-      13: 'ignore',
+      13: 'equalContribution',
       14: 'ignore',
       15: 'ignore',
       16: 'ignore',

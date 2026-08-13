@@ -12,7 +12,8 @@ Platform-independent scholarly author metadata. All imports normalize into this 
 | `familyName` | string | yes | Last / family name |
 | `email` | string (email) | recommended | Missing email is a validation warning |
 | `orcid` | string | no | ORCID iD, normalized when present |
-| `isCorresponding` | boolean | yes | Exactly one corresponding author recommended |
+| `isCorresponding` | boolean | yes | Multiple shared corresponding authors are allowed |
+| `equalContribution` | boolean | yes | Shared/co-first or equally contributing author. Canonical only: not filled into any portal without fixture evidence |
 | `affiliations` | Affiliation[] | yes (may be empty) | Ordered; one may be marked primary |
 | `sequence` | positive int | yes | 1-based author order in the roster |
 
@@ -66,6 +67,7 @@ Recognized headings (non-exhaustive; mapping UI must show final mapping):
 - Country: `Country`
 - Middle: `Middle name`, `Middle Name`, `middle_name`
 - Corresponding: `Corresponding`, `Corresponding Author`, `is_corresponding`
+- Equal contribution: `Equal contribution`, `Co-first author`, `Shared first author`
 - Funding: `Support/Funding Statement`, `Funding Statement`, `Funding`
 - Disclosure: `Conflicts of Interest`, `Competing Interests`, `Disclosure Statement`
 
