@@ -10,6 +10,7 @@ Chronological overnight / autonomous iteration log.
 - schema/import: Added optional project-level `fundingStatements` and `disclosureStatements` to rosters and identity-v2 round trips. Support/Funding and Conflicts/Competing Interests columns map explicitly instead of false-matching author state.
 - UX: Read-only roster review summarizes imported project statements. Adapters do not fill them until portal fixtures prove the corresponding fields, and no certification/attestation is automated.
 - tests: Added the reported leading-blank-column shape, project metadata mapping/deduplication, identity migration preservation, and production popup E2E coverage.
+- verification: 185 Vitest tests, typecheck, production build, zero-warning security lint, and all three Playwright MV3 journeys passed.
 
 ### 2026-08-13 02:30 UTC
 - branding: Added a “Corr” extension icon using the popup's mint, cream, parchment, and pale-sage gradient with dark forest serif lettering.
