@@ -371,22 +371,41 @@ function report(
 }
 
 /**
- * Writes a value the way a person would, so the portal's framework updates its
- * own model rather than re-rendering our text away. The native setter bypasses
- * value tracking, and an InputEvent carrying `inputType` is what reactive
- * bindings listen for.
+ * `insertText` routes through the browser's own editing pipeline, so reactive
+ * frameworks observe it exactly as they would real typing. The remaining
+ * strategies are fallbacks for inputs that reject document commands.
  */
-function setInputValue(input: HTMLInputElement, value: string): void {
-  assertSafeMutationTarget(input);
-  if (input.disabled || input.readOnly) return;
+const INPUT_STRATEGIES = ['insertText', 'nativeSetter', 'rangeText'] as const;
+type InputStrategy = (typeof INPUT_STRATEGIES)[number];
+
+function applyInputStrategy(
+  input: HTMLInputElement,
+  value: string,
+  strategy: InputStrategy,
+): void {
   const win = input.ownerDocument.defaultView;
   input.focus();
-  const setter = win
-    ? Object.getOwnPropertyDescriptor(win.HTMLInputElement.prototype, 'value')
-        ?.set
-    : undefined;
-  if (setter) setter.call(input, value);
-  else input.value = value;
+
+  if (strategy === 'insertText') {
+    input.select();
+    const command = value ? 'insertText' : 'delete';
+    // execCommand emits its own trusted-shaped input events.
+    if (!input.ownerDocument.execCommand(command, false, value)) {
+      throw new Error('insertText unavailable');
+    }
+    return;
+  }
+
+  if (strategy === 'rangeText') {
+    input.setRangeText(value, 0, input.value.length, 'end');
+  } else {
+    const setter = win
+      ? Object.getOwnPropertyDescriptor(win.HTMLInputElement.prototype, 'value')
+          ?.set
+      : undefined;
+    if (setter) setter.call(input, value);
+    else input.value = value;
+  }
 
   const InputEventCtor = win?.InputEvent;
   input.dispatchEvent(
@@ -394,14 +413,30 @@ function setInputValue(input: HTMLInputElement, value: string): void {
       ? new InputEventCtor('input', {
           bubbles: true,
           cancelable: false,
-          inputType: 'insertText',
-          data: value,
+          inputType: value ? 'insertText' : 'deleteContentBackward',
+          data: value || null,
         })
       : new Event('input', { bubbles: true }),
   );
   input.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
+/** Returns false when no strategy left the intended value in the field. */
+function setInputValue(input: HTMLInputElement, value: string): boolean {
+  assertSafeMutationTarget(input);
+  if (input.disabled || input.readOnly) return false;
+  const desired = value.trim();
+  for (const strategy of INPUT_STRATEGIES) {
+    try {
+      applyInputStrategy(input, value, strategy);
+    } catch {
+      continue;
+    }
+    if (input.value.trim() === desired) break;
+  }
   input.blur();
   input.dispatchEvent(new Event('blur', { bubbles: true }));
+  return input.value.trim() === desired;
 }
 
 function setCheckbox(input: HTMLInputElement, checked: boolean): void {
@@ -771,10 +806,19 @@ export const biorxivAdapter: PlatformAdapter = {
         }
 
         if (commit === 'rejected') {
+          // Distinguish "our text never landed" from "the portal ignored text
+          // that was visibly present" so the next fix is not guesswork.
+          const shown = resolveAuthorFields(dialog, author)
+            .filter(({ field, input }) => input && field.required)
+            .map(
+              ({ field, input }) =>
+                `${field.label}=${input!.value.trim() ? 'present' : 'empty'}`,
+            )
+            .join(', ');
           throw new Error(
             `bioRxiv rejected author ${author.sequence} after re-entering the details: ${
               dialogValidationText(dialog) || 'review the dialog'
-            }`,
+            } (fields at Save: ${shown || 'none found'})`,
           );
         }
         if (commit === 'unconfirmed') {

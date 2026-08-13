@@ -4,6 +4,13 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-13 17:15 UTC
+- live result: Author 2 still rejected with "the first name field is required" after the retry. Not a sample-data problem: the sample author has a first name, and author 1 saves from the same roster.
+- input fidelity: Writing now tries `document.execCommand('insertText')` first, which routes through the browser's own editing pipeline so reactive bindings observe it as real typing, then falls back to the native setter and `setRangeText`. Each strategy is verified against the field before moving on.
+- self-diagnosis: A rejected author now reports whether each required field was present or empty at the moment Save was clicked. That separates "our text never landed" from "the portal ignored text that was visibly present", so the next fix is evidence-led rather than another guess.
+- honest status: Two prior hypotheses for this failure were wrong. This change improves the most likely mechanism and instruments the rest instead of claiming a certain fix.
+- verification: 199 Vitest tests, typecheck, production build, zero-warning security lint, and all four Playwright MV3 journeys passed. jsdom lacks `execCommand`, so unit runs exercise the fallback path and Chrome exercises the primary path.
+
 ### 2026-08-13 16:50 UTC
 - live result: Author 1 saved. Author 2's details were visibly typed in, then vanished, and bioRxiv reported "the first name field is required."
 - root cause: The portal's own model did not receive the values, so its re-render discarded them while the DOM still looked correct. Verification passed against the DOM, Save was clicked, and validation then failed against the empty model.
