@@ -49,6 +49,8 @@ function activeDialog(doc: Document): HTMLElement | null {
 function labelText(el: Element): string {
   const aria = el.getAttribute('aria-label');
   if (aria) return aria.trim();
+  const parentLabel = el.closest('label');
+  if (parentLabel?.textContent) return parentLabel.textContent.trim();
   const inputRoot = el.closest('.v-input');
   const label = inputRoot?.querySelector('label');
   return label?.textContent?.trim() ?? '';
