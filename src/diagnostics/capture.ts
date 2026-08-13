@@ -31,6 +31,17 @@ export interface CaptureField {
   repeatedGroupIndex?: number;
 }
 
+export interface CaptureControl {
+  tag: string;
+  inputType?: string;
+  idPattern?: string;
+  namePattern?: string;
+  actionLabel?: string;
+  category: FieldCategory;
+  disabled: boolean;
+  hidden: boolean;
+}
+
 export interface CaptureStructure {
   repeatedGroups: Array<{
     pattern: string;
@@ -46,8 +57,11 @@ export interface CompatibilityCapture {
   redactionComplete: boolean;
   notes: string[];
   fieldCount: number;
+  controlCount: number;
   /** Structural field descriptors (no values). */
   structuralFields: CaptureField[];
+  /** Redacted action controls needed to understand repeated modal workflows. */
+  controls: CaptureControl[];
   structure: CaptureStructure;
   urlPattern?: string;
   titleSafe?: string;
@@ -135,6 +149,23 @@ const CAPTURE_NOTES = [
   'Share this capture when requesting support for a new journal portal.',
 ];
 
+const SAFE_ACTION_WORD =
+  /^(add|author|co-?author|save|cancel|close|continue|next|back|previous|done|edit|remove|delete|open|submit|certify|copyright|payment|pay|accept)$/i;
+
+function redactControlLabel(raw: string): string | undefined {
+  const words = raw.trim().split(/\s+/).filter(Boolean).slice(0, 8);
+  if (words.length === 0) return undefined;
+  const redacted = words.map((word) =>
+    SAFE_ACTION_WORD.test(word.replace(/[^\p{L}-]/gu, ''))
+      ? word
+      : '[redacted]',
+  );
+  return redacted
+    .join(' ')
+    .replace(/(?:\[redacted\]\s*)+/g, '[redacted] ')
+    .trim();
+}
+
 export function captureForm(
   doc: Document,
   options: { url?: string } = {},
@@ -198,6 +229,44 @@ export function captureForm(
     });
   });
 
+  const controls: CaptureControl[] = [];
+  doc
+    .querySelectorAll(
+      'button, input[type="button"], input[type="submit"], [role="button"]',
+    )
+    .forEach((el) => {
+      const inputType =
+        el instanceof HTMLInputElement ? el.type : undefined;
+      const rawLabel =
+        el.getAttribute('aria-label') ||
+        (el instanceof HTMLInputElement ? el.value : el.textContent) ||
+        '';
+      const id = el.id || undefined;
+      const name = el.getAttribute('name') || undefined;
+      const category = categorize(el, rawLabel);
+      if (
+        category === 'auth_secret' ||
+        shouldOmitFieldFromCapture(el, rawLabel)
+      ) {
+        return;
+      }
+      controls.push({
+        tag: el.tagName.toLowerCase(),
+        inputType,
+        idPattern: id ? normalizeIdPattern(id) : undefined,
+        namePattern: name ? normalizeNamePattern(name) : undefined,
+        actionLabel: redactControlLabel(rawLabel),
+        category,
+        disabled:
+          (el instanceof HTMLButtonElement ||
+            el instanceof HTMLInputElement) &&
+          el.disabled,
+        hidden:
+          (el instanceof HTMLElement && el.hidden) ||
+          el.getAttribute('aria-hidden') === 'true',
+      });
+    });
+
   const features = extractFieldFeatures(doc);
   const authorGroups = detectAuthorGroups(features);
   const groupCounts = new Map<string, { count: number; evidence: string[] }>();
@@ -231,7 +300,9 @@ export function captureForm(
     redactionComplete: true,
     notes: [...CAPTURE_NOTES],
     fieldCount: fields.length,
+    controlCount: controls.length,
     structuralFields: fields,
+    controls,
     structure: {
       repeatedGroups: [...groupCounts.entries()].map(([pattern, info]) => ({
         pattern,
@@ -264,6 +335,7 @@ export function previewCapture(capture: CompatibilityCapture): string {
   if (capture.urlPattern) lines.push(`urlPattern: ${capture.urlPattern}`);
   if (capture.titleSafe) lines.push(`titleSafe: ${capture.titleSafe}`);
   lines.push(`fieldCount: ${capture.fieldCount}`);
+  lines.push(`controlCount: ${capture.controlCount}`);
   lines.push(`authorGroupCount: ${capture.structure.authorGroupCount}`);
   lines.push('');
   lines.push('## notes');
@@ -300,6 +372,28 @@ export function previewCapture(capture: CompatibilityCapture): string {
         .filter(Boolean)
         .join(' | '),
     );
+  }
+  if (capture.controls.length > 0) {
+    lines.push('');
+    lines.push('## controls');
+    for (const control of capture.controls) {
+      lines.push(
+        [
+          control.tag,
+          control.inputType ? `type=${control.inputType}` : null,
+          control.idPattern ? `idPattern=${control.idPattern}` : null,
+          control.namePattern ? `namePattern=${control.namePattern}` : null,
+          control.actionLabel
+            ? `action=${JSON.stringify(control.actionLabel)}`
+            : null,
+          `category=${control.category}`,
+          control.disabled ? 'disabled' : null,
+          control.hidden ? 'hidden' : null,
+        ]
+          .filter(Boolean)
+          .join(' | '),
+      );
+    }
   }
   return `${lines.join('\n')}\n`;
 }
