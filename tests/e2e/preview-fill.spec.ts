@@ -231,7 +231,9 @@ test('wide Excel-style paste defaults extra columns to Ignore and imports', asyn
   await expect(
     popup.getByRole('heading', { name: 'Review imported authors' }),
   ).toBeVisible();
-  await expect(popup.getByText(/Ada Lovelace/)).toBeVisible();
+  await expect(
+    popup.locator('.review-author-name').filter({ hasText: 'Ada Lovelace' }),
+  ).toBeVisible();
   await popup.getByText('Project statements').click();
   await expect(popup.getByText('Supported by Grant A')).toBeVisible();
   await expect(popup.getByText('No competing interests')).toBeVisible();
