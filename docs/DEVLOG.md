@@ -11,6 +11,7 @@ Chronological overnight / autonomous iteration log.
 - workflow simplification: Replaced roster CRUD/edit/export controls with a read-only imported-author review and issue summary. Source corrections happen in the spreadsheet followed by re-import.
 - Sheets: Made clipboard import explicitly Google Sheets/Excel friendly. Configured builds now support read-only Google Sheet URL import through Chrome Identity; unconfigured builds retain the three-permission/no-host-permission manifest and direct users to private clipboard paste.
 - bioRxiv intake: Added reviewed capture download, an unsupported-portal capture entry point, and two-state instructions for the author page plus empty repeated-author dialog. No selectors were guessed without the captures.
+- verification: 175 Vitest tests, typecheck, production build, zero-warning security lint, and two Playwright MV3 journeys passed. Default manifest remains `activeTab`/`storage`/`scripting` with no host permissions; a dummy configured build added only `identity`, `https://sheets.googleapis.com/*`, and `spreadsheets.readonly`.
 
 ### 2026-08-13 01:00 UTC
 - changed: Added an official Playwright MV3 end-to-end environment for remote Cursor terminals. It launches current bundled Chromium with an isolated persistent context, loads a test copy of the production extension, and intercepts the pinned localhost fixture without another server.
