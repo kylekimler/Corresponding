@@ -15,7 +15,7 @@ import { createEmptyRoster } from '@/roster/mutations';
 import { createRosterStore } from '@/roster/storage';
 import {
   importSampleRosterOnce,
-  sampleFillBlockReason,
+  sampleFillConfirmation,
 } from '@/roster/sample';
 import type { Roster, RosterSource } from '@/schema/author';
 import { previewCapture } from '@/diagnostics/capture';
@@ -60,7 +60,9 @@ const store = createRosterStore();
 const sheetsClient = createChromeGoogleSheetsClient();
 const auditLog = createChromeAuditLog();
 const popupPreferences = createPopupPreferences();
-const showSampleOnboarding = import.meta.env.DEV;
+// Clearly-labelled example data is useful in every build, including for
+// end-to-end testing against a real portal.
+const showSampleOnboarding = true;
 
 async function requestActiveTab(
   ...args: Parameters<typeof sendToActiveTab>
@@ -86,8 +88,8 @@ type PendingImport = {
   fileName?: string;
 };
 
-export function App() {
-  const [view, setView] = useState<View>('main');
+export function App({ surface = 'popup' }: { surface?: 'popup' | 'page' } = {}) {
+  const [view, setView] = useState<View>(surface === 'page' ? 'import' : 'main');
   const [importMode, setImportMode] = useState<ImportMode>('chooser');
   const [rosters, setRosters] = useState<Roster[]>([]);
   const [selectedId, setSelectedId] = useState<string>('');
@@ -374,6 +376,18 @@ export function App() {
     }
   }
 
+  /**
+   * A popup is destroyed when the native file dialog takes focus, so choosing a
+   * file has to happen on a full extension page.
+   */
+  function chooseImportFile() {
+    if (surface === 'popup') {
+      void browser.tabs.create({ url: chrome.runtime.getURL('import.html') });
+      return;
+    }
+    fileInputRef.current?.click();
+  }
+
   async function handleImportFile(file: File) {
     setError('');
     const kind = detectImportFileKind(file);
@@ -571,14 +585,11 @@ export function App() {
         url: currentSession.context.url,
       };
       if (selected.source === 'sample') {
-        const hasSuccessfulPreview = currentSession.report.dryRun;
-        const blockReason = sampleFillBlockReason(
+        const confirmation = sampleFillConfirmation(
           selected.source,
-          hasSuccessfulPreview,
-          hasSuccessfulPreview && (await isActiveDevelopmentFixtureTab()),
+          await isActiveDevelopmentFixtureTab(),
         );
-        if (blockReason) {
-          reportActionError(blockReason);
+        if (confirmation && !confirm(confirmation)) {
           setActionStatus('');
           return;
         }
@@ -732,7 +743,7 @@ export function App() {
                   disabled={sampleCreating}
                   onClick={() => void addSampleRoster()}
                 >
-                  {sampleCreating ? 'Adding sample…' : 'Try local test sample'}
+                  {sampleCreating ? 'Adding example…' : 'Try six example authors'}
                 </button>
               )}
               <button
@@ -745,7 +756,8 @@ export function App() {
             </div>
             {showSampleOnboarding && (
               <p className="muted tight">
-                Development only: example data for the pinned localhost fixture.
+                Example authors for practice: two shared first, two shared
+                corresponding. Not real people.
               </p>
             )}
           </section>
@@ -982,18 +994,16 @@ export function App() {
               className="import-option"
               onClick={() => {
                 setImportMode('csv');
-                fileInputRef.current?.click();
+                if (surface === 'page') fileInputRef.current?.click();
               }}
             >
               <strong>Upload CSV</strong>
-              <span>Drag and drop or choose a file</span>
+              <span>Drag and drop, or choose a file</span>
             </button>
             <button
               type="button"
               className="import-option"
-              onClick={() => {
-                fileInputRef.current?.click();
-              }}
+              onClick={chooseImportFile}
             >
               <strong>Upload manuscript (.docx)</strong>
               <span>Extract a structured author table locally</span>
@@ -1116,15 +1126,21 @@ export function App() {
               }}
             >
               <p>
-                Drop a CSV here, or{' '}
+                Drop a CSV or .docx here, or{' '}
                 <button
                   type="button"
                   className="linkish inline"
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={chooseImportFile}
                 >
-                  choose a file
+                  {surface === 'popup' ? 'open the file importer' : 'choose a file'}
                 </button>
               </p>
+              {surface === 'popup' && (
+                <p className="muted tight">
+                  Dropping a file works here. Choosing one opens a tab, because
+                  this panel closes when the system file dialog appears.
+                </p>
+              )}
               {csvMeta && (
                 <p className="ok">
                   {csvMeta.name} · {csvMeta.rows} rows

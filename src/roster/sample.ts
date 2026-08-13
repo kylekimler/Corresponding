@@ -131,17 +131,15 @@ export async function importSampleRosterOnce(
   }
 }
 
-export function sampleFillBlockReason(
+/**
+ * Example authors may fill any page, but only after the person confirms it.
+ * A hard block prevented legitimate end-to-end testing on real portals, while
+ * the real risk is filling example names without noticing.
+ */
+export function sampleFillConfirmation(
   source: RosterSource,
-  hasSuccessfulPreview: boolean,
   isDevelopmentFixture: boolean,
 ): string | undefined {
-  if (source !== 'sample') return undefined;
-  if (!hasSuccessfulPreview) {
-    return 'Preview the sample roster before filling the local test fixture.';
-  }
-  if (!isDevelopmentFixture) {
-    return 'Sample rosters can only fill the local Nature test fixture. Import your authors for a real portal.';
-  }
-  return undefined;
+  if (source !== 'sample' || isDevelopmentFixture) return undefined;
+  return 'This roster contains example authors, not real people. Fill them into this page anyway?';
 }

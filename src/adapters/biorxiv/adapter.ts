@@ -26,7 +26,6 @@ const COMMIT_RECHECK_TIMEOUT_MS = 1_500;
 const COMMIT_FALLBACK_SETTLE_MS = 1_200;
 /** Longer than one frame so a late re-render is seen before Save. */
 const WRITE_VERIFY_DELAY_MS = 150;
-const WRITE_ATTEMPTS = 2;
 
 type AuthorField = {
   key: 'email' | 'givenName' | 'middleName' | 'familyName' | 'institution';
@@ -375,8 +374,23 @@ function report(
  * frameworks observe it exactly as they would real typing. The remaining
  * strategies are fallbacks for inputs that reject document commands.
  */
-const INPUT_STRATEGIES = ['insertText', 'nativeSetter', 'rangeText'] as const;
+const INPUT_STRATEGIES = [
+  'insertText',
+  'nativeSetter',
+  'rangeText',
+  'keySequence',
+] as const;
 type InputStrategy = (typeof INPUT_STRATEGIES)[number];
+
+function setNativeValue(input: HTMLInputElement, value: string): void {
+  const win = input.ownerDocument.defaultView;
+  const setter = win
+    ? Object.getOwnPropertyDescriptor(win.HTMLInputElement.prototype, 'value')
+        ?.set
+    : undefined;
+  if (setter) setter.call(input, value);
+  else input.value = value;
+}
 
 function applyInputStrategy(
   input: HTMLInputElement,
@@ -396,15 +410,33 @@ function applyInputStrategy(
     return;
   }
 
+  if (strategy === 'keySequence') {
+    // Per-character events for portals that track keystrokes rather than value.
+    setNativeValue(input, '');
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    for (const char of value) {
+      const key = { key: char, bubbles: true, cancelable: true };
+      input.dispatchEvent(new KeyboardEvent('keydown', key));
+      setNativeValue(input, input.value + char);
+      input.dispatchEvent(
+        win?.InputEvent
+          ? new win.InputEvent('input', {
+              bubbles: true,
+              inputType: 'insertText',
+              data: char,
+            })
+          : new Event('input', { bubbles: true }),
+      );
+      input.dispatchEvent(new KeyboardEvent('keyup', key));
+    }
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+    return;
+  }
+
   if (strategy === 'rangeText') {
     input.setRangeText(value, 0, input.value.length, 'end');
   } else {
-    const setter = win
-      ? Object.getOwnPropertyDescriptor(win.HTMLInputElement.prototype, 'value')
-          ?.set
-      : undefined;
-    if (setter) setter.call(input, value);
-    else input.value = value;
+    setNativeValue(input, value);
   }
 
   const InputEventCtor = win?.InputEvent;
@@ -421,22 +453,22 @@ function applyInputStrategy(
   input.dispatchEvent(new Event('change', { bubbles: true }));
 }
 
-/** Returns false when no strategy left the intended value in the field. */
-function setInputValue(input: HTMLInputElement, value: string): boolean {
+/** Returns false when the chosen strategy did not leave the value in place. */
+function setInputValue(
+  input: HTMLInputElement,
+  value: string,
+  strategy: InputStrategy,
+): boolean {
   assertSafeMutationTarget(input);
   if (input.disabled || input.readOnly) return false;
-  const desired = value.trim();
-  for (const strategy of INPUT_STRATEGIES) {
-    try {
-      applyInputStrategy(input, value, strategy);
-    } catch {
-      continue;
-    }
-    if (input.value.trim() === desired) break;
+  try {
+    applyInputStrategy(input, value, strategy);
+  } catch {
+    return false;
   }
   input.blur();
   input.dispatchEvent(new Event('blur', { bubbles: true }));
-  return input.value.trim() === desired;
+  return input.value.trim() === value.trim();
 }
 
 function setCheckbox(input: HTMLInputElement, checked: boolean): void {
@@ -549,18 +581,18 @@ function writeAuthorFields(
   resolved: ResolvedField[],
   authoritative: boolean,
   overwrite: boolean,
+  strategy: InputStrategy,
 ): void {
   for (const { field, input } of resolved) {
     if (!input) continue;
     const desired = field.value?.trim() ?? '';
     const current = input.value.trim();
     if (!desired) {
-      if (authoritative && current) setInputValue(input, '');
+      if (authoritative && current) setInputValue(input, '', strategy);
       continue;
     }
-    if (current === desired) continue;
     if (current && !authoritative && !overwrite) continue;
-    setInputValue(input, desired);
+    setInputValue(input, desired, strategy);
   }
 }
 
@@ -759,34 +791,33 @@ export const biorxivAdapter: PlatformAdapter = {
         }
 
         let commit: CommitResult = 'rejected';
-        for (let attempt = 0; attempt < WRITE_ATTEMPTS; attempt += 1) {
-          if (attempt > 0) {
-            // A rejected save means the portal discarded our values before
-            // committing. Let it finish re-rendering, then re-enter the author.
+        let lastMismatch: string | null = null;
+        // The portal's own validation is the only reliable signal that it
+        // accepted our text, so escalate input strategies until it agrees.
+        for (const strategy of INPUT_STRATEGIES) {
+          if (commit === 'rejected' && strategy !== INPUT_STRATEGIES[0]) {
             await waitForDialogSettled(dialog);
           }
 
           let resolved = resolveAuthorFields(dialog, author);
-          writeAuthorFields(resolved, openedByUs, options.overwrite);
+          writeAuthorFields(resolved, openedByUs, options.overwrite, strategy);
 
           // Re-read after a tick: the portal may reset fields asynchronously.
           await delay(WRITE_VERIFY_DELAY_MS);
           resolved = resolveAuthorFields(dialog, author);
-          if (
-            authorFieldMismatch(resolved, author, openedByUs, options.overwrite)
-          ) {
-            writeAuthorFields(resolved, openedByUs, options.overwrite);
-            await delay(WRITE_VERIFY_DELAY_MS);
-            resolved = resolveAuthorFields(dialog, author);
-          }
-          // Never save a dialog that does not match the roster author.
-          const mismatch = authorFieldMismatch(
+          lastMismatch = authorFieldMismatch(
             resolved,
             author,
             openedByUs,
             options.overwrite,
           );
-          if (mismatch) throw new Error(mismatch);
+          if (lastMismatch) continue;
+
+          // Values are in the fields but the portal still reports them missing:
+          // its model did not receive this strategy's input.
+          if (/required|cannot be blank|must be/i.test(dialogValidationText(dialog))) {
+            continue;
+          }
 
           const corresponding = correspondingCheckbox(dialog);
           if (!corresponding) {
@@ -804,6 +835,7 @@ export const biorxivAdapter: PlatformAdapter = {
           );
           if (commit !== 'rejected') break;
         }
+        if (commit === 'rejected' && lastMismatch) throw new Error(lastMismatch);
 
         if (commit === 'rejected') {
           // Distinguish "our text never landed" from "the portal ignored text
@@ -816,9 +848,9 @@ export const biorxivAdapter: PlatformAdapter = {
             )
             .join(', ');
           throw new Error(
-            `bioRxiv rejected author ${author.sequence} after re-entering the details: ${
+            `bioRxiv rejected author ${author.sequence} after trying every input method: ${
               dialogValidationText(dialog) || 'review the dialog'
-            } (fields at Save: ${shown || 'none found'})`,
+            } (fields at Save: ${shown || 'none found'}). Try bioRxiv's own Import Authors control for bulk entry.`,
           );
         }
         if (commit === 'unconfirmed') {

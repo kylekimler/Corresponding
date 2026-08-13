@@ -3,7 +3,7 @@ import { readyAuthorCount } from '@/popup/authorAttention';
 import {
   createSampleRoster,
   importSampleRosterOnce,
-  sampleFillBlockReason,
+  sampleFillConfirmation,
 } from '@/roster/sample';
 import { createMemoryRosterStore } from '@/roster/storage';
 import { RosterSchema } from '@/schema/author';
@@ -81,12 +81,14 @@ describe('sample roster', () => {
     expect(await store.list()).toHaveLength(1);
   });
 
-  it('allows sample Fill only after Preview on the local fixture', () => {
-    expect(sampleFillBlockReason('sample', false, true)).toMatch(/Preview/i);
-    expect(sampleFillBlockReason('sample', true, false)).toMatch(
-      /only fill the local Nature test fixture/i,
+  it('asks before filling example authors into a real portal', () => {
+    // Confirmed rather than blocked, so end-to-end testing stays possible.
+    expect(sampleFillConfirmation('sample', false)).toMatch(
+      /example authors, not real people/i,
     );
-    expect(sampleFillBlockReason('sample', true, true)).toBeUndefined();
-    expect(sampleFillBlockReason('csv', false, false)).toBeUndefined();
+    // The local test fixture needs no warning.
+    expect(sampleFillConfirmation('sample', true)).toBeUndefined();
+    // Imported rosters are never questioned.
+    expect(sampleFillConfirmation('csv', false)).toBeUndefined();
   });
 });

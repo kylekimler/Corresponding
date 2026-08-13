@@ -185,6 +185,13 @@ No broad host permissions for form filling. Author PII is not sent to a journal-
 
 ### Manuscript author-table import
 
+### Choosing files
+
+Chrome destroys an extension popup when a native file dialog takes focus, which
+silently cancels the import. Dragging a file onto the popup works, and choosing
+a file opens `import.html` in a tab, where the dialog is safe. Both paths share
+the same local roster storage.
+
 **Upload manuscript (.docx)** parses the Word archive locally and looks only
 for a table with separate given-name and family-name columns. The extracted
 table uses the same mapping/review flow as spreadsheet paste. Manuscript prose
