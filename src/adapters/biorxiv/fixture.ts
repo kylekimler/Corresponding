@@ -8,6 +8,10 @@ export interface BiorxivFixtureOptions {
   addIconLigature?: string;
   /** Add a hidden decoy button whose text is exactly "Add Author". */
   hiddenDecoyAddButton?: boolean;
+  /** Reopen the reused dialog still holding the previous author's values. */
+  staleValuesOnReopen?: boolean;
+  /** Clear the reused dialog asynchronously, as a reactive framework would. */
+  resetDelayMs?: number;
 }
 
 export interface BiorxivFixtureHarness {
@@ -120,6 +124,16 @@ export function mountBiorxivFixture(
 
   add.addEventListener('click', () => {
     addClicks += 1;
+    if (options.staleValuesOnReopen) {
+      // Reused dialog keeps the previous author's values.
+      setDialogOpen(true);
+      return;
+    }
+    if (options.resetDelayMs !== undefined) {
+      setDialogOpen(true);
+      setTimeout(resetDialog, options.resetDelayMs);
+      return;
+    }
     resetDialog();
     setDialogOpen(true);
   });

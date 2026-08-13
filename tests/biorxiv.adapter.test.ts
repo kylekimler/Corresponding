@@ -152,6 +152,72 @@ describe('bioRxiv repeated author dialog adapter', () => {
     expect(harness.savedAuthors()).toHaveLength(2);
   });
 
+  it('does not carry a previous author into a reused dialog', async () => {
+    const harness = mountBiorxivFixture({ staleValuesOnReopen: true });
+    const authors = makeNAuthors(3);
+    authors[0]!.middleName = 'Mathison';
+
+    const report = await biorxivAdapter.fillAsync!(
+      document,
+      makeRoster(authors),
+      { overwrite: false, dryRun: false },
+    );
+
+    expect(report.errors).toEqual([]);
+    const saved = harness.savedAuthors();
+    expect(saved.map((author) => author.firstName)).toEqual([
+      'Given1',
+      'Given2',
+      'Given3',
+    ]);
+    expect(saved.map((author) => author.email)).toEqual([
+      'author1@example.org',
+      'author2@example.org',
+      'author3@example.org',
+    ]);
+    // Author 1's middle name must not leak into authors 2 and 3.
+    expect(saved.map((author) => author.middleName)).toEqual([
+      'Mathison',
+      '',
+      '',
+    ]);
+  });
+
+  it('survives an asynchronous dialog reset after reopening', async () => {
+    const harness = mountBiorxivFixture({ resetDelayMs: 60 });
+
+    await biorxivAdapter.fillAsync!(document, makeRoster(makeNAuthors(2)), {
+      overwrite: false,
+      dryRun: false,
+    });
+
+    expect(harness.savedAuthors().map((author) => author.lastName)).toEqual([
+      'Family1',
+      'Family2',
+    ]);
+  });
+
+  it('refuses to save a dialog that rejects roster values', async () => {
+    const harness = mountBiorxivFixture();
+    const firstName = document.querySelector(
+      'input[name="firstName"]',
+    ) as HTMLInputElement;
+    // Simulate a portal that discards programmatic input.
+    Object.defineProperty(firstName, 'value', {
+      get: () => '',
+      set: () => {},
+      configurable: true,
+    });
+
+    await expect(
+      biorxivAdapter.fillAsync!(document, makeRoster(makeNAuthors(1)), {
+        overwrite: false,
+        dryRun: false,
+      }),
+    ).rejects.toThrow(/did not accept the roster value/i);
+    expect(harness.saveClicks()).toBe(0);
+  });
+
   it('explains how to recover when authors already exist', () => {
     mountBiorxivFixture({ existingAuthors: 3 });
     const report = biorxivAdapter.fill(document, makeRoster(makeNAuthors(2)), {
