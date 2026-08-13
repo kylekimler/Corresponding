@@ -10,6 +10,7 @@ Chronological overnight / autonomous iteration log.
 - manuscript import phase 1: Added local DOCX archive parsing with `fflate`, strict compressed/XML size limits, and deterministic extraction of structured author tables. The parser returns only the selected table; manuscript prose is discarded and never stored.
 - fail-closed scope: DOCX tables must expose separate given/family columns. Paragraph front matter, superscript-only layouts, PDF, and OCR remain blocked pending anonymized fixtures.
 - tests: Added delayed post-save Add remount coverage, label-variant coverage, DOCX selection among unrelated tables, blank-column preservation, paragraph-layout refusal, malformed archive refusal, and production popup DOCX upload.
+- verification: 188 Vitest tests, typecheck, production build, zero-warning security lint, zero production dependency vulnerabilities, and all four Playwright MV3 journeys passed.
 
 ### 2026-08-13 02:50 UTC
 - copy: Changed the popup purpose line to “Giving scientists more time to do science.” Replaced mandatory-sounding safety copy with optional Preview guidance.
