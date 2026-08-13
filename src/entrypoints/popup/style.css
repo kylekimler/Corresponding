@@ -201,6 +201,11 @@ input:not([type]) {
   margin-top: var(--c-space-2);
 }
 
+.sample-remove {
+  margin-top: 6px;
+  color: var(--c-status-attention);
+}
+
 .portal-badge {
   display: flex;
   gap: 10px;

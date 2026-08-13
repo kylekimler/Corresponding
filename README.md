@@ -53,7 +53,9 @@ What happens:
 4. That Chrome window uses a **dedicated test profile** at `.wxt/chrome-data`.
 5. Rosters you import, cookies, and test-site logins in this window survive stopping and restarting `npm run dev`.
 
-Then: click the Corresponding icon → import `fixtures/sample-authors.csv` (once) → **Preview** → **Fill**.
+Then: click the Corresponding icon → import `fixtures/sample-authors.csv` →
+optional **Preview** → **Fill**. Fill always performs a fresh internal preflight
+even when the visible Preview step is skipped.
 
 Leave this terminal open while you test.
 
@@ -92,16 +94,12 @@ permission, automatic content script, or permissions beyond `activeTab`,
 
 ### Testing a bioRxiv submission
 
-bioRxiv filling is not implemented yet. On a live author-entry page, the current
-safe test is: detection reports unsupported, Preview refuses without mutation,
-Fill stays unavailable, and Advanced → Capture diagnostic produces structural
-metadata with values redacted. Download one reviewed capture with the author
-dialog closed, then click **Add author**, leave the empty dialog open, and
-download a second capture. Do not save the empty author. Review both files for
-names, emails, manuscript titles, credentials, and tokens before sharing them.
-Raw HTML or a Chrome-console dump is not required and can leak authenticated
-page data. Do not automate login, final submission, certification, copyright,
-payment, or legal actions.
+bioRxiv author-entry filling is capture-backed and fixture-tested. Start on an
+empty author table, import the roster, optionally Preview, then Fill. Corresponding
+preflights the complete roster and saves one Add Author dialog per author. It
+refuses to append when author rows already exist, leaves ORCID authorization
+manual, and never clicks `CA_continue`, final submission, certification,
+copyright, payment, or legal actions.
 
 An authenticated live bioRxiv workflow still requires a visible local browser.
 Use the dedicated WXT profile locally, or load `.output/chrome-mv3` unpacked into

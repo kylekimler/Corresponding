@@ -92,7 +92,7 @@ test('production popup previews, fills, validates, and preserves protected contr
 
   const preview = popup.getByRole('button', { name: 'Preview', exact: true });
   const fill = popup.getByRole('button', { name: 'Fill', exact: true });
-  await expect(fill).toBeDisabled();
+  await expect(fill).toBeEnabled();
 
   const valuesBeforePreview = await fixture
     .locator('input, select')
@@ -118,12 +118,9 @@ test('production popup previews, fills, validates, and preserves protected contr
 
   const overwrite = popup.getByLabel('Overwrite non-empty fields');
   await overwrite.check();
-  await expect(fill).toBeDisabled();
+  await expect(popup.getByText(/Preview ready — .*form unchanged/)).toHaveCount(0);
+  await expect(fill).toBeEnabled();
   await overwrite.uncheck();
-  await expect(fill).toBeDisabled();
-
-  await keepFixtureActive(fixture, popup);
-  await preview.click();
   await expect(fill).toBeEnabled();
   await keepFixtureActive(fixture, popup);
   await fill.click();
@@ -273,12 +270,7 @@ test('bioRxiv modal workflow saves each author and never continues the page', as
     .setInputFiles(path.resolve('fixtures/sample-authors.csv'));
   await expect(popup.getByText('3 authors', { exact: true })).toBeVisible();
 
-  const preview = popup.getByRole('button', { name: 'Preview', exact: true });
   const fill = popup.getByRole('button', { name: 'Fill', exact: true });
-  await expect(fill).toBeDisabled();
-  await keepFixtureActive(fixture, popup, BIORXIV_FIXTURE_URL);
-  await preview.click();
-  await expect(popup.getByText(/Preview ready — .*form unchanged/).first()).toBeVisible();
   await expect(fill).toBeEnabled();
   await keepFixtureActive(fixture, popup, BIORXIV_FIXTURE_URL);
   await fill.click();
