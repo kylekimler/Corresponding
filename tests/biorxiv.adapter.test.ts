@@ -284,6 +284,29 @@ describe('bioRxiv repeated author dialog adapter', () => {
     );
   }, 15_000);
 
+  it('re-enters an author when a late re-render wipes the dialog', async () => {
+    const harness = mountBiorxivFixture({
+      lateResetMs: 120,
+      wipeOnFirstSave: true,
+      validateOnSave: true,
+      rowActionControls: true,
+    });
+
+    const report = await biorxivAdapter.fillAsync!(
+      document,
+      makeRoster(makeNAuthors(2)),
+      { overwrite: false, dryRun: false },
+    );
+
+    expect(report.errors).toEqual([]);
+    expect(harness.savedAuthors().map((author) => author.firstName)).toEqual([
+      'Given1',
+      'Given2',
+    ]);
+    // The wiped attempt was retried rather than saved empty.
+    expect(harness.saveClicks()).toBeGreaterThan(2);
+  });
+
   it('stops and surfaces a bioRxiv error banner instead of continuing', async () => {
     const harness = mountBiorxivFixture({ commitDelayMs: 50 });
     const banner = document.getElementById('portal-error')!;

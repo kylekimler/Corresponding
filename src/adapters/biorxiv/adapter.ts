@@ -24,6 +24,9 @@ const COMMIT_CONFIRM_TIMEOUT_MS = 8_000;
 /** Shorter wait once row counting has proven unreliable on this page. */
 const COMMIT_RECHECK_TIMEOUT_MS = 1_500;
 const COMMIT_FALLBACK_SETTLE_MS = 1_200;
+/** Longer than one frame so a late re-render is seen before Save. */
+const WRITE_VERIFY_DELAY_MS = 150;
+const WRITE_ATTEMPTS = 2;
 
 type AuthorField = {
   key: 'email' | 'givenName' | 'middleName' | 'familyName' | 'institution';
@@ -81,8 +84,13 @@ function buttonLabel(button: HTMLElement): string {
 }
 
 function activeDialog(doc: Document): HTMLElement | null {
-  const dialog = doc.querySelector(DIALOG_SELECTOR);
-  return dialog instanceof HTMLElement && isVisible(dialog) ? dialog : null;
+  // Several dialogs stay mounted, and a stale one can keep the active class,
+  // so the first match is not necessarily the dialog on screen.
+  return (
+    Array.from(doc.querySelectorAll<HTMLElement>(DIALOG_SELECTOR)).find(
+      isVisible,
+    ) ?? null
+  );
 }
 
 function labelText(el: Element): string {
@@ -362,18 +370,37 @@ function report(
   };
 }
 
+/**
+ * Writes a value the way a person would, so the portal's framework updates its
+ * own model rather than re-rendering our text away. The native setter bypasses
+ * value tracking, and an InputEvent carrying `inputType` is what reactive
+ * bindings listen for.
+ */
 function setInputValue(input: HTMLInputElement, value: string): void {
   assertSafeMutationTarget(input);
   if (input.disabled || input.readOnly) return;
   const win = input.ownerDocument.defaultView;
+  input.focus();
   const setter = win
     ? Object.getOwnPropertyDescriptor(win.HTMLInputElement.prototype, 'value')
         ?.set
     : undefined;
   if (setter) setter.call(input, value);
   else input.value = value;
-  input.dispatchEvent(new Event('input', { bubbles: true }));
+
+  const InputEventCtor = win?.InputEvent;
+  input.dispatchEvent(
+    InputEventCtor
+      ? new InputEventCtor('input', {
+          bubbles: true,
+          cancelable: false,
+          inputType: 'insertText',
+          data: value,
+        })
+      : new Event('input', { bubbles: true }),
+  );
   input.dispatchEvent(new Event('change', { bubbles: true }));
+  input.blur();
   input.dispatchEvent(new Event('blur', { bubbles: true }));
 }
 
@@ -531,17 +558,29 @@ function authorFieldMismatch(
   return null;
 }
 
-const PORTAL_ERROR_SELECTOR =
-  '.v-alert, [role="alert"], .error--text, .red--text';
+/** Page-level banners: a real failure the user must see. */
+const PORTAL_BANNER_SELECTOR = '.v-alert, [role="alert"]';
+/** Field-level validation: recoverable while the dialog is still open. */
+const FIELD_VALIDATION_SELECTOR =
+  '.v-messages__message, .error--text, .red--text';
 
-/** bioRxiv's own visible error banner text, if any. */
-function portalErrorText(doc: Document): string {
-  for (const node of Array.from(doc.querySelectorAll(PORTAL_ERROR_SELECTOR))) {
+function visibleText(doc: ParentNode, selector: string): string {
+  for (const node of Array.from(doc.querySelectorAll(selector))) {
     if (!(node instanceof HTMLElement) || !isVisible(node)) continue;
     const text = normalizeText(node.textContent);
     if (text.length >= 8) return text.slice(0, 200);
   }
   return '';
+}
+
+/** bioRxiv's own visible error banner text, if any. */
+function portalErrorText(doc: Document): string {
+  return visibleText(doc, PORTAL_BANNER_SELECTOR);
+}
+
+/** Validation shown against fields inside the open author dialog. */
+function dialogValidationText(dialog: HTMLElement): string {
+  return visibleText(dialog, FIELD_VALIDATION_SELECTOR);
 }
 
 /**
@@ -554,12 +593,14 @@ function portalErrorText(doc: Document): string {
  * save. When the row cannot be counted the save may still have succeeded, so
  * an undetectable commit settles and continues instead of failing the run.
  */
+type CommitResult = 'confirmed' | 'unconfirmed' | 'rejected';
+
 async function saveAuthorDialog(
   doc: Document,
   dialog: HTMLElement,
   baselineError: string,
   confirmTimeoutMs: number,
-): Promise<'confirmed' | 'unconfirmed'> {
+): Promise<CommitResult> {
   const before = existingAuthorCount(doc);
   const save = findButton(dialog, 'Save');
   if (!save) throw new Error('Could not find the active bioRxiv author Save button');
@@ -575,13 +616,20 @@ async function saveAuthorDialog(
     if (activeDialog(doc) === null && existingAuthorCount(doc) > before) {
       return 'confirmed';
     }
+    // Validation with the dialog still open means nothing was committed, so
+    // the values were lost before Save and the author can be re-entered.
+    if (activeDialog(doc) === dialog && dialogValidationText(dialog)) {
+      return 'rejected';
+    }
     await delay(100);
   }
 
-  // A dialog still open after Save means bioRxiv rejected the author.
   if (activeDialog(doc) !== null) {
+    const validation = dialogValidationText(dialog);
     throw new Error(
-      'bioRxiv kept the author dialog open after Save; review its validation messages',
+      validation
+        ? `bioRxiv rejected the author: ${validation}`
+        : 'bioRxiv kept the author dialog open after Save; review its validation messages',
     );
   }
   await delay(COMMIT_FALLBACK_SETTLE_MS);
@@ -675,39 +723,60 @@ export const biorxivAdapter: PlatformAdapter = {
           throw new Error(`bioRxiv reported: ${openError}`);
         }
 
-        let resolved = resolveAuthorFields(dialog, author);
-        writeAuthorFields(resolved, openedByUs, options.overwrite);
+        let commit: CommitResult = 'rejected';
+        for (let attempt = 0; attempt < WRITE_ATTEMPTS; attempt += 1) {
+          if (attempt > 0) {
+            // A rejected save means the portal discarded our values before
+            // committing. Let it finish re-rendering, then re-enter the author.
+            await waitForDialogSettled(dialog);
+          }
 
-        // Re-read after a tick: the portal may reset fields asynchronously.
-        await delay(SETTLE_INTERVAL_MS);
-        resolved = resolveAuthorFields(dialog, author);
-        if (authorFieldMismatch(resolved, author, openedByUs, options.overwrite)) {
+          let resolved = resolveAuthorFields(dialog, author);
           writeAuthorFields(resolved, openedByUs, options.overwrite);
-          await delay(SETTLE_INTERVAL_MS);
-          resolved = resolveAuthorFields(dialog, author);
-        }
-        // Never save a dialog that does not match the roster author.
-        const mismatch = authorFieldMismatch(
-          resolved,
-          author,
-          openedByUs,
-          options.overwrite,
-        );
-        if (mismatch) throw new Error(mismatch);
 
-        const corresponding = correspondingCheckbox(dialog);
-        if (!corresponding) {
+          // Re-read after a tick: the portal may reset fields asynchronously.
+          await delay(WRITE_VERIFY_DELAY_MS);
+          resolved = resolveAuthorFields(dialog, author);
+          if (
+            authorFieldMismatch(resolved, author, openedByUs, options.overwrite)
+          ) {
+            writeAuthorFields(resolved, openedByUs, options.overwrite);
+            await delay(WRITE_VERIFY_DELAY_MS);
+            resolved = resolveAuthorFields(dialog, author);
+          }
+          // Never save a dialog that does not match the roster author.
+          const mismatch = authorFieldMismatch(
+            resolved,
+            author,
+            openedByUs,
+            options.overwrite,
+          );
+          if (mismatch) throw new Error(mismatch);
+
+          const corresponding = correspondingCheckbox(dialog);
+          if (!corresponding) {
+            throw new Error(
+              `Could not find bioRxiv corresponding-author checkbox for author ${author.sequence}`,
+            );
+          }
+          setCheckbox(corresponding, author.isCorresponding);
+
+          commit = await saveAuthorDialog(
+            doc,
+            dialog,
+            baselineError,
+            confirmTimeoutMs,
+          );
+          if (commit !== 'rejected') break;
+        }
+
+        if (commit === 'rejected') {
           throw new Error(
-            `Could not find bioRxiv corresponding-author checkbox for author ${author.sequence}`,
+            `bioRxiv rejected author ${author.sequence} after re-entering the details: ${
+              dialogValidationText(dialog) || 'review the dialog'
+            }`,
           );
         }
-        setCheckbox(corresponding, author.isCorresponding);
-        const commit = await saveAuthorDialog(
-          doc,
-          dialog,
-          baselineError,
-          confirmTimeoutMs,
-        );
         if (commit === 'unconfirmed') {
           unconfirmedCommits += 1;
           confirmTimeoutMs = COMMIT_RECHECK_TIMEOUT_MS;

@@ -20,6 +20,15 @@ export interface BiorxivFixtureOptions {
   hiddenImportTable?: boolean;
   /** Render row actions as icon-only edit/delete controls, as bioRxiv does. */
   rowActionControls?: boolean;
+  /** Wipe the dialog once after it opens, as a late framework re-render does. */
+  lateResetMs?: number;
+  /** Reject Save with field validation when the first name is empty. */
+  validateOnSave?: boolean;
+  /**
+   * Clear the fields on the first Save, reproducing a portal whose model lost
+   * the values even though the DOM still showed them.
+   */
+  wipeOnFirstSave?: boolean;
 }
 
 export interface BiorxivFixtureHarness {
@@ -83,6 +92,7 @@ export function mountBiorxivFixture(
               <div class="v-input"><label>Last Name</label><input type="text" name="lastName" /></div>
               <div class="v-input"><label>Institution</label><input type="text" name="affiliation" /></div>
             </div>
+            <div class="v-messages__message" id="dialog-validation" style="display: none"></div>
             <div class="v-card__actions">
               <button type="button" class="v-btn primary" id="save-author">Save</button>
               <button type="button" class="v-btn" id="cancel-author">Cancel</button>
@@ -117,6 +127,8 @@ export function mountBiorxivFixture(
   let saveClicks = 0;
   let continueClicks = 0;
   let commitPending = false;
+  let lateResetDone = false;
+  let wipedOnce = false;
 
   function renderRows() {
     const actions = options.rowActionControls
@@ -166,9 +178,34 @@ export function mountBiorxivFixture(
     }
     resetDialog();
     setDialogOpen(true);
+    if (options.lateResetMs !== undefined && !lateResetDone) {
+      // One late re-render after Corresponding has already written values.
+      setTimeout(() => {
+        lateResetDone = true;
+        resetDialog();
+      }, options.lateResetMs);
+    }
   });
   save.addEventListener('click', () => {
     saveClicks += 1;
+    const validation = document.getElementById('dialog-validation')!;
+    if (options.wipeOnFirstSave && !wipedOnce) {
+      wipedOnce = true;
+      resetDialog();
+      validation.textContent = 'the first name field is required.';
+      validation.style.display = 'block';
+      return;
+    }
+    const firstNameValue = (
+      document.querySelector('input[name="firstName"]') as HTMLInputElement
+    ).value;
+    if (options.validateOnSave && !firstNameValue.trim()) {
+      validation.textContent = 'the first name field is required.';
+      validation.style.display = 'block';
+      return;
+    }
+    validation.style.display = 'none';
+    validation.textContent = '';
     const record = {
       email: (document.getElementById('email') as HTMLInputElement).value,
       firstName: (

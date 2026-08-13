@@ -4,6 +4,16 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-13 16:50 UTC
+- live result: Author 1 saved. Author 2's details were visibly typed in, then vanished, and bioRxiv reported "the first name field is required."
+- root cause: The portal's own model did not receive the values, so its re-render discarded them while the DOM still looked correct. Verification passed against the DOM, Save was clicked, and validation then failed against the empty model.
+- input fidelity: Values are now written the way a person enters them — focus, native setter, an `InputEvent` carrying `inputType`, then change and blur — so reactive bindings update their model instead of overwriting our text.
+- same `querySelector` class of bug as the author table: `activeDialog` returned null whenever the first `.v-dialog--active` was hidden. It now selects the first visible active dialog.
+- error handling split: Page banners stay fatal, while field validation inside a still-open dialog is treated as recoverable, because an open dialog means nothing was committed. The author is re-entered once and only then reported as rejected.
+- verification timing: The post-write settle is longer than a frame so a late re-render is caught before Save rather than after it.
+- tests: Model desync at Save with a late dialog wipe (verified failing when the retry is removed), proving the author is re-entered rather than saved empty.
+- verification: 199 Vitest tests, typecheck, production build, zero-warning security lint, and all four Playwright MV3 journeys passed.
+
 ### 2026-08-13 14:55 UTC
 - live result: Author saved correctly and appeared in bioRxiv's list, but Corresponding reported "did not confirm the saved author". A screenshot proved the fill succeeded and only detection failed.
 - root cause: `existingAuthorCount` used `querySelector`, taking the first `table.v-datatable` in the document. bioRxiv's Import Authors feature contributes a hidden preview table, so the visible author list was never counted and the gate could never observe the commit.
