@@ -44,6 +44,7 @@ import { summarizePreview } from '@/popup/previewSummary';
 import {
   getActiveTabTarget,
   isActiveDevelopmentFixtureTab,
+  normalizeTabResponse,
   sendToActiveTab,
 } from './tabBridge';
 import {
@@ -59,6 +60,12 @@ const sheetsClient = createChromeGoogleSheetsClient();
 const auditLog = createChromeAuditLog();
 const popupPreferences = createPopupPreferences();
 const showSampleOnboarding = import.meta.env.DEV;
+
+async function requestActiveTab(
+  ...args: Parameters<typeof sendToActiveTab>
+) {
+  return normalizeTabResponse(await sendToActiveTab(...args));
+}
 
 type View = 'main' | 'import' | 'manage' | 'advanced';
 type ImportMode = 'chooser' | 'paste' | 'csv' | 'sheets' | 'mapping';
@@ -161,7 +168,10 @@ export function App() {
     try {
       const target = await getActiveTabTarget();
       setActiveTarget(target);
-      const res = await sendToActiveTab({ type: 'DETECT' }, target ?? undefined);
+      const res = await requestActiveTab(
+        { type: 'DETECT' },
+        target ?? undefined,
+      );
       if (res.type === 'DETECT_RESULT') {
         setDetected(res.result);
         setDetectStatus(
@@ -422,7 +432,7 @@ export function App() {
         setActionStatus('');
         return;
       }
-      const res = await sendToActiveTab(
+      const res = await requestActiveTab(
         {
           type: 'PREVIEW',
           roster: selected,
@@ -493,7 +503,7 @@ export function App() {
     setActionStatus('Filling…');
     setValidation(null);
     try {
-      const res = await sendToActiveTab(
+      const res = await requestActiveTab(
         {
           type: 'FILL',
           roster: selected,
@@ -510,7 +520,7 @@ export function App() {
       if (res.type === 'FILL_RESULT') {
         setPreviewSession(null);
         await recordLocalActivity(res.result, selected.id);
-        const v = await sendToActiveTab(
+        const v = await requestActiveTab(
           { type: 'VALIDATE', roster: selected },
           expectedTarget,
         );
@@ -547,20 +557,28 @@ export function App() {
 
   async function runDiagnostic() {
     setError('');
-    const res = await sendToActiveTab({ type: 'DIAGNOSTIC' });
-    if (res.type === 'DIAGNOSTIC_RESULT') {
-      if (!res.result.redactionComplete) {
-        setDiagText('');
-        setError(
-          'Diagnostic redaction incomplete — export blocked to protect page PII.',
-        );
-        setStatus('Diagnostic blocked (redaction incomplete).');
-        return;
+    try {
+      const res = await requestActiveTab({ type: 'DIAGNOSTIC' });
+      if (res.type === 'DIAGNOSTIC_RESULT') {
+        if (!res.result.redactionComplete) {
+          setDiagText('');
+          setError(
+            'Diagnostic redaction incomplete — export blocked to protect page PII.',
+          );
+          setStatus('Diagnostic blocked (redaction incomplete).');
+          return;
+        }
+        setDiagText(previewCapture(res.result));
+        setStatus('Compatibility capture ready (values redacted).');
+      } else if (res.type === 'ERROR') {
+        setError(res.message);
       }
-      setDiagText(previewCapture(res.result));
-      setStatus('Compatibility capture ready (values redacted).');
-    } else if (res.type === 'ERROR') {
-      setError(res.message);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Could not connect to the active journal tab.',
+      );
     }
   }
 

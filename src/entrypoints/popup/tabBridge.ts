@@ -55,18 +55,34 @@ export async function getActiveTabTarget(): Promise<TabTarget | null> {
 
 /** Normalize chrome.runtime messaging replies into a typed ExtensionResponse. */
 export function normalizeTabResponse(response: unknown): ExtensionResponse {
-  if (
-    response &&
-    typeof response === 'object' &&
-    'type' in response &&
-    typeof (response as { type: unknown }).type === 'string'
-  ) {
-    return response as ExtensionResponse;
+  if (response && typeof response === 'object' && 'type' in response) {
+    const candidate = response as {
+      type?: unknown;
+      result?: unknown;
+      message?: unknown;
+    };
+    if (candidate.type === 'PONG') return { type: 'PONG' };
+    if (candidate.type === 'ERROR' && typeof candidate.message === 'string') {
+      return { type: 'ERROR', message: candidate.message };
+    }
+    if (
+      [
+        'DETECT_RESULT',
+        'INSPECT_RESULT',
+        'FILL_RESULT',
+        'VALIDATE_RESULT',
+        'DIAGNOSTIC_RESULT',
+      ].includes(String(candidate.type)) &&
+      candidate.result &&
+      typeof candidate.result === 'object'
+    ) {
+      return candidate as ExtensionResponse;
+    }
   }
   return {
     type: 'ERROR',
     message:
-      'No response from the page content script. Reload the extension and refresh the journal tab.',
+      'The page connection was interrupted, usually because Corresponding was updated. Close and reopen the popup, then refresh the journal tab.',
   };
 }
 

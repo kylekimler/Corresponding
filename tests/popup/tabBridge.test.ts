@@ -21,7 +21,7 @@ describe('normalizeTabResponse', () => {
     const fromUndefined = normalizeTabResponse(undefined);
     expect(fromUndefined.type).toBe('ERROR');
     expect(fromUndefined.type === 'ERROR' && fromUndefined.message).toMatch(
-      /content script/i,
+      /updated|interrupted/i,
     );
 
     const fromNull = normalizeTabResponse(null);
@@ -30,6 +30,13 @@ describe('normalizeTabResponse', () => {
 
   it('rejects objects without a type field', () => {
     expect(normalizeTabResponse({ filled: 1 }).type).toBe('ERROR');
+  });
+
+  it('rejects typed result envelopes with missing payloads', () => {
+    expect(normalizeTabResponse({ type: 'DETECT_RESULT' }).type).toBe('ERROR');
+    expect(
+      normalizeTabResponse({ type: 'ERROR', message: undefined }).type,
+    ).toBe('ERROR');
   });
 });
 
