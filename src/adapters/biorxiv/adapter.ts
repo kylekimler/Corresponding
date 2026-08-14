@@ -601,11 +601,15 @@ async function waitForLookupSettled(
  * bioRxiv's "fetch author data" offer. Corresponding never accepts it: that
  * would replace the roster's values with the portal's own record.
  */
+function isLookupOfferText(text: string): boolean {
+  return /found author|fetch author data|fill info|overwrite any existing fields/i.test(
+    text,
+  );
+}
+
 function lookupOfferPresent(doc: Document): boolean {
-  return Array.from(doc.querySelectorAll<HTMLElement>('div, span, p')).some(
-    (node) =>
-      isVisible(node) &&
-      /fetch author data|found author/i.test(normalizeText(node.textContent)),
+  return Array.from(doc.querySelectorAll<HTMLElement>('div, span, p, button')).some(
+    (node) => isVisible(node) && isLookupOfferText(normalizeText(node.textContent)),
   );
 }
 
@@ -696,7 +700,18 @@ function visibleText(doc: ParentNode, selector: string): string {
 
 /** bioRxiv's own visible error banner text, if any. */
 function portalErrorText(doc: Document): string {
-  return visibleText(doc, PORTAL_BANNER_SELECTOR);
+  for (const node of Array.from(
+    doc.querySelectorAll(PORTAL_BANNER_SELECTOR),
+  )) {
+    if (!(node instanceof HTMLElement) || !isVisible(node)) continue;
+    const text = normalizeText(node.textContent);
+    if (text.length < 8) continue;
+    // The email-lookup "found author / FILL INFO" panel is a v-alert.
+    // It is not a failure. Treating it as one stops the run at 0 authors.
+    if (isLookupOfferText(text)) continue;
+    return text.slice(0, 200);
+  }
+  return '';
 }
 
 /** Validation shown against fields inside the open author dialog. */

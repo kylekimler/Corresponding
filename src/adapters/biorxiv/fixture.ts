@@ -68,8 +68,9 @@ export function mountBiorxivFixture(
   document.body.innerHTML = `
     <div id="submission_form">
       <div class="v-alert error--text" id="portal-error" style="display: none"></div>
-      <div id="author-lookup" style="display: none">
-        <span>Found author Example Person, Example Institute. Click to fetch author data.</span>
+      <div id="author-lookup" class="v-alert" role="alert" style="display: none">
+        <i class="v-icon material-icons">check_circle</i>
+        <span>Found author Example Person, Example Institute. Click to fetch author data. This will overwrite any existing fields.</span>
         <button type="button" id="fill-info">FILL INFO</button>
       </div>
       ${

@@ -348,6 +348,23 @@ describe('bioRxiv repeated author dialog adapter', () => {
     expect(fillInfoClicks).not.toHaveBeenCalled();
   }, 20_000);
 
+  it('does not treat the FILL INFO v-alert as a fatal portal error', async () => {
+    const harness = mountBiorxivFixture({
+      emailLookupMs: 80,
+      validateOnSave: true,
+    });
+
+    const report = await biorxivAdapter.fillAsync!(
+      document,
+      makeRoster(makeNAuthors(2)),
+      { overwrite: false, dryRun: false },
+    );
+
+    expect(report.errors).toEqual([]);
+    expect(harness.savedAuthors()).toHaveLength(2);
+    expect(report.warnings.join(' ')).toMatch(/Fill Info was not used/i);
+  }, 20_000);
+
   it('stops and surfaces a bioRxiv error banner instead of continuing', async () => {
     const harness = mountBiorxivFixture({ commitDelayMs: 50 });
     const banner = document.getElementById('portal-error')!;

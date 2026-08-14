@@ -4,6 +4,13 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-14 16:55 UTC
+- reported: bioRxiv Fill stopped after 0 authors with `bioRxiv reported: check_circlefound author … click to fetch author data … fill info`.
+- root cause: the email-lookup offer is a Vuetify `v-alert` / `role="alert"` with a Material `check_circle` ligature. After Save, `portalErrorText` treated that informational panel as a new fatal banner.
+- fix: ignore lookup-offer text (`found author`, `fetch author data`, `fill info`, `overwrite any existing fields`) when reading portal errors. Real banners such as the hash mismatch still stop the run. FILL INFO is still never clicked.
+- fixture now renders the offer as a `v-alert` so this cannot regress silently.
+- verification pending this iteration: Vitest, typecheck, production build.
+
 ### 2026-08-13 18:20 UTC
 - root cause found, from a user screenshot: entering an author email makes bioRxiv look the author up in its own directory. When the result arrives it re-renders the dialog and offers "fetch author data" via FILL INFO. Everything written during that window is discarded, which is exactly the "typed then vanished, first name required" failure. Earlier fixes treated the symptom.
 - fix: Email is now written alone, then Corresponding waits for the whole dialog to stop changing — element count, text length, input values, and the presence of the offer panel — before writing names and institution. Fields are re-resolved afterwards because the lookup can replace the input elements.
