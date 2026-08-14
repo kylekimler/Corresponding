@@ -9,7 +9,7 @@ Chronological overnight / autonomous iteration log.
 - Checkmarks are honest. Nature Portfolio and bioRxiv / medRxiv are ✅. Editorial Manager, ScholarOne, Elsevier, Wiley, Frontiers, PLOS, and eLife stay ⬜ until a redacted fixture exists. A test fails if the README claims a stub can fill.
 - Unlock events are listed as recurring circulation: next EM / ScholarOne, later v0.7 Cell Press, v0.8 Wiley, v0.9 100 journals.
 - Unknown-portal popup copy asks for a redacted author-form capture as the way the next platform unlocks.
-- verification pending this iteration: Vitest, typecheck, production build.
+- verification: 209 Vitest tests, typecheck, and production build passed.
 
 ### 2026-08-14 04:45 UTC
 - Corresponding Fill is now radically free: MIT license, no account, no trial, no freemium gate.
