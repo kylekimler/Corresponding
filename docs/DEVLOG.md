@@ -8,6 +8,7 @@ Chronological overnight / autonomous iteration log.
 - PLOS Genetics capture from `editorialmanager.com/pgenetics/default2.aspx` after clicking inside Add New Author was still RoleDropdown chrome. That is Editorial Manager, not ScholarOne (`manuscriptcentral.com`). The installed capture also lacked `iframeSeen`, so it came from a build that never left the top frame.
 - Detection now uses the tab hostname: `*.editorialmanager.com` → Editorial Manager, `*.manuscriptcentral.com` → ScholarOne. Stub HTML hints stay below the fill threshold; host family is labeled but Fill stays off until an author-form fixture exists.
 - Diagnostic injection uses `allFrames: true` and merges every injectable frame capture. If Add Author is a separate window, the capture must be taken while that window is focused. Still no PLOS/EM field selectors.
+- verification: 219 Vitest tests, typecheck, and production build passed.
 
 ### 2026-08-14 22:55 UTC
 - PLOS ONE live captures from `editorialmanager.com/pone/default2.aspx` (before and after “+ Add Another Author”) were identical chrome: `RoleDropdown` Author/Reviewer, hamburger, user icon. No author fields. That is the EM home/role shell, not Manuscript Data → Authors.
