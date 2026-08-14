@@ -6,7 +6,10 @@ Corresponding
 
 ## Problem
 
-Scientific manuscript submission systems force repetitive, error-prone re-entry of author metadata (names, emails, affiliations, ORCID, corresponding-author flags) across journals and portals. Large collaborations amplify the pain.
+Stop entering 74 authors into journal submission forms by hand. Scientific
+manuscript portals force repetitive, error-prone re-entry of author metadata
+(names, emails, affiliations, ORCID, corresponding-author flags). Large
+collaborations amplify a universally hated form.
 
 ## Solution
 
@@ -47,8 +50,10 @@ live smoke validation remains pending.
 - Storing or transmitting passwords / cookies / tokens
 - Writing back to Google Sheets
 - Broad web scraping of unrelated page content
-- Payments / entitlement enforcement (interface only until fill flow is reliable)
+- Accounts, trials, freemium gates, or author-count limits on fill
+- A Corresponding login or backend for author PII
 
 ## Success criteria
 
-- A user can import a roster, preview fills on Nature MTS, fill without overwriting linked conflicting identities, and see a clear validation summary — without the extension ever submitting the manuscript.
+- A user can install the extension with no account, import a roster, preview fills on Nature MTS, fill without overwriting linked conflicting identities, and see a clear validation summary — without the extension ever submitting the manuscript.
+- Fill stays MIT-licensed and ungated.

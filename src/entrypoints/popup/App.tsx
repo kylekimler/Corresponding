@@ -705,6 +705,7 @@ export function App({ surface = 'popup' }: { surface?: 'popup' | 'page' } = {}) 
         <header className="app-header">
           <h1>Corresponding</h1>
           <p className="brand-line">Giving scientists more time to do science.</p>
+          <p className="free-line">Free. No account. No trial.</p>
         </header>
 
         <PortalBadge
@@ -730,7 +731,7 @@ export function App({ surface = 'popup' }: { surface?: 'popup' | 'page' } = {}) 
         {!selected ? (
           <section className="panel empty-state">
             <p className="stat">
-              Import your author list to get started.
+              Import a spreadsheet or author list. Then you submit the paper.
             </p>
             <div className="empty-state-actions">
               <button type="button" onClick={openImport}>

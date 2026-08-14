@@ -22,4 +22,6 @@ Optional future Google Sheets import may add OAuth (`identity`) and Google API h
 
 ## Single purpose
 
-Help scientists fill author metadata on journal submission forms from a local canonical roster, with preview and validation, without performing final submission or legal attestations.
+Help scientists stop retyping author lists into journal submission forms.
+Fill author metadata from a local roster, with preview and validation, without
+performing final submission or legal attestations. No account. No trial.

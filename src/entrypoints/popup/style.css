@@ -39,6 +39,14 @@ h1 {
   line-height: 1.3;
 }
 
+.free-line {
+  margin: 4px 0 0;
+  color: var(--c-muted);
+  font-size: 0.68rem;
+  letter-spacing: 0.01em;
+  line-height: 1.3;
+}
+
 .subview-header {
   margin-bottom: var(--c-space-3);
 }

@@ -38,7 +38,7 @@ export default defineConfig({
     return {
       name: 'Corresponding',
       description:
-        'Maintain one scientific identity and fill manuscript author forms locally. Never submits or certifies for you.',
+        'Stop retyping authors into journal forms. Import a spreadsheet, fill locally. You still submit. Free. No account.',
       version: '0.1.0',
       permissions: [
         'activeTab',

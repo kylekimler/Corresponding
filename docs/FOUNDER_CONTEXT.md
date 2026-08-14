@@ -73,11 +73,19 @@ Sequence: utility → private identity → collaborative workflow → verified n
 
 ## Business principles
 
-Make the first fill magical before optimizing monetization. Scientists should tell one another: “Install this before submitting your paper.”
+The fill extension is radically free: MIT license, no account, no trial, no
+freemium gate. Scientists should tell one another: “Install this before
+submitting your paper.”
 
-Potential later tiers: individual profiles/projects/sync; lab directories and collaboration workflows; institutional identity and research-office workflows; eventually publisher APIs/OEM/white-label submission-ready metadata.
+The loop is install → import a spreadsheet or ORCIDs → fill → the scientist
+submits. Do not add billing, entitlements, author-count limits, or a
+Corresponding login to that loop.
 
-Do not sell raw autofill code prematurely. Build a moat from reliability, platform compatibility, structured metadata, freshness, provenance, workflow-confirmed information, contribution resolution, and interoperability.
+The moat is reliability, platform adapters, fixtures, canonical scholarly
+metadata, freshness, provenance, and an audit trail — not a paywall.
+
+Later products (Profile, Projects / Teams, Graph) can exist without turning
+Fill into freemium.
 
 ## Engineering and autonomous work
 
@@ -102,4 +110,4 @@ Reports should emphasize capabilities, regressions found/fixed, tests, manual fl
 
 High value now: effortless local testing; clear Preview; compact popup; paste/CSV/XLSX; roster/project management; safe recognition; adapter reliability; bioRxiv/medRxiv and eLife investigation/fixtures; real Nature/eJournalPress validation; property/DOM-chaos tests; safe compatibility capture; excellent failures.
 
-Explicitly defer: public scientist search, cloud graph databases, recruitment marketplace, elaborate billing, publisher enterprise APIs, speculative AI, and generalized architecture without an immediate workflow.
+Explicitly defer: public scientist search, cloud graph databases, recruitment marketplace, billing or a freemium gate on Fill, publisher enterprise APIs, speculative AI, and generalized architecture without an immediate workflow.

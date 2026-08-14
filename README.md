@@ -1,8 +1,35 @@
 # Corresponding
 
-Local-first scientific identity and submission assistance. The Chrome Manifest V3 extension fills manuscript **author** forms from a canonical local roster — never the final submit.
+**Stop entering 74 authors into journal submission forms by hand.**
 
-You import authors once (CSV, saved local roster, or future Google Sheets read-only), preview the fill plan on the active portal, then fill and validate. **Final submission, certification, copyright, payment, and signatures always stay with the human.**
+That is the whole product.
+
+Every scientist knows this form. Given name. Family name. Email. Affiliation.
+Department. City. Country. ORCID. Corresponding author? Then the next author.
+Then the next. Then you fat-finger an email and the journal sends the proofs
+to the wrong person. Large collaborations make it worse: 40 authors, 74
+authors, a consortium. The science is done. The hated part is still ahead.
+
+Corresponding is a Chrome extension that fills the **author** form from the
+spreadsheet or ORCID list you already have. Preview the plan. Fill. Check the
+result. **You** submit the paper.
+
+## Radically free
+
+MIT license. No account. No trial. No freemium gate. No "start trial."
+
+The loop is:
+
+**Install the extension → import a spreadsheet or ORCIDs → fill the form → submit the paper yourself.**
+
+Author data stays on your device. There is no Corresponding login and no
+Corresponding backend for author PII.
+
+## What it never does
+
+Final submission, certification, copyright, payment, and signatures always
+stay with the human. The extension fills author metadata. It does not click
+Submit.
 
 ## Status
 
@@ -222,4 +249,4 @@ Never stores: passwords, cookies, auth tokens, unrelated browsing history.
 
 ## License
 
-Proprietary — all rights reserved (commercial product).
+[MIT](LICENSE). Use it, share it, fork it. No account required.
