@@ -3,13 +3,7 @@ import { captureForm, previewCapture } from '@/diagnostics/capture';
 import { probeForm } from '@/diagnostics/formProbe';
 import { assertNoLeakedSecrets } from '@/diagnostics/redact';
 
-function mountSameOriginFrame(
-  parent: Document,
-  html: string,
-  src?: string,
-): HTMLIFrameElement {
-  const iframe = parent.createElement('iframe');
-  parent.body.appendChild(iframe);
+function writeFrameDocument(iframe: HTMLIFrameElement, html: string): Document {
   const child = iframe.contentDocument;
   if (!child) {
     throw new Error('jsdom did not provide a same-origin iframe document');
@@ -17,7 +11,26 @@ function mountSameOriginFrame(
   child.open();
   child.write(`<!doctype html><html><body>${html}</body></html>`);
   child.close();
-  if (src) iframe.setAttribute('src', src);
+  return iframe.contentDocument ?? child;
+}
+
+function mountSameOriginFrame(
+  parent: Document,
+  html: string,
+  src?: string,
+): HTMLIFrameElement {
+  const iframe = parent.createElement('iframe');
+  const host = parent.body ?? parent.documentElement;
+  if (!host) {
+    throw new Error('parent document has no body to attach an iframe');
+  }
+  host.appendChild(iframe);
+  writeFrameDocument(iframe, html);
+  if (src) {
+    iframe.setAttribute('src', src);
+    // jsdom navigates on src and may replace the document; restore the fixture.
+    writeFrameDocument(iframe, html);
+  }
   return iframe;
 }
 
@@ -100,18 +113,17 @@ describe('compatibility capture iframe walk', () => {
 
   it('walks nested same-origin frames', () => {
     document.body.innerHTML = '<select id="RoleDropdown" name="RoleDropdown"></select>';
-    const outer = mountSameOriginFrame(
-      document,
-      '<div id="outer-shell"></div>',
-      'https://www.editorialmanager.com/pone/outer.aspx',
-    );
+    const outer = mountSameOriginFrame(document, '<div id="outer-shell"></div>');
+    const outerDoc = outer.contentDocument;
+    if (!outerDoc?.body) {
+      throw new Error('outer iframe document was not writable');
+    }
     mountSameOriginFrame(
-      outer.contentDocument!,
+      outerDoc,
       `
         <label for="firstName">First name</label>
         <input id="firstName" name="firstName" />
       `,
-      'https://www.editorialmanager.com/pone/inner.aspx',
     );
 
     const capture = captureForm(document);

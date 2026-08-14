@@ -156,7 +156,7 @@ const CAPTURE_NOTES = [
   'Structural capture only — field values are never exported.',
   'IDs and names are normalized (# replaces digits) for safe sharing.',
   'Password, token, CSRF, cookie, and hidden auth fields are omitted.',
-  'Same-origin iframes are included; cross-origin frames are counted but not read.',
+  'Same-origin iframes are walked; cross-origin frames are counted but not read.',
   'Share this capture when requesting support for a new journal portal.',
 ];
 

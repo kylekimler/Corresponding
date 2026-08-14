@@ -79,7 +79,7 @@ export function redactUrl(url: string): string | undefined {
     let path = parsed.pathname.replace(/\/[a-f0-9]{16,}\b/gi, '/[REDACTED_ID]');
     path = path.replace(/\/(ms|manuscript|article)\/[^/]+/gi, '/$1/[REDACTED_ID]');
     parsed.pathname = path;
-    return parsed.toString();
+    return parsed.toString().replace(/%5BREDACTED%5D/gi, '[REDACTED]');
   } catch {
     return '[REDACTED_URL]';
   }

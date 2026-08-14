@@ -38,27 +38,23 @@ function redactFrameSrc(raw: string | null | undefined): string | undefined {
   return url.replace(EMAIL_RE, '[REDACTED_EMAIL]');
 }
 
-function tryReadFrameDocument(
-  el: HTMLIFrameElement | HTMLFrameElement,
-): Document | null {
+function tryReadFrameDocument(el: Element): Document | null {
+  const frame = el as HTMLIFrameElement | HTMLFrameElement;
   try {
-    if (el.contentDocument) return el.contentDocument;
+    if (frame.contentDocument) return frame.contentDocument;
   } catch {
     return null;
   }
   try {
-    const doc = el.contentWindow?.document ?? null;
+    const doc = frame.contentWindow?.document ?? null;
     return doc;
   } catch {
     return null;
   }
 }
 
-function frameElements(doc: Document): Array<HTMLIFrameElement | HTMLFrameElement> {
-  return Array.from(doc.querySelectorAll('iframe, frame')).filter(
-    (el): el is HTMLIFrameElement | HTMLFrameElement =>
-      el instanceof HTMLIFrameElement || el instanceof HTMLFrameElement,
-  );
+function frameElements(doc: Document): Element[] {
+  return Array.from(doc.querySelectorAll('iframe, frame'));
 }
 
 /**
@@ -81,7 +77,9 @@ export function collectReadableDocuments(root: Document): {
     if (!current || current.depth >= MAX_FRAME_DEPTH) continue;
 
     for (const el of frameElements(current.doc)) {
-      const srcPattern = redactFrameSrc(el.getAttribute('src') || el.src);
+      const srcPattern = redactFrameSrc(
+        el.getAttribute('src') || (el as HTMLIFrameElement).src,
+      );
       const child = tryReadFrameDocument(el);
       if (!child || seen.has(child)) {
         frames.push({
