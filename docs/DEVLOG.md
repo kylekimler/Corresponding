@@ -9,7 +9,7 @@ Chronological overnight / autonomous iteration log.
 - README leads with the hated-form hook: `Stop entering 74 authors into journal submission forms by hand.`
 - The entitlement stub (free/pro/team plans, author caps) is gone. Access is a locked `FREE_ACCESS` object so a paywall cannot grow by accident.
 - Popup header says `Free. No account. No trial.` Store description and privacy copy match.
-- verification pending this iteration: Vitest, typecheck, production build.
+- verification: 206 Vitest tests, typecheck, production build, and six Playwright MV3 journeys passed.
 
 ### 2026-08-13 18:20 UTC
 - root cause found, from a user screenshot: entering an author email makes bioRxiv look the author up in its own directory. When the result arrives it re-renders the dialog and offers "fetch author data" via FILL INFO. Everything written during that window is discarded, which is exactly the "typed then vanished, first name required" failure. Earlier fixes treated the symptom.
