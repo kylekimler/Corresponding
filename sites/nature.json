@@ -1,0 +1,36 @@
+{
+  "id": "nature-mts",
+  "label": "Nature MTS / eJournalPress",
+  "autofill": true,
+  "detect": {
+    "ids": [
+      { "id": "num_authors", "score": 0.35 },
+      { "id": "corr_auth_first_nm", "score": 0.25 },
+      { "id": "contrib_auth_1_first_nm", "score": 0.25 },
+      { "id": "current_contrib_auth_1_author_pid", "score": 0.15 }
+    ]
+  },
+  "countField": "num_authors",
+  "authors": {
+    "slot": "contrib_auth_{n}_first_nm",
+    "start": 1,
+    "linkedPid": "current_contrib_auth_{n}_author_pid",
+    "fields": {
+      "givenName": "contrib_auth_{n}_first_nm",
+      "middleName": "contrib_auth_{n}_middle_nm",
+      "familyName": "contrib_auth_{n}_last_nm",
+      "email": "contrib_auth_{n}_email",
+      "institution": "contrib_auth_{n}_org",
+      "city": "contrib_auth_{n}_city",
+      "country": "contrib_auth_{n}_country",
+      "sequence": "contrib_auth_{n}_author_seq"
+    }
+  },
+  "corresponding": {
+    "givenName": "corr_auth_first_nm",
+    "middleName": "corr_auth_middle_nm",
+    "familyName": "corr_auth_last_nm",
+    "email": "corr_auth_email",
+    "sequence": "corr_auth_author_seq"
+  }
+}

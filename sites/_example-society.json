@@ -1,0 +1,14 @@
+{
+  "id": "example-society",
+  "label": "Example Society Journal",
+  "autofill": true,
+  "detect": { "ids": ["author_1_first"] },
+  "authors": {
+    "slot": "author_{n}_first",
+    "fields": {
+      "givenName": "author_{n}_first",
+      "familyName": "author_{n}_last",
+      "email": "author_{n}_email"
+    }
+  }
+}

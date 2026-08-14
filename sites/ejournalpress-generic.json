@@ -1,0 +1,10 @@
+{
+  "id": "ejournalpress-generic",
+  "label": "eJournalPress (generic)",
+  "autofill": false,
+  "detect": {
+    "text": ["ejournalpress", "ejp"],
+    "maxConfidence": 0.35
+  },
+  "notes": "Nature MTS is the fixture-tested eJournalPress family adapter. This file only hints at other eJP skins."
+}

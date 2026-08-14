@@ -56,6 +56,31 @@ Unlocking a platform is the event. That is the recurring reason to circulate.
 See [CHANGELOG.md](CHANGELOG.md). Empty squares move to ✅ only after a
 redacted fixture and a tested adapter.
 
+**Your journal broken? Add support in ~10 lines.**
+
+Scientists PR their society journals. Coverage compounds.
+
+```json
+{
+  "id": "example-society",
+  "label": "Example Society Journal",
+  "autofill": true,
+  "detect": { "ids": ["author_1_first"] },
+  "authors": {
+    "slot": "author_{n}_first",
+    "fields": {
+      "givenName": "author_{n}_first",
+      "familyName": "author_{n}_last",
+      "email": "author_{n}_email"
+    }
+  }
+}
+```
+
+Drop that in [`sites/`](sites/). IDs only — no clicks, no guessed selectors.
+See [`sites/_example-society.json`](sites/_example-society.json) and
+[`docs/ADDING_AN_ADAPTER.md`](docs/ADDING_AN_ADAPTER.md).
+
 ## Radically free
 
 MIT license. No account. No trial. No freemium gate. No "start trial."
@@ -265,7 +290,8 @@ rules.
 ## Architecture
 
 - `src/schema` — canonical Author / Roster model (Zod)
-- `src/adapters` — platform adapters (`detect` / `inspect` / `fill` / `validate`)
+- `sites/` — declarative journal/platform adapters (element IDs only)
+- `src/adapters` — TypeScript adapters for multi-step widgets (`detect` / `inspect` / `fill` / `validate`)
 - `src/import` — CSV + column mapping
 - `src/roster` — local saved rosters
 - `src/sheets` — Google Sheets read-only abstraction (credentials blocked)

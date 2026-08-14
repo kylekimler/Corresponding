@@ -10,8 +10,8 @@ import type {
 } from '../types';
 
 /**
- * Template adapter — copy this module when a real anonymized fixture exists.
- * Do not invent selectors.
+ * Template for multi-step portals. Ordinary journals should add
+ * `sites/<id>.json` instead. Do not invent selectors.
  */
 export const templateAdapter: PlatformAdapter = {
   id: 'unknown',

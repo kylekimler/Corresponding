@@ -20,4 +20,5 @@ that every title under a logo already fills.
 - **v0.9** — 100 journals
 
 A row moves from ⬜ to ✅ only after a redacted fixture and a tested adapter.
-Your journal is not on the board? Open an issue and paste a screenshot.
+Your journal is not on the board? Open an issue and paste a screenshot, or
+add `sites/<journal>.json` in about ten lines.

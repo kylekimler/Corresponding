@@ -34,6 +34,7 @@ Status key: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked (exte
 
 ## Local remaining (not blocked)
 
+- [x] Declarative `sites/*.json` adapters (Nature proven; S1/EM detect-only)
 - [x] Public compatibility scoreboard (honest ✅ / ⬜, issue CTA, unlock releases)
 - [x] MIT license + no-account / no-trial fill (README hook, locked FREE_ACCESS)
 - [x] Compact first-use popup + Import authors (paste/CSV) + read-only review

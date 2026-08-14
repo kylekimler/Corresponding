@@ -30,7 +30,7 @@ Diagnostic utility extracting form metadata (tag, type, id, name, label, options
 
 ## Milestone 8 — Platform architecture
 
-Adapter registration + detection; empty stubs for ScholarOne, Editorial Manager, generic eJournalPress; unsupported platforms return diagnostic reports.
+Adapter registration + detection; declarative `sites/*.json` for ordinary journals; TypeScript adapters for multi-step widgets; unsupported platforms return diagnostic reports.
 
 ## Milestone 9 — Store readiness
 

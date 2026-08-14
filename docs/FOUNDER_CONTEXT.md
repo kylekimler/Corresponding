@@ -27,6 +27,10 @@ Publish compatibility as a scoreboard. Each new publisher is a release.
 Scientists should be able to open an issue, paste a redacted author-form
 screenshot, and watch an empty square become a checkmark.
 
+Do not personally maintain selectors for thousands of journals. Coverage
+comes from tiny declarative files in `sites/`. Scientists PR their society
+titles. TypeScript adapters stay reserved for multi-step widgets.
+
 Prefer broad, evidence-based platform-family support over one bespoke adapter per journal. Recognition should fall through in this order:
 
 1. Exact tested selector

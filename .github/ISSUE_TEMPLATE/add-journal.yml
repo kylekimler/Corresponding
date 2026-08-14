@@ -8,10 +8,11 @@ body:
     attributes:
       value: |
         Each new publisher is a release. A screenshot of the **author form**
-        is enough to start.
+        is enough to start. Even better: a ~10-line PR that adds
+        `sites/<journal>.json` with the real field IDs.
 
         Redact names, emails, ORCIDs, and manuscript text. Do not include
-        passwords, cookies, or the submit/payment step.
+        passwords, cookies, or the submit/payment step. Do not guess IDs.
   - type: input
     id: journal
     attributes:
