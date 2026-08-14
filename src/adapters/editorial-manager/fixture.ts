@@ -177,10 +177,11 @@ function bindOverlay(doc: Document): void {
   const list = doc.getElementById('em-author-list');
   if (!add || !overlay || !save || !list) return;
 
+  const saveAndAdd = doc.getElementById('em-save-and-add');
   add.addEventListener('click', () => {
     overlay.hidden = false;
   });
-  save.addEventListener('click', () => {
+  const commitOverlay = () => {
     const next = list.querySelectorAll('[data-author-slot]').length + 1;
     const seed: EditorialManagerAuthorSeed = {
       first: (
@@ -211,7 +212,9 @@ function bindOverlay(doc: Document): void {
       const el = doc.getElementById(id) as HTMLInputElement | null;
       if (el) el.value = '';
     }
-  });
+  };
+  save.addEventListener('click', commitOverlay);
+  saveAndAdd?.addEventListener('click', commitOverlay);
 }
 
 export function mountEditorialManagerFixture(

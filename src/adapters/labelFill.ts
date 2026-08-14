@@ -176,18 +176,14 @@ export function isEditableControl(el: Element): el is EditableControl {
 }
 
 export function isVisible(el: Element): boolean {
-  const view = el.ownerDocument.defaultView;
-  if (!view) return true;
   for (
     let node: Element | null = el;
     node && node !== el.ownerDocument.documentElement;
     node = node.parentElement
   ) {
-    if (node instanceof view.HTMLElement && node.hidden) return false;
+    if (node instanceof HTMLElement && node.hidden) return false;
     if (node.getAttribute('aria-hidden') === 'true') return false;
     if (node.hasAttribute('hidden')) return false;
-    const style = view.getComputedStyle(node);
-    if (style.display === 'none' || style.visibility === 'hidden') return false;
   }
   return true;
 }
@@ -233,15 +229,18 @@ export function findLabeledControl(
   root: ParentNode,
   phrases: string[],
 ): EditableControl | null {
-  const controls = Array.from(
-    root.querySelectorAll('input, select, textarea'),
-  ).filter((el): el is EditableControl => isEditableControl(el) && isVisible(el));
-
+  const controls = visibleEditableControls(root);
   for (const phrase of phrases) {
     const match = controls.find((el) => phraseMatches(controlLabel(el), phrase));
     if (match) return match;
   }
   return null;
+}
+
+function visibleEditableControls(root: ParentNode): EditableControl[] {
+  return Array.from(root.querySelectorAll('input, select, textarea')).filter(
+    (el): el is EditableControl => isEditableControl(el) && isVisible(el),
+  );
 }
 
 function linkedPidIn(root: HTMLElement): string {
@@ -260,9 +259,15 @@ export function resolveSlotFields(
   root: HTMLElement,
 ): Partial<Record<AuthorFieldKey, EditableControl>> {
   const fields: Partial<Record<AuthorFieldKey, EditableControl>> = {};
-  for (const rule of AUTHOR_FIELD_RULES) {
-    const control = findLabeledControl(root, rule.phrases);
-    if (control) fields[rule.key] = control;
+  for (const el of visibleEditableControls(root)) {
+    const label = controlLabel(el);
+    for (const rule of AUTHOR_FIELD_RULES) {
+      if (fields[rule.key]) continue;
+      if (rule.phrases.some((phrase) => phraseMatches(label, phrase))) {
+        fields[rule.key] = el;
+        break;
+      }
+    }
   }
   return fields;
 }
@@ -334,17 +339,16 @@ export function findButtonByPhrases(
       'button, input[type="button"], input[type="submit"], a[role="button"]',
     ),
   );
-  for (const phrase of phrases) {
-    const wanted = normalizeLabel(phrase);
-    const match = nodes.find((el) => {
-      if (!isVisible(el)) return false;
+  const candidates = nodes
+    .map((el) => {
+      if (!isVisible(el)) return null;
       if (
         (el instanceof HTMLButtonElement || el instanceof HTMLInputElement) &&
         el.disabled
       ) {
-        return false;
+        return null;
       }
-      if (isForbiddenControl(el)) return false;
+      if (isForbiddenControl(el)) return null;
       const text = normalizeLabel(
         [
           el.getAttribute('aria-label') ?? '',
@@ -352,10 +356,25 @@ export function findButtonByPhrases(
           el.textContent ?? '',
         ].join(' '),
       );
-      return text.includes(wanted);
-    });
-    if (match) {
-      return match as HTMLButtonElement | HTMLInputElement | HTMLAnchorElement;
+      return { el, text };
+    })
+    .filter((row): row is { el: HTMLElement; text: string } => row !== null);
+
+  for (const phrase of phrases) {
+    const wanted = normalizeLabel(phrase);
+    const exact = candidates.find((row) => row.text === wanted);
+    if (exact) {
+      return exact.el as HTMLButtonElement | HTMLInputElement | HTMLAnchorElement;
+    }
+  }
+  for (const phrase of phrases) {
+    const wanted = normalizeLabel(phrase);
+    const partial = candidates.find((row) => row.text.includes(wanted));
+    if (partial) {
+      return partial.el as
+        | HTMLButtonElement
+        | HTMLInputElement
+        | HTMLAnchorElement;
     }
   }
   return null;

@@ -10,12 +10,12 @@
     "minConfidence": 0.5
   },
   "expectedMappings": [
-    { "idPattern": "s1_author_#_first_name", "canonicalField": "givenName", "authorGroupIndex": 1, "minConfidence": 0.5 },
-    { "idPattern": "s1_author_#_last_name", "canonicalField": "familyName", "authorGroupIndex": 1, "minConfidence": 0.5 },
-    { "idPattern": "s1_author_#_email", "canonicalField": "email", "authorGroupIndex": 1, "minConfidence": 0.5 },
-    { "idPattern": "s1_author_#_institution", "canonicalField": "institution", "authorGroupIndex": 1, "minConfidence": 0.4 },
-    { "idPattern": "s1_author_#_country", "canonicalField": "country", "authorGroupIndex": 1, "minConfidence": 0.4 },
-    { "idPattern": "s1_conflict_of_interest", "canonicalField": "conflictOfInterest", "minConfidence": 0.5 }
+    { "idPattern": "s#_author_#_first_name", "canonicalField": "givenName", "authorGroupIndex": 1, "minConfidence": 0.5 },
+    { "idPattern": "s#_author_#_last_name", "canonicalField": "familyName", "authorGroupIndex": 1, "minConfidence": 0.5 },
+    { "idPattern": "s#_author_#_email", "canonicalField": "email", "authorGroupIndex": 1, "minConfidence": 0.5 },
+    { "idPattern": "s#_author_#_institution", "canonicalField": "institution", "authorGroupIndex": 1, "minConfidence": 0.4 },
+    { "idPattern": "s#_author_#_country", "canonicalField": "country", "authorGroupIndex": 1, "minConfidence": 0.4 },
+    { "idPattern": "s#_conflict_of_interest", "canonicalField": "conflictOfInterest", "minConfidence": 0.5 }
   ],
-  "expectedUnsupportedFields": ["s1_author_#_user_id"]
+  "expectedUnsupportedFields": ["s#_author_#_user_id"]
 }

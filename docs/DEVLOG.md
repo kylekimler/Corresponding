@@ -11,7 +11,7 @@ Chronological overnight / autonomous iteration log.
 - Editorial Manager: Documentation-backed adapter from Aries EM Help — Manuscript Data / Enter Author Details labels (Given/First Name, Family/Last Name always required), Additional Information competing-interest **text**, equal-contribution checkbox when present. Never clicks Proceed, Build PDF, Approve Submission, or COI attestation.
 - matching: Official field **labels**, not guessed live element IDs. Fixtures encode those labels; live anonymized captures still needed for Ringgold typeaheads and journal-specific widgets.
 - tests: Shared adapter contract opted in for both families; COI-only step; overlay add-author; safety controls; schema/import/identity round-trip; corpus replay fixtures.
-- verification: pending this revision’s `npm test`, `typecheck`, and `build`.
+- verification: 244 Vitest tests, typecheck, and production build passed. Manifest permissions remain `activeTab`, `storage`, and `scripting`.
 
 ### 2026-08-13 18:20 UTC
 - root cause found, from a user screenshot: entering an author email makes bioRxiv look the author up in its own directory. When the result arrives it re-renders the dialog and offers "fetch author data" via FILL INFO. Everything written during that window is discarded, which is exactly the "typed then vanished, first name required" failure. Earlier fixes treated the symptom.

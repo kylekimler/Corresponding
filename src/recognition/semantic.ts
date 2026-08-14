@@ -83,12 +83,12 @@ const RULES: Rule[] = [
   },
   {
     field: 'state',
-    exact: ['state', 'province', 'region', 'state region'],
+    exact: ['state or province', 'state/province', 'state', 'province'],
     soft: ['province'],
   },
   {
     field: 'country',
-    exact: ['country', 'nation'],
+    exact: ['country or region', 'country/region', 'country', 'nation'],
     soft: ['country'],
   },
   {

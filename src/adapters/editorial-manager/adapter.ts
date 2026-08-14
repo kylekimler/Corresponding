@@ -111,8 +111,8 @@ export const editorialManagerAdapter: PlatformAdapter = {
       roster,
       options,
       enabledKeys: ENABLED_KEYS,
-      addAuthorPhrases: ['add another author', 'add author'],
-      saveOverlayPhrases: ['save and add', 'save'],
+      addAuthorPhrases: ['add another author'],
+      saveOverlayPhrases: ['save'],
     });
   },
 
