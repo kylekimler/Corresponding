@@ -111,7 +111,7 @@ describe('content-script injection', () => {
 
     expect(result.type).toBe('DETECT_RESULT');
     expect(executeScript).toHaveBeenCalledWith({
-      target: { tabId: 7 },
+      target: { tabId: 7, allFrames: true },
       files: [CONTENT_SCRIPT_FILE],
     });
     expect(CONTENT_SCRIPT_FILE.startsWith('/')).toBe(false);
@@ -120,6 +120,72 @@ describe('content-script injection', () => {
       'PING',
       'DETECT',
     ]);
+  });
+
+  it('merges diagnostic captures from every injectable frame', async () => {
+    const sendMessage = vi
+      .fn()
+      .mockResolvedValueOnce({ type: 'PONG' })
+      .mockResolvedValueOnce({
+        type: 'DIAGNOSTIC_RESULT',
+        result: {
+          redactionComplete: true,
+          notes: ['top'],
+          fieldCount: 1,
+          controlCount: 0,
+          structuralFields: [
+            { tag: 'select', idPattern: 'RoleDropdown', category: 'other' },
+          ],
+          controls: [],
+          structure: { repeatedGroups: [], authorGroupCount: 0 },
+          frames: { seen: 0, readable: 0, blocked: 0, frames: [] },
+          fields: [],
+        },
+      })
+      .mockResolvedValueOnce({
+        type: 'DIAGNOSTIC_RESULT',
+        result: {
+          redactionComplete: true,
+          notes: ['child'],
+          fieldCount: 1,
+          controlCount: 0,
+          structuralFields: [
+            { tag: 'input', idPattern: 'givenName', category: 'author' },
+          ],
+          controls: [],
+          structure: { repeatedGroups: [], authorGroupCount: 0 },
+          frames: { seen: 0, readable: 0, blocked: 0, frames: [] },
+          fields: [],
+        },
+      });
+    const executeScript = vi
+      .fn()
+      .mockResolvedValueOnce([{ frameId: 0 }, { frameId: 2 }]);
+    vi.stubGlobal('browser', {
+      tabs: {
+        query: vi.fn().mockResolvedValue([
+          { id: 11, url: 'https://www.editorialmanager.com/pgenetics/default2.aspx' },
+        ]),
+        sendMessage,
+      },
+      scripting: { executeScript },
+    });
+
+    const result = await sendToActiveTab({ type: 'DIAGNOSTIC' });
+    expect(result.type).toBe('DIAGNOSTIC_RESULT');
+    if (result.type === 'DIAGNOSTIC_RESULT') {
+      expect(result.result.structuralFields.map((f) => f.idPattern)).toEqual(
+        expect.arrayContaining(['RoleDropdown', 'givenName']),
+      );
+      expect(result.result.notes.join(' ')).toMatch(/Merged 2 injectable frame/);
+    }
+    expect(sendMessage.mock.calls.map((call) => call[1].type)).toEqual([
+      'PING',
+      'DIAGNOSTIC',
+      'DIAGNOSTIC',
+    ]);
+    expect(sendMessage.mock.calls[1]?.[2]).toEqual({ frameId: 0 });
+    expect(sendMessage.mock.calls[2]?.[2]).toEqual({ frameId: 2 });
   });
 
   it('does not reinject when the content script intentionally returns ERROR', async () => {

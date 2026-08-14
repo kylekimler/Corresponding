@@ -44,6 +44,23 @@ Research date: 2026-08-12. Based on public documentation and vendor marketing pa
 - **Integration opportunities:** Adapter after redacted fixture; careful with corresponding-author and affiliation widgets.
 - **Notes:** Do not scrape reviewer or decision pages.
 
+### PLOS Genetics live shell capture (2026-08-14)
+
+A third redacted capture from `https://www.editorialmanager.com/pgenetics/default2.aspx`
+was taken after clicking inside an author field in the Add New Author popup. It
+was still chrome only (`RoleDropdown`, hamburger, user icon) and still lacked
+`iframeSeen` lines, which means the installed build was the pre-iframe-walk
+extension and the content script only saw the top document.
+
+This is **Editorial Manager**, not ScholarOne. ScholarOne hosts are
+`*.manuscriptcentral.com`. PLOS titles (ONE, Genetics, and others) use Aries
+Editorial Manager. Host-family detection now labels `editorialmanager.com` as
+Editorial Manager without inventing field selectors.
+
+If a later capture still shows only the role dropdown after all-frame injection,
+the Add Author UI is likely a **separate browser window**. Capture while that
+window is focused.
+
 ### PLOS ONE live shell capture (2026-08-14)
 
 Two redacted compatibility captures from `https://www.editorialmanager.com/pone/default2.aspx`

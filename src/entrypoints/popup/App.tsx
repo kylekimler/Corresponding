@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { isFillablePlatform } from '@/adapters/hosts';
 import type { DetectResult, FillReport, ValidateReport } from '@/adapters/types';
 import { parseCsv } from '@/import/csv';
 import {
@@ -185,7 +186,10 @@ export function App({ surface = 'popup' }: { surface?: 'popup' | 'page' } = {}) 
       if (res.type === 'DETECT_RESULT') {
         setDetected(res.result);
         setDetectStatus(
-          res.result.platformId === 'unknown' ? 'unknown' : 'ready',
+          res.result.platformId === 'unknown' ||
+            !isFillablePlatform(res.result.platformId)
+            ? 'unknown'
+            : 'ready',
         );
         return;
       }
@@ -692,11 +696,15 @@ export function App({ surface = 'popup' }: { surface?: 'popup' | 'page' } = {}) 
   const portalDetail =
     detectStatus === 'error'
       ? detectError || 'Open a submission form, then retry.'
-      : detectStatus === 'unknown'
-        ? 'Unsupported on this page'
-        : detectStatus === 'ready' && detected
-          ? `${Math.round(detected.confidence * 100)}% · ${detected.platformId}`
-          : undefined;
+      : detectStatus === 'unknown' &&
+          detected &&
+          detected.platformId !== 'unknown'
+        ? 'Recognized. Author form not supported yet — capture the Add Author fields.'
+        : detectStatus === 'unknown'
+          ? 'Unsupported on this page'
+          : detectStatus === 'ready' && detected
+            ? `${Math.round(detected.confidence * 100)}% · ${detected.platformId}`
+            : undefined;
 
   /* ---------------- MAIN VIEW ---------------- */
   if (view === 'main') {
@@ -1360,9 +1368,11 @@ export function App({ surface = 'popup' }: { surface?: 'popup' | 'page' } = {}) 
           dialog is open.
         </p>
         <p className="muted">
-          If you only see a role dropdown (Author / Reviewer), you are on the
-          Editorial Manager home screen, not the author form. Open Manuscript
-          Data → Authors, click inside an author field, then capture again.
+          PLOS journals use Editorial Manager (editorialmanager.com), not
+          ScholarOne (manuscriptcentral.com). If you only see a role dropdown,
+          you are on the home screen. Open Manuscript Data → Authors. If Add
+          Author is a separate window, click the Corresponding icon while that
+          window is focused, then capture again.
         </p>
         <button type="button" className="secondary" onClick={() => void runDiagnostic()}>
           Capture diagnostic

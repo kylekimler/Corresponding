@@ -22,10 +22,10 @@ export async function handleExtensionRequest(
       case 'DETECT':
         return {
           type: 'DETECT_RESULT',
-          result: defaultRegistry.detect(doc),
+          result: defaultRegistry.detect(doc, pageUrl),
         };
       case 'INSPECT': {
-        const detected = defaultRegistry.detect(doc);
+        const detected = defaultRegistry.detect(doc, pageUrl);
         const adapter = defaultRegistry.get(detected.platformId);
         return {
           type: 'INSPECT_RESULT',
@@ -41,7 +41,7 @@ export async function handleExtensionRequest(
         };
       }
       case 'PREVIEW': {
-        const detected = defaultRegistry.detect(doc);
+        const detected = defaultRegistry.detect(doc, pageUrl);
         if (detected.platformId === 'unknown') {
           return {
             type: 'ERROR',
@@ -60,7 +60,7 @@ export async function handleExtensionRequest(
         };
       }
       case 'FILL': {
-        const detected = defaultRegistry.detect(doc);
+        const detected = defaultRegistry.detect(doc, pageUrl);
         if (detected.platformId === 'unknown') {
           return {
             type: 'ERROR',
@@ -82,7 +82,7 @@ export async function handleExtensionRequest(
         };
       }
       case 'VALIDATE': {
-        const detected = defaultRegistry.detect(doc);
+        const detected = defaultRegistry.detect(doc, pageUrl);
         if (detected.platformId === 'unknown') {
           return {
             type: 'ERROR',

@@ -184,7 +184,7 @@ function hasAuthorLikeFields(fields: CaptureField[]): boolean {
   return fields.some((f) => AUTHOR_LIKE_CATEGORIES.has(f.category));
 }
 
-function chromeShellNotes(
+export function captureGuidanceNotes(
   fields: CaptureField[],
   frames: FrameInventory,
   urlPattern?: string,
@@ -196,7 +196,7 @@ function chromeShellNotes(
 
   if (chrome && sparse) {
     notes.push(
-      'This capture looks like Editorial Manager chrome (role picker / shell), not the author-entry form. Open Manuscript Data → Authors, click inside an author field, then capture again.',
+      'This capture looks like Editorial Manager chrome (role picker / shell), not the author-entry form. PLOS journals use Editorial Manager, not ScholarOne. Open Manuscript Data → Authors. If Add Author is a separate window, click the Corresponding icon while that window is focused, then capture again.',
     );
   } else if (sparse && frames.seen > 0) {
     notes.push(
@@ -391,7 +391,7 @@ export function captureForm(
     redactionComplete: true,
     notes: [
       ...CAPTURE_NOTES,
-      ...chromeShellNotes(fields, inventory, urlPattern),
+      ...captureGuidanceNotes(fields, inventory, urlPattern),
     ],
     fieldCount: fields.length,
     controlCount: controls.length,
