@@ -9,7 +9,7 @@ Chronological overnight / autonomous iteration log.
 - root cause: the email-lookup offer is a Vuetify `v-alert` / `role="alert"` with a Material `check_circle` ligature. After Save, `portalErrorText` treated that informational panel as a new fatal banner.
 - fix: ignore lookup-offer text (`found author`, `fetch author data`, `fill info`, `overwrite any existing fields`) when reading portal errors. Real banners such as the hash mismatch still stop the run. FILL INFO is still never clicked.
 - fixture now renders the offer as a `v-alert` so this cannot regress silently.
-- verification pending this iteration: Vitest, typecheck, production build.
+- verification: 204 Vitest tests, typecheck, and production build passed.
 
 ### 2026-08-13 18:20 UTC
 - root cause found, from a user screenshot: entering an author email makes bioRxiv look the author up in its own directory. When the result arrives it re-renders the dialog and offers "fetch author data" via FILL INFO. Everything written during that window is discarded, which is exactly the "typed then vanished, first name required" failure. Earlier fixes treated the symptom.
