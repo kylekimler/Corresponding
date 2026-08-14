@@ -7,6 +7,14 @@ import { detectAuthorGroups } from '@/recognition/authorGroups';
 import { extractFieldFeatures } from '@/recognition/features';
 import type { FieldCategory } from './formProbe';
 import {
+  collectReadableDocuments,
+  emptyFrameInventory,
+  recordFrameCounts,
+  type FrameInventory,
+} from './frames';
+
+export type { CaptureFrame, FrameInventory } from './frames';
+import {
   evaluateRedactionComplete,
   normalizeIdPattern,
   normalizeNamePattern,
@@ -63,6 +71,8 @@ export interface CompatibilityCapture {
   /** Redacted action controls needed to understand repeated modal workflows. */
   controls: CaptureControl[];
   structure: CaptureStructure;
+  /** Same-origin iframe walk. Cross-origin frames are counted, not read. */
+  frames: FrameInventory;
   urlPattern?: string;
   titleSafe?: string;
 }
@@ -146,8 +156,62 @@ const CAPTURE_NOTES = [
   'Structural capture only — field values are never exported.',
   'IDs and names are normalized (# replaces digits) for safe sharing.',
   'Password, token, CSRF, cookie, and hidden auth fields are omitted.',
+  'Same-origin iframes are included; cross-origin frames are counted but not read.',
   'Share this capture when requesting support for a new journal portal.',
 ];
+
+const AUTHOR_LIKE_CATEGORIES = new Set<FieldCategory>([
+  'author',
+  'affiliation',
+  'email',
+  'orcid',
+  'corresponding',
+]);
+
+function isEditorialManagerChrome(
+  fields: CaptureField[],
+  urlPattern?: string,
+): boolean {
+  const hasRoleDropdown = fields.some(
+    (f) =>
+      f.idPattern === 'RoleDropdown' || f.namePattern === 'RoleDropdown',
+  );
+  const emUrl = Boolean(urlPattern?.includes('editorialmanager.com'));
+  return hasRoleDropdown || emUrl;
+}
+
+function hasAuthorLikeFields(fields: CaptureField[]): boolean {
+  return fields.some((f) => AUTHOR_LIKE_CATEGORIES.has(f.category));
+}
+
+function chromeShellNotes(
+  fields: CaptureField[],
+  frames: FrameInventory,
+  urlPattern?: string,
+): string[] {
+  const notes: string[] = [];
+  const authorLike = hasAuthorLikeFields(fields);
+  const chrome = isEditorialManagerChrome(fields, urlPattern);
+  const sparse = fields.length <= 3 && !authorLike;
+
+  if (chrome && sparse) {
+    notes.push(
+      'This capture looks like Editorial Manager chrome (role picker / shell), not the author-entry form. Open Manuscript Data → Authors, click inside an author field, then capture again.',
+    );
+  } else if (sparse && frames.seen > 0) {
+    notes.push(
+      `Top document has few fields but ${frames.seen} iframe(s) were found (${frames.readable} readable, ${frames.blocked} blocked). If author inputs are missing, click inside the author form and capture again.`,
+    );
+  }
+
+  if (!authorLike && frames.blocked > 0 && frames.readable === 0) {
+    notes.push(
+      'Iframes were present but not readable from the top document (likely cross-origin). Click inside the author form, then capture again.',
+    );
+  }
+
+  return notes;
+}
 
 const SAFE_ACTION_WORD =
   /^(add|author|co-?author|save|cancel|close|continue|next|back|previous|done|edit|remove|delete|open|submit|certify|copyright|payment|pay|accept)$/i;
@@ -168,14 +232,9 @@ function redactControlLabel(raw: string): string | undefined {
     .join(' ');
 }
 
-export function captureForm(
-  doc: Document,
-  options: { url?: string } = {},
-): CompatibilityCapture {
-  const nodes = doc.querySelectorAll('input, select, textarea');
+function collectFieldsFromDocument(doc: Document): CaptureField[] {
   const fields: CaptureField[] = [];
-
-  nodes.forEach((el) => {
+  doc.querySelectorAll('input, select, textarea').forEach((el) => {
     const tag = el.tagName.toLowerCase();
     const inputType =
       el instanceof HTMLInputElement ? el.type : undefined;
@@ -230,7 +289,10 @@ export function captureForm(
       repeatedGroupIndex,
     });
   });
+  return fields;
+}
 
+function collectControlsFromDocument(doc: Document): CaptureControl[] {
   const controls: CaptureControl[] = [];
   doc
     .querySelectorAll(
@@ -268,8 +330,34 @@ export function captureForm(
           el.getAttribute('aria-hidden') === 'true',
       });
     });
+  return controls;
+}
 
-  const features = extractFieldFeatures(doc);
+export function captureForm(
+  doc: Document,
+  options: { url?: string } = {},
+): CompatibilityCapture {
+  const { documents, inventory } = collectReadableDocuments(doc);
+  const fields: CaptureField[] = [];
+  const controls: CaptureControl[] = [];
+  const features: ReturnType<typeof extractFieldFeatures> = [];
+
+  for (const frame of documents) {
+    const frameFields = collectFieldsFromDocument(frame.doc);
+    const frameControls = collectControlsFromDocument(frame.doc);
+    fields.push(...frameFields);
+    controls.push(...frameControls);
+    features.push(...extractFieldFeatures(frame.doc));
+    if (frame.frameIndex >= 0) {
+      recordFrameCounts(
+        inventory,
+        frame.frameIndex,
+        frameFields.length,
+        frameControls.length,
+      );
+    }
+  }
+
   const authorGroups = detectAuthorGroups(features);
   const groupCounts = new Map<string, { count: number; evidence: string[] }>();
   for (const g of authorGroups) {
@@ -297,10 +385,14 @@ export function captureForm(
     }
   }
 
+  const urlPattern = options.url ? redactUrl(options.url) : undefined;
   const draft: CompatibilityCapture = {
     capturedAt: new Date().toISOString(),
     redactionComplete: true,
-    notes: [...CAPTURE_NOTES],
+    notes: [
+      ...CAPTURE_NOTES,
+      ...chromeShellNotes(fields, inventory, urlPattern),
+    ],
     fieldCount: fields.length,
     controlCount: controls.length,
     structuralFields: fields,
@@ -313,7 +405,8 @@ export function captureForm(
       })),
       authorGroupCount: authorGroups.length,
     },
-    urlPattern: options.url ? redactUrl(options.url) : undefined,
+    frames: inventory,
+    urlPattern,
     titleSafe: redactPageTitle(doc.title || ''),
   };
 
@@ -336,13 +429,34 @@ export function previewCapture(capture: CompatibilityCapture): string {
   lines.push(`redactionComplete: ${capture.redactionComplete}`);
   if (capture.urlPattern) lines.push(`urlPattern: ${capture.urlPattern}`);
   if (capture.titleSafe) lines.push(`titleSafe: ${capture.titleSafe}`);
+  const frames = capture.frames ?? emptyFrameInventory();
   lines.push(`fieldCount: ${capture.fieldCount}`);
   lines.push(`controlCount: ${capture.controlCount}`);
   lines.push(`authorGroupCount: ${capture.structure.authorGroupCount}`);
+  lines.push(`iframeSeen: ${frames.seen}`);
+  lines.push(`iframeReadable: ${frames.readable}`);
+  lines.push(`iframeBlocked: ${frames.blocked}`);
   lines.push('');
   lines.push('## notes');
   for (const note of capture.notes) lines.push(`- ${note}`);
   lines.push('');
+  if (frames.frames.length > 0) {
+    lines.push('## frames');
+    for (const frame of frames.frames) {
+      lines.push(
+        [
+          `depth=${frame.depth}`,
+          frame.readable ? 'readable' : 'blocked',
+          frame.srcPattern ? `srcPattern=${frame.srcPattern}` : null,
+          `fieldCount=${frame.fieldCount}`,
+          `controlCount=${frame.controlCount}`,
+        ]
+          .filter(Boolean)
+          .join(' | '),
+      );
+    }
+    lines.push('');
+  }
   if (capture.structure.repeatedGroups.length > 0) {
     lines.push('## repeated structure');
     for (const g of capture.structure.repeatedGroups) {

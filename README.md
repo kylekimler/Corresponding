@@ -208,7 +208,7 @@ rules.
 - `src/import` — CSV + column mapping
 - `src/roster` — local saved rosters
 - `src/sheets` — Google Sheets read-only abstraction (credentials blocked)
-- `src/diagnostics` — redacted form probe for new portals
+- `src/diagnostics` — redacted form probe for new portals (walks same-origin iframes)
 - `entrypoints/popup` — React UI
 - `docs/` — product, privacy, roadmap, backlog, threat model, release checklist
 

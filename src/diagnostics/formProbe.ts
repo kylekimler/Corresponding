@@ -8,6 +8,7 @@ import {
   previewCapture,
   type CompatibilityCapture,
 } from './capture';
+import { collectReadableDocuments } from './frames';
 import {
   normalizeIdPattern,
   normalizeNamePattern,
@@ -108,7 +109,7 @@ function categorize(el: Element, label?: string): FieldCategory {
   return 'other';
 }
 
-function probeLegacyFields(
+function probeLegacyFieldsFromDocument(
   doc: Document,
   includeValues: boolean,
 ): DiagnosticField[] {
@@ -179,6 +180,16 @@ function probeLegacyFields(
   });
 
   return fields;
+}
+
+function probeLegacyFields(
+  doc: Document,
+  includeValues: boolean,
+): DiagnosticField[] {
+  const { documents } = collectReadableDocuments(doc);
+  return documents.flatMap((frame) =>
+    probeLegacyFieldsFromDocument(frame.doc, includeValues),
+  );
 }
 
 export function probeForm(

@@ -4,6 +4,11 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-14 22:55 UTC
+- PLOS ONE live captures from `editorialmanager.com/pone/default2.aspx` (before and after “+ Add Another Author”) were identical chrome: `RoleDropdown` Author/Reviewer, hamburger, user icon. No author fields. That is the EM home/role shell, not Manuscript Data → Authors.
+- Diagnostic capture now walks nested same-origin `iframe` / `frame` documents and reports `iframeSeen` / `iframeReadable` / `iframeBlocked` with redacted `srcPattern`. Cross-origin frames are counted, never read. No PLOS or EM fill selectors were added.
+- Chrome-only EM captures add a note to open the author-entry step and click inside an author field. Advanced explains the same. Still need a capture that lists Given/First, Family/Last, Email, affiliation.
+
 ### 2026-08-13 18:20 UTC
 - root cause found, from a user screenshot: entering an author email makes bioRxiv look the author up in its own directory. When the result arrives it re-renders the dialog and offers "fetch author data" via FILL INFO. Everything written during that window is discarded, which is exactly the "typed then vanished, first name required" failure. Earlier fixes treated the symptom.
 - fix: Email is now written alone, then Corresponding waits for the whole dialog to stop changing — element count, text length, input values, and the presence of the offer panel — before writing names and institution. Fields are re-resolved afterwards because the lookup can replace the input elements.

@@ -1359,6 +1359,11 @@ export function App({ surface = 'popup' }: { surface?: 'popup' | 'page' } = {}) 
           author dialog, capture once before opening it and once while an empty
           dialog is open.
         </p>
+        <p className="muted">
+          If you only see a role dropdown (Author / Reviewer), you are on the
+          Editorial Manager home screen, not the author form. Open Manuscript
+          Data → Authors, click inside an author field, then capture again.
+        </p>
         <button type="button" className="secondary" onClick={() => void runDiagnostic()}>
           Capture diagnostic
         </button>

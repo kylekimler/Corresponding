@@ -44,6 +44,36 @@ Research date: 2026-08-12. Based on public documentation and vendor marketing pa
 - **Integration opportunities:** Adapter after redacted fixture; careful with corresponding-author and affiliation widgets.
 - **Notes:** Do not scrape reviewer or decision pages.
 
+### PLOS ONE live shell capture (2026-08-14)
+
+Two redacted compatibility captures from `https://www.editorialmanager.com/pone/default2.aspx`
+(before and after opening “+ Add Another Author”) were **identical**. Both were
+structural chrome only:
+
+- `fieldCount: 1`, `controlCount: 2`, `authorGroupCount: 0`
+- `select RoleDropdown` options `Author` / `Reviewer`
+- `div hamBurger` and `div userIcon` (open-menu controls)
+- No given/family/email/affiliation fields, no author groups
+
+This is the Editorial Manager post-login role/home shell, not the author-entry
+form. Opening “+ Add Another Author” did not add inputs to the top document the
+diagnostic could see. Likely causes, in order:
+
+1. Capture was not on Manuscript Data → author-entry.
+2. Author fields live in a nested iframe (common for EM). The diagnostic now
+   walks same-origin `iframe` / `frame` documents and reports
+   `iframeSeen` / `iframeReadable` / `iframeBlocked`.
+3. The add-author UI is an overlay that was not in the captured top DOM.
+
+**Still required before any PLOS / EM fill selectors:** a capture that lists
+Given/First, Family/Last, Email, and affiliation — taken on the author-entry
+step, with those inputs visible. If the improved diagnostic still shows
+`iframeReadable: 0` while `iframeSeen > 0`, the form is likely cross-origin and
+we need a capture from that frame or a redacted HTML fixture of the inner form.
+
+Do not invent PLOS or EM field IDs from this shell capture. PLOS stays
+unsupported until author-entry evidence exists.
+
 ## eJournalPress
 
 - **Terminology:** eJournalPress (eJP); used by multiple publishers including some Nature-family workflows historically observed in this repo’s Nature MTS notes.

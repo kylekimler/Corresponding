@@ -70,7 +70,7 @@ export function redactUrl(url: string): string | undefined {
     parsed.password = '';
     parsed.hash = '';
     const sensitiveParams =
-      /^(token|csrf|xsrf|session|sid|auth|key|code|state|manuscript|msid|article)/i;
+      /^(token|csrf|xsrf|session|sid|auth|key|code|state|manuscript|msid|article|email)/i;
     for (const key of [...parsed.searchParams.keys()]) {
       if (sensitiveParams.test(key)) {
         parsed.searchParams.set(key, '[REDACTED]');
