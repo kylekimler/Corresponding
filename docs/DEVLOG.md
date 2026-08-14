@@ -9,7 +9,7 @@ Chronological overnight / autonomous iteration log.
 - ScholarOne, Editorial Manager, and generic eJournalPress are detect-only JSON. No field IDs were guessed. bioRxiv stays a TypeScript adapter because it is a repeated dialog with a directory lookup.
 - Site files may only name element IDs. CSS selectors and click actions are rejected so a drive-by PR cannot submit a manuscript.
 - README: `Your journal broken? Add support in ~10 lines.` plus the example society file. That is the contributor flywheel.
-- verification pending this iteration: Vitest, typecheck, production build.
+- verification: 214 Vitest tests, typecheck, production build, and six Playwright MV3 journeys passed.
 
 ### 2026-08-14 04:50 UTC
 - Compatibility is now the public game: a giant Platform / Autofill table near the top of the README, plus "Your journal isn't supported? Open an issue and paste a screenshot."
