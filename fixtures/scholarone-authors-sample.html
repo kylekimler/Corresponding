@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>ScholarOne Authors &amp; Institutions (local fixture)</title>
+    <style>
+      body { font-family: Georgia, serif; margin: 2rem; max-width: 760px; }
+      fieldset { margin: 1rem 0; }
+      label { display: inline-block; min-width: 11rem; }
+      input, select, textarea { margin: 0.25rem 0; }
+      textarea { width: 24rem; height: 4rem; }
+    </style>
+  </head>
+  <body>
+    <h1>Synthetic ScholarOne author form</h1>
+    <p>
+      Local fixture from official ScholarOne Author Center labels. Not a live
+      publisher page. Preview / Fill authors here; Details &amp; Comments COI
+      is a separate text field. Search, Save and Continue, Submit, and COI
+      certification stay manual.
+    </p>
+    <div id="s1-root" data-platform="scholarone">
+      <header>ScholarOne Manuscripts — Manuscript Central</header>
+      <nav>Step 4 – Authors &amp; Institutions</nav>
+      <h2>Authors &amp; Institutions</h2>
+      <div id="s1-author-list">
+        <fieldset class="s1-author" data-author-slot="1">
+          <legend>Author 1</legend>
+          <label for="s1_author_1_first_name">First Name</label>
+          <input id="s1_author_1_first_name" name="s1_author_1_first_name" type="text" />
+          <label for="s1_author_1_last_name">Last Name</label>
+          <input id="s1_author_1_last_name" name="s1_author_1_last_name" type="text" />
+          <label for="s1_author_1_email">Email Address</label>
+          <input id="s1_author_1_email" name="s1_author_1_email" type="text" />
+          <label for="s1_author_1_institution">Institution</label>
+          <input id="s1_author_1_institution" name="s1_author_1_institution" type="text" />
+          <label for="s1_author_1_country">Country</label>
+          <select id="s1_author_1_country" name="s1_author_1_country">
+            <option value="">Select country</option>
+            <option>United States</option>
+            <option>United Kingdom</option>
+            <option>Germany</option>
+            <option>Japan</option>
+            <option>France</option>
+          </select>
+          <label for="s1_author_1_corresponding">
+            <input id="s1_author_1_corresponding" type="checkbox" />
+            Corresponding Author
+          </label>
+          <input id="s1_author_1_user_id" name="s1_author_1_user_id" type="hidden" />
+        </fieldset>
+        <fieldset class="s1-author" data-author-slot="2">
+          <legend>Author 2</legend>
+          <label for="s1_author_2_first_name">First Name</label>
+          <input id="s1_author_2_first_name" name="s1_author_2_first_name" type="text" />
+          <label for="s1_author_2_last_name">Last Name</label>
+          <input id="s1_author_2_last_name" name="s1_author_2_last_name" type="text" />
+          <label for="s1_author_2_email">Email Address</label>
+          <input id="s1_author_2_email" name="s1_author_2_email" type="text" />
+          <label for="s1_author_2_institution">Institution</label>
+          <input id="s1_author_2_institution" name="s1_author_2_institution" type="text" />
+          <label for="s1_author_2_country">Country</label>
+          <select id="s1_author_2_country" name="s1_author_2_country">
+            <option value="">Select country</option>
+            <option>United States</option>
+            <option>United Kingdom</option>
+            <option>Germany</option>
+            <option>Japan</option>
+            <option>France</option>
+          </select>
+          <label for="s1_author_2_corresponding">
+            <input id="s1_author_2_corresponding" type="checkbox" />
+            Corresponding Author
+          </label>
+          <input id="s1_author_2_user_id" name="s1_author_2_user_id" type="hidden" />
+        </fieldset>
+      </div>
+      <section>
+        <h2>Details &amp; Comments</h2>
+        <label for="s1_conflict_of_interest">Conflict of Interest</label>
+        <textarea id="s1_conflict_of_interest" name="s1_conflict_of_interest"></textarea>
+        <label for="s1_coi_attest">
+          <input id="s1_coi_attest" type="checkbox" />
+          I certify I have no conflicts of interest
+        </label>
+      </section>
+      <button type="button" id="s1-save-continue">Save and Continue</button>
+      <button type="submit" id="s1-submit">Submit Manuscript</button>
+    </div>
+  </body>
+</html>

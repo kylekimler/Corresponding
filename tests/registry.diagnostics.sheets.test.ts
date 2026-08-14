@@ -21,11 +21,17 @@ describe('adapter registry', () => {
     expect(defaultRegistry.detect(document).platformId).toBe('unknown');
   });
 
-  it('lists stub adapters without implementing selectors', () => {
+  it('lists implemented major-platform adapters plus the eJournalPress stub', () => {
     const ids = defaultRegistry.list().map((a) => a.id);
     expect(ids).toContain('scholarone');
     expect(ids).toContain('editorial-manager');
     expect(ids).toContain('ejournalpress-generic');
+    expect(defaultRegistry.get('scholarone')?.label).toBe(
+      'ScholarOne Manuscripts',
+    );
+    expect(defaultRegistry.get('editorial-manager')?.label).toBe(
+      'Editorial Manager',
+    );
   });
 });
 

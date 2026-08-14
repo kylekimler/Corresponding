@@ -127,7 +127,14 @@ export function fromSimpleRoster(roster: Roster): IdentityDocument {
         ? [{ system: 'orcid', value: a.orcid }]
         : [],
       funding: [],
-      disclosures: [],
+      disclosures: a.conflictOfInterest
+        ? [
+            {
+              kind: 'conflict_of_interest' as const,
+              statement: a.conflictOfInterest,
+            },
+          ]
+        : [],
       creditRoles: [],
       works: [],
       teamMemberships: [],
@@ -153,6 +160,12 @@ export function toSimpleRoster(doc: IdentityDocument): Roster {
         : p.affiliations;
     const orcid =
       p.identifiers.find((id) => id.system === 'orcid')?.value ?? p.orcid;
+    const conflictOfInterest =
+      p.conflictOfInterest ??
+      p.disclosures.find(
+        (d) =>
+          d.kind === 'conflict_of_interest' || d.kind === 'competing_interest',
+      )?.statement;
     return AuthorSchema.parse({
       id: p.id,
       givenName: p.givenName,
@@ -161,6 +174,8 @@ export function toSimpleRoster(doc: IdentityDocument): Roster {
       email,
       orcid,
       isCorresponding: p.isCorresponding,
+      equalContribution: p.equalContribution,
+      conflictOfInterest,
       affiliations,
       sequence: p.sequence || i + 1,
     });

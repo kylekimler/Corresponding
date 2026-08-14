@@ -12,7 +12,7 @@ Corresponding is a local-first browser extension. Author roster data stays on yo
 
 On your device, the extension may store:
 
-- Saved author rosters (names, emails, affiliations, ORCID, corresponding-author flags, and related scholarly metadata you import or enter)
+- Saved author rosters (names, emails, affiliations, ORCID, corresponding-author flags, conflict-of-interest statements, and related scholarly metadata you import or enter)
 - Structured author/project metadata extracted locally from a user-selected
   DOCX author table. Full manuscript prose is not retained.
 - Column-mapping preferences for CSV/Sheets imports

@@ -101,6 +101,20 @@ const RULES: Rule[] = [
     exact: ['corresponding author', 'corresponding', 'corr auth'],
     soft: ['corr'],
   },
+  {
+    field: 'conflictOfInterest',
+    exact: [
+      'conflict of interest',
+      'conflicts of interest',
+      'competing interest',
+      'competing interests',
+      'disclosure statement',
+      'coi statement',
+      'coi',
+    ],
+    soft: ['disclosure', 'competing'],
+    preferTypes: ['textarea', 'text'],
+  },
 ];
 
 function scoreFeature(feature: FieldFeatures, rule: Rule): {

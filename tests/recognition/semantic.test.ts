@@ -44,6 +44,19 @@ describe('semantic recognizer', () => {
     );
   });
 
+  it('recognizes a conflict-of-interest textarea by label', () => {
+    document.body.innerHTML = `
+      <label for="coi">Conflicts of Interest</label>
+      <textarea id="coi" name="competing_interests"></textarea>
+    `;
+    const report = recognizeForm(document);
+    const coi = report.proposals.find(
+      (p) => p.canonicalField === 'conflictOfInterest',
+    );
+    expect(coi?.unresolved).toBe(false);
+    expect(coi?.confidence).toBeGreaterThanOrEqual(CONFIDENCE.fillThreshold);
+  });
+
   it('leaves ambiguous soft matches unresolved', () => {
     document.body.innerHTML = `
       <input id="x1" name="contact" aria-label="Contact" />

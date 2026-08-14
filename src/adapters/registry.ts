@@ -1,10 +1,8 @@
 import { biorxivAdapter } from './biorxiv/adapter';
+import { editorialManagerAdapter } from './editorial-manager/adapter';
 import { natureMtsAdapter } from './nature-mts/adapter';
-import {
-  eJournalPressGenericStub,
-  editorialManagerStub,
-  scholarOneStub,
-} from './stubs';
+import { scholarOneAdapter } from './scholarone/adapter';
+import { eJournalPressGenericStub } from './stubs';
 import type {
   AdapterRegistry,
   DetectResult,
@@ -15,9 +13,9 @@ import type {
 const adapters: PlatformAdapter[] = [
   biorxivAdapter,
   natureMtsAdapter,
+  scholarOneAdapter,
+  editorialManagerAdapter,
   eJournalPressGenericStub,
-  scholarOneStub,
-  editorialManagerStub,
 ];
 
 export function createAdapterRegistry(

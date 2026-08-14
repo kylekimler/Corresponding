@@ -23,6 +23,7 @@ describe('identity migration', () => {
         orcid: '0000-0001-2345-6789',
         sequence: 1,
         isCorresponding: true,
+        conflictOfInterest: 'No competing interests',
         affiliations: [
           { institution: 'Example University', city: 'Boston', isPrimary: true },
         ],
@@ -53,6 +54,7 @@ describe('identity migration', () => {
     expect(back.authors[0]?.email).toBe('jane.doe@example.org');
     expect(back.authors[0]?.orcid).toBe('0000-0001-2345-6789');
     expect(back.authors[0]?.affiliations[0]?.institution).toBe('Example University');
+    expect(back.authors[0]?.conflictOfInterest).toBe('No competing interests');
     expect(back.projectMetadata).toEqual(withMetadata.projectMetadata);
   });
 

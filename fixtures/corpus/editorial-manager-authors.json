@@ -1,0 +1,21 @@
+{
+  "id": "editorial-manager-authors",
+  "platformFamily": "editorial-manager",
+  "journalId": "editorial-manager-family",
+  "sourceDate": "2026-08-14",
+  "description": "Editorial Manager Manuscript Data fixture from official Aries EM Help labels (Enter Author Details, Given/First Name, Family/Last Name, +Add Another Author, Competing Interests). Not a live capture.",
+  "sanitizedHtml": "<div data-platform=\"editorial-manager\"><header>Editorial Manager</header><h1>Manuscript Data</h1><h2>Authors</h2><fieldset class=\"em-author\" data-author-slot=\"1\"><legend>Author 1</legend><label for=\"em_author_1_given_first_name\">Given/First Name</label><input id=\"em_author_1_given_first_name\" name=\"em_author_1_given_first_name\" type=\"text\" /><label for=\"em_author_1_family_last_name\">Family/Last Name</label><input id=\"em_author_1_family_last_name\" name=\"em_author_1_family_last_name\" type=\"text\" /><label for=\"em_author_1_email\">Email Address</label><input id=\"em_author_1_email\" name=\"em_author_1_email\" type=\"text\" /><label for=\"em_author_1_institution\">Institution</label><input id=\"em_author_1_institution\" name=\"em_author_1_institution\" type=\"text\" /><label for=\"em_author_1_country\">Country or Region</label><select id=\"em_author_1_country\" name=\"em_author_1_country\"><option></option><option>United States</option><option>Japan</option><option>Germany</option><option>France</option><option>Canada</option></select><input id=\"em_author_1_people_id\" name=\"em_author_1_people_id\" type=\"hidden\" /></fieldset><button type=\"button\">+Add Another Author</button><div hidden data-author-overlay><h2>Enter Author Details</h2></div><h2>Additional Information</h2><label for=\"em_competing_interests\">Competing Interests</label><textarea id=\"em_competing_interests\" name=\"em_competing_interests\"></textarea><button type=\"button\" id=\"em-proceed\">Proceed</button></div>",
+  "expectedDetection": {
+    "platformId": "editorial-manager",
+    "minConfidence": 0.5
+  },
+  "expectedMappings": [
+    { "idPattern": "em_author_#_given_first_name", "canonicalField": "givenName", "authorGroupIndex": 1, "minConfidence": 0.5 },
+    { "idPattern": "em_author_#_family_last_name", "canonicalField": "familyName", "authorGroupIndex": 1, "minConfidence": 0.5 },
+    { "idPattern": "em_author_#_email", "canonicalField": "email", "authorGroupIndex": 1, "minConfidence": 0.5 },
+    { "idPattern": "em_author_#_institution", "canonicalField": "institution", "authorGroupIndex": 1, "minConfidence": 0.4 },
+    { "idPattern": "em_author_#_country", "canonicalField": "country", "authorGroupIndex": 1, "minConfidence": 0.4 },
+    { "idPattern": "em_competing_interests", "canonicalField": "conflictOfInterest", "minConfidence": 0.5 }
+  ],
+  "expectedUnsupportedFields": ["em_author_#_people_id"]
+}

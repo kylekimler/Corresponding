@@ -14,6 +14,7 @@ export type CanonicalField =
   | 'orcid'
   | 'sequence'
   | 'corresponding'
+  | 'conflictOfInterest'
   | 'unknown';
 
 export interface FieldFeatures {

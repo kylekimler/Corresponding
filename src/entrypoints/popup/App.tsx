@@ -1329,6 +1329,7 @@ export function App({ surface = 'popup' }: { surface?: 'popup' | 'page' } = {}) 
                       {author.affiliations[0]?.institution
                         ? ` · ${author.affiliations[0].institution}`
                         : ''}
+                      {author.conflictOfInterest ? ' · COI on file' : ''}
                     </div>
                   </li>
                 ))}

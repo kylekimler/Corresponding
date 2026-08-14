@@ -25,6 +25,12 @@ export const AuthorSchema = z.object({
    * only: no portal field is filled from it without fixture evidence.
    */
   equalContribution: z.boolean().default(false),
+  /**
+   * Per-author conflict / competing-interest statement. Adapters may fill a
+   * matching text field when fixture evidence identifies it. Never used to
+   * click certification, attestation, or "I have no conflicts" controls.
+   */
+  conflictOfInterest: z.string().min(1).optional(),
   affiliations: z.array(AffiliationSchema).default([]),
   sequence: z.number().int().positive(),
 });

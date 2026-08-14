@@ -14,6 +14,7 @@ export type CanonicalColumn =
   | 'sequence'
   | 'fundingStatement'
   | 'disclosureStatement'
+  | 'conflictOfInterest'
   | 'ignore';
 
 export interface ColumnSuggestion {
@@ -102,6 +103,15 @@ const ALIASES: Record<Exclude<CanonicalColumn, 'ignore'>, string[]> = {
     'competing interest statement',
     'disclosure statement',
     'disclosures',
+  ],
+  conflictOfInterest: [
+    'coi',
+    'author coi',
+    'author conflict of interest',
+    'author conflicts of interest',
+    'coi statement',
+    'individual coi',
+    'individual conflict of interest',
   ],
 };
 

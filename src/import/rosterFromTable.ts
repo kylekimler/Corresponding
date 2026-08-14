@@ -66,6 +66,8 @@ export function rowsToRoster(input: {
     const sequence = seqRaw ? Number.parseInt(seqRaw, 10) : i + 1;
 
     const email = cell(row, input.mapping, 'email');
+    const authorCoi = cell(row, input.mapping, 'conflictOfInterest').trim();
+    const rowDisclosure = cell(row, input.mapping, 'disclosureStatement').trim();
 
     return {
       id: crypto.randomUUID(),
@@ -76,6 +78,7 @@ export function rowsToRoster(input: {
       orcid: normalizeOrcid(cell(row, input.mapping, 'orcid')),
       isCorresponding: truthy(cell(row, input.mapping, 'isCorresponding')),
       equalContribution: truthy(cell(row, input.mapping, 'equalContribution')),
+      conflictOfInterest: authorCoi || rowDisclosure || undefined,
       affiliations,
       sequence: Number.isFinite(sequence) && sequence > 0 ? sequence : i + 1,
     };

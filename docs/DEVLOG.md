@@ -4,6 +4,15 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-14 04:20 UTC
+- priority: ScholarOne and Editorial Manager are now first-coverage platforms (largest submission managers), ahead of the earlier bioRxiv → eLife → Nature sequence.
+- schema: Added canonical optional `conflictOfInterest` on each author. Importing Conflicts / Competing Interests still stores unique project `disclosureStatements` and now also copies each row onto the author so a later COI step can be filled. Explicit `Author COI` / `COI statement` columns map per-author.
+- ScholarOne: Documentation-backed adapter from the official Author Center workflow — Authors & Institutions labels, Create New Author overlay, Details & Comments COI **text**. Never clicks email Search, Save and Continue, Submit, or COI attestation.
+- Editorial Manager: Documentation-backed adapter from Aries EM Help — Manuscript Data / Enter Author Details labels (Given/First Name, Family/Last Name always required), Additional Information competing-interest **text**, equal-contribution checkbox when present. Never clicks Proceed, Build PDF, Approve Submission, or COI attestation.
+- matching: Official field **labels**, not guessed live element IDs. Fixtures encode those labels; live anonymized captures still needed for Ringgold typeaheads and journal-specific widgets.
+- tests: Shared adapter contract opted in for both families; COI-only step; overlay add-author; safety controls; schema/import/identity round-trip; corpus replay fixtures.
+- verification: pending this revision’s `npm test`, `typecheck`, and `build`.
+
 ### 2026-08-13 18:20 UTC
 - root cause found, from a user screenshot: entering an author email makes bioRxiv look the author up in its own directory. When the result arrives it re-renders the dialog and offers "fetch author data" via FILL INFO. Everything written during that window is discarded, which is exactly the "typed then vanished, first name required" failure. Earlier fixes treated the symptom.
 - fix: Email is now written alone, then Corresponding waits for the whole dialog to stop changing — element count, text length, input values, and the presence of the offer panel — before writing names and institution. Fields are re-resolved afterwards because the lookup can replace the input elements.

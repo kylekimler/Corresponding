@@ -48,7 +48,8 @@ Status key: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked (exte
 
 - [!] Google OAuth client ID for Sheets read-only
 - [!] Real Nature MTS HTML capture to validate synthetic IDs
-- [!] Real ScholarOne / Editorial Manager fixtures before selectors
+- [x] ScholarOne + Editorial Manager documentation-backed adapters (label matching, COI text, contract tests)
+- [!] Live anonymized ScholarOne / Editorial Manager captures to confirm journal-specific widgets
 
 ## Security / quality (post PR #1)
 
@@ -64,7 +65,7 @@ Status key: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked (exte
 2. Decide and enable safe local XLSX parsing
 3. eLife fixture investigation (bioRxiv/medRxiv capture-backed adapter complete)
 4. Raise coverage on migrate + capture redaction edge cases
-5. Add inline “why unresolved” evidence in Preview
+5. Live ScholarOne / Editorial Manager smoke against an anonymized capture
 
 ## Founder-context opportunities
 

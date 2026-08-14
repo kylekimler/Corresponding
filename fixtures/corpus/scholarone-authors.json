@@ -1,0 +1,21 @@
+{
+  "id": "scholarone-authors",
+  "platformFamily": "scholarone",
+  "journalId": "scholarone-family",
+  "sourceDate": "2026-08-14",
+  "description": "ScholarOne Authors & Institutions fixture from official Author Center labels (Create New Author, First Name, Email Address, Institution, Details & Comments COI). Not a live capture.",
+  "sanitizedHtml": "<div data-platform=\"scholarone\"><header>ScholarOne Manuscripts — Manuscript Central</header><h1>Authors &amp; Institutions</h1><fieldset class=\"s1-author\" data-author-slot=\"1\"><legend>Author 1</legend><label for=\"s1_author_1_first_name\">First Name</label><input id=\"s1_author_1_first_name\" name=\"s1_author_1_first_name\" type=\"text\" /><label for=\"s1_author_1_last_name\">Last Name</label><input id=\"s1_author_1_last_name\" name=\"s1_author_1_last_name\" type=\"text\" /><label for=\"s1_author_1_email\">Email Address</label><input id=\"s1_author_1_email\" name=\"s1_author_1_email\" type=\"text\" /><label for=\"s1_author_1_institution\">Institution</label><input id=\"s1_author_1_institution\" name=\"s1_author_1_institution\" type=\"text\" /><label for=\"s1_author_1_country\">Country</label><select id=\"s1_author_1_country\" name=\"s1_author_1_country\"><option></option><option>United States</option><option>Japan</option><option>Germany</option><option>France</option><option>Canada</option></select><input id=\"s1_author_1_user_id\" name=\"s1_author_1_user_id\" type=\"hidden\" /></fieldset><button type=\"button\">Create New Author</button><h2>Details &amp; Comments</h2><label for=\"s1_conflict_of_interest\">Conflict of Interest</label><textarea id=\"s1_conflict_of_interest\" name=\"s1_conflict_of_interest\"></textarea><button type=\"button\" id=\"s1-save-continue\">Save and Continue</button></div>",
+  "expectedDetection": {
+    "platformId": "scholarone",
+    "minConfidence": 0.5
+  },
+  "expectedMappings": [
+    { "idPattern": "s1_author_#_first_name", "canonicalField": "givenName", "authorGroupIndex": 1, "minConfidence": 0.5 },
+    { "idPattern": "s1_author_#_last_name", "canonicalField": "familyName", "authorGroupIndex": 1, "minConfidence": 0.5 },
+    { "idPattern": "s1_author_#_email", "canonicalField": "email", "authorGroupIndex": 1, "minConfidence": 0.5 },
+    { "idPattern": "s1_author_#_institution", "canonicalField": "institution", "authorGroupIndex": 1, "minConfidence": 0.4 },
+    { "idPattern": "s1_author_#_country", "canonicalField": "country", "authorGroupIndex": 1, "minConfidence": 0.4 },
+    { "idPattern": "s1_conflict_of_interest", "canonicalField": "conflictOfInterest", "minConfidence": 0.5 }
+  ],
+  "expectedUnsupportedFields": ["s1_author_#_user_id"]
+}

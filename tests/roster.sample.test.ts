@@ -38,6 +38,13 @@ describe('sample roster', () => {
     expect(shared.map((author) => author.sequence)).toEqual([1, 2]);
     // Two shared corresponding authors close it.
     expect(corresponding.map((author) => author.sequence)).toEqual([5, 6]);
+    expect(roster.authors[3]?.conflictOfInterest).toBe(
+      'Consultant to an optics workshop',
+    );
+    expect(roster.projectMetadata?.disclosureStatements).toEqual([
+      'No competing interests',
+      'Consultant to an optics workshop',
+    ]);
     expect(
       roster.authors.map((author) => author.familyName),
     ).toEqual([

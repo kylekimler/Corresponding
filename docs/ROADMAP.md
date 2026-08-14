@@ -48,6 +48,7 @@ Privacy draft, CWS permission explanation, threat model, release checklist, vers
 
 ### Soon
 
+- Live-smoke ScholarOne and Editorial Manager against anonymized captures; keep label matching until exact IDs are observed.
 - Complete live smoke validation of the capture-backed bioRxiv/medRxiv modal adapter; investigate eLife and implement only after fixture evidence.
 - Validate Nature/eJournalPress against a real anonymized capture and expand only tested platform-family patterns.
 - Add collaborator/project readiness concepts incrementally after the Fill workflow is dependable.

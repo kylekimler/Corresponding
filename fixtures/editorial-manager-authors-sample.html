@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Editorial Manager Manuscript Data (local fixture)</title>
+    <style>
+      body { font-family: Georgia, serif; margin: 2rem; max-width: 760px; }
+      fieldset { margin: 1rem 0; }
+      label { display: inline-block; min-width: 12rem; }
+      input, select, textarea { margin: 0.25rem 0; }
+      textarea { width: 24rem; height: 4rem; }
+    </style>
+  </head>
+  <body>
+    <h1>Synthetic Editorial Manager author form</h1>
+    <p>
+      Local fixture from official Aries Editorial Manager Help labels. Not a
+      live publisher page. Given/First Name and Family/Last Name are always
+      required. Competing Interests may appear on Additional Information.
+      Proceed, Build PDF, Approve Submission, and COI attestation stay manual.
+    </p>
+    <div id="em-root" data-platform="editorial-manager">
+      <header>Editorial Manager</header>
+      <nav>Manuscript Data</nav>
+      <h2>Manuscript Data</h2>
+      <section>
+        <h3>Authors</h3>
+        <div id="em-author-list">
+          <fieldset class="em-author" data-author-slot="1">
+            <legend>Author 1</legend>
+            <label for="em_author_1_given_first_name">Given/First Name</label>
+            <input id="em_author_1_given_first_name" name="em_author_1_given_first_name" type="text" />
+            <label for="em_author_1_family_last_name">Family/Last Name</label>
+            <input id="em_author_1_family_last_name" name="em_author_1_family_last_name" type="text" />
+            <label for="em_author_1_email">Email Address</label>
+            <input id="em_author_1_email" name="em_author_1_email" type="text" />
+            <label for="em_author_1_institution">Institution</label>
+            <input id="em_author_1_institution" name="em_author_1_institution" type="text" />
+            <label for="em_author_1_country">Country or Region</label>
+            <select id="em_author_1_country" name="em_author_1_country">
+              <option value="">Select country</option>
+              <option>United States</option>
+              <option>United Kingdom</option>
+              <option>Germany</option>
+              <option>Japan</option>
+              <option>France</option>
+            </select>
+            <label for="em_author_1_corresponding">
+              <input id="em_author_1_corresponding" type="checkbox" />
+              Corresponding Author
+            </label>
+            <label for="em_author_1_equal">
+              <input id="em_author_1_equal" type="checkbox" />
+              Equal Contribution Status
+            </label>
+            <input id="em_author_1_people_id" name="em_author_1_people_id" type="hidden" />
+          </fieldset>
+          <fieldset class="em-author" data-author-slot="2">
+            <legend>Author 2</legend>
+            <label for="em_author_2_given_first_name">Given/First Name</label>
+            <input id="em_author_2_given_first_name" name="em_author_2_given_first_name" type="text" />
+            <label for="em_author_2_family_last_name">Family/Last Name</label>
+            <input id="em_author_2_family_last_name" name="em_author_2_family_last_name" type="text" />
+            <label for="em_author_2_email">Email Address</label>
+            <input id="em_author_2_email" name="em_author_2_email" type="text" />
+            <label for="em_author_2_institution">Institution</label>
+            <input id="em_author_2_institution" name="em_author_2_institution" type="text" />
+            <label for="em_author_2_country">Country or Region</label>
+            <select id="em_author_2_country" name="em_author_2_country">
+              <option value="">Select country</option>
+              <option>United States</option>
+              <option>United Kingdom</option>
+              <option>Germany</option>
+              <option>Japan</option>
+              <option>France</option>
+            </select>
+            <label for="em_author_2_corresponding">
+              <input id="em_author_2_corresponding" type="checkbox" />
+              Corresponding Author
+            </label>
+            <label for="em_author_2_equal">
+              <input id="em_author_2_equal" type="checkbox" />
+              Equal Contribution Status
+            </label>
+            <input id="em_author_2_people_id" name="em_author_2_people_id" type="hidden" />
+          </fieldset>
+        </div>
+        <button type="button" id="em-add-another-author">+Add Another Author</button>
+      </section>
+      <section>
+        <h3>Additional Information</h3>
+        <label for="em_competing_interests">Competing Interests</label>
+        <textarea id="em_competing_interests" name="em_competing_interests"></textarea>
+        <label for="em_coi_attest">
+          <input id="em_coi_attest" type="checkbox" />
+          I attest that I have disclosed all conflicts of interest
+        </label>
+      </section>
+      <button type="button" id="em-proceed">Proceed</button>
+      <button type="button" id="em-build-pdf">Build PDF for Approval</button>
+      <button type="button" id="em-approve">Approve Submission</button>
+    </div>
+  </body>
+</html>

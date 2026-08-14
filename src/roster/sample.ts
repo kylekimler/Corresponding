@@ -12,6 +12,7 @@ const SAMPLE_HEADERS = [
   'Country',
   'Corresponding',
   'Equal contribution',
+  'Conflicts of Interest',
 ];
 
 /**
@@ -29,6 +30,7 @@ const SAMPLE_ROWS = [
     'United Kingdom',
     '',
     'yes',
+    'No competing interests',
   ],
   [
     'Alan',
@@ -40,6 +42,7 @@ const SAMPLE_ROWS = [
     'United Kingdom',
     '',
     'yes',
+    'No competing interests',
   ],
   [
     'Chien-Shiung',
@@ -51,6 +54,7 @@ const SAMPLE_ROWS = [
     'United States',
     '',
     '',
+    'No competing interests',
   ],
   [
     'Émilie',
@@ -62,6 +66,7 @@ const SAMPLE_ROWS = [
     'France',
     '',
     '',
+    'Consultant to an optics workshop',
   ],
   [
     'Rosalind',
@@ -73,6 +78,7 @@ const SAMPLE_ROWS = [
     'United Kingdom',
     'yes',
     '',
+    'No competing interests',
   ],
   [
     'Grace',
@@ -84,6 +90,7 @@ const SAMPLE_ROWS = [
     'United States',
     'yes',
     '',
+    'No competing interests',
   ],
 ];
 
@@ -97,6 +104,7 @@ const SAMPLE_MAPPING = {
   6: 'country',
   7: 'isCorresponding',
   8: 'equalContribution',
+  9: 'disclosureStatement',
 } as const;
 
 /**

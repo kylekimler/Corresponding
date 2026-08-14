@@ -23,6 +23,14 @@ A Chrome Manifest V3 extension that:
 
 ## Supported platform adapters
 
+**ScholarOne Manuscripts** and **Editorial Manager** are the first-priority
+platform families. Adapters match official vendor field **labels** and workflow
+chrome (Authors & Institutions / Create New Author; Manuscript Data / Enter
+Author Details). They fill author identity fields and, when present on a later
+step, conflict-of-interest **text**. They never click Search-to-attach-account,
+Save and Continue, Proceed, Build PDF, Approve Submission, or COI
+certification/attestation.
+
 Nature MTS / eJournalPress, based on observed DOM field IDs such as:
 
 - `num_authors`
@@ -30,10 +38,11 @@ Nature MTS / eJournalPress, based on observed DOM field IDs such as:
 - `contrib_auth_{n}_*`
 - `current_contrib_auth_{n}_author_pid`
 
-This was the first implemented adapter, not the strategic destination order.
-Near-term coverage priority is live bioRxiv/medRxiv validation, eLife fixture
-capture, then broader real-world Nature/eJournalPress validation. New adapters
-still require anonymized fixture evidence before selectors are implemented.
+Nature MTS was the first implemented adapter. Coverage priority is now
+ScholarOne and Editorial Manager (largest submission managers), then live
+bioRxiv/medRxiv validation and eLife fixture capture. New exact-ID selectors
+still require anonymized fixture evidence; these two families use documented
+labels rather than guessed live IDs.
 
 bioRxiv/medRxiv author entry is now implemented from redacted live structural
 captures as a repeated-modal workflow. It fills and saves author dialogs only;

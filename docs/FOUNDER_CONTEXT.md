@@ -18,10 +18,11 @@ Corresponding must never automate final submission, certification, signatures, p
 
 Make scientific submission dramatically less painful. Prioritize:
 
-1. bioRxiv / medRxiv
-2. eLife
-3. Nature / eJournalPress
-4. Later: ScholarOne, Editorial Manager, and other major platform families
+1. ScholarOne Manuscripts
+2. Editorial Manager
+3. bioRxiv / medRxiv
+4. eLife
+5. Nature / eJournalPress and other major platform families
 
 Prefer broad, evidence-based platform-family support over one bespoke adapter per journal. Recognition should fall through in this order:
 

@@ -29,11 +29,13 @@ export function ColumnSelect(props: {
       <option value="state">State</option>
       <option value="country">Country</option>
       <option value="isCorresponding">Corresponding?</option>
+      <option value="equalContribution">Equal contribution</option>
       <option value="sequence">Sequence</option>
       <option value="fundingStatement">Support / funding statement</option>
       <option value="disclosureStatement">
-        Conflict / disclosure statement
+        Project conflict / disclosure statement
       </option>
+      <option value="conflictOfInterest">Author COI statement</option>
       <option value="ignore">Ignore</option>
     </select>
   );

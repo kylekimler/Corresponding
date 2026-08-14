@@ -33,15 +33,17 @@ Research date: 2026-08-12. Based on public documentation and vendor marketing pa
 - **Terminology:** Manuscript Central, ScholarOne Manuscripts, center sites often `*.manuscriptcentral.com`.
 - **Host patterns (publicly known):** `manuscriptcentral.com` and publisher-specific subdomains.
 - **Public APIs:** Clarivate documents publisher/integrations at a business level; no public browser-form selector documentation suitable for autofill.
-- **Integration opportunities:** Future adapter after diagnostic capture; possible institutional SSO considerations (must never touch auth tokens).
-- **Notes for Corresponding:** Expect multi-step author entry; linked author accounts likely. Capture with Diagnostics on the author step only.
+- **Documented author workflow (Author Center User Guide):** Step “Authors & Institutions”; search co-author by email; if none found, **Create New Author** / **Create New Co-Author**; required name/email/institution; **Add Created Author**; later **Details & Comments** may collect conflict-of-interest text.
+- **Adapter status:** Label-based family adapter implemented against a documentation-backed fixture. Does not click email Search (avoids auto-attaching a linked account), Save and Continue, Submit, or COI attestation. Live anonymized capture still needed to confirm journal-specific widgets (Ringgold typeahead, Actions menu).
+- **Notes for Corresponding:** Multi-step author entry; linked author accounts likely. Prefer false negatives.
 
 ## Editorial Manager (Aries / Elsevier ecosystem)
 
 - **Terminology:** Editorial Manager (EM), often branded per journal.
 - **Host patterns:** Commonly `*.editorialmanager.com` (publicly referenced in journal instructions).
 - **Public APIs:** Aries/EM publish system overviews for publishers; no stable public DOM contract for third-party extensions.
-- **Integration opportunities:** Adapter after redacted fixture; careful with corresponding-author and affiliation widgets.
+- **Documented author workflow (EM Help / Submit a Manuscript):** Manuscript Data → Authors → **+Add Another Author** opens **Enter Author Details**. Given/First Name and Family/Last Name are always required; email, institution, department, city, state, country/region, ORCID, corresponding, and equal-contribution are configurable. **Additional Information** may present competing-interest questions.
+- **Adapter status:** Label-based family adapter implemented against a documentation-backed fixture. Does not click Proceed, Build PDF for Approval, Approve Submission, or COI attestation. Live anonymized capture still needed for journal-specific overlays and Ringgold institution lookup.
 - **Notes:** Do not scrape reviewer or decision pages.
 
 ## eJournalPress

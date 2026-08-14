@@ -164,6 +164,32 @@ describe('paste from spreadsheet', () => {
       fundingStatements: ['Supported by Grant A'],
       disclosureStatements: ['No competing interests'],
     });
+    expect(roster.authors[0]?.conflictOfInterest).toBe('No competing interests');
+    expect(roster.authors[1]?.conflictOfInterest).toBe('No competing interests');
+  });
+
+  it('maps an explicit Author COI column onto each author', () => {
+    const text = [
+      'First name\tLast Name\tAuthor COI',
+      'Ada\tLovelace\tAdvisor to Analytical Engines Ltd',
+      'Alan\tTuring\tNo competing interests',
+    ].join('\n');
+    const parsed = parsePastedTable(text);
+    const mapping = suggestColumnMapping(parsed.headers);
+    expect(mapping.map[2]).toBe('conflictOfInterest');
+    const roster = rowsToRoster({
+      name: 'Author COI',
+      headers: parsed.headers,
+      rows: parsed.rows,
+      mapping: mapping.map,
+      source: 'csv',
+    });
+    expect(roster.authors[0]?.conflictOfInterest).toBe(
+      'Advisor to Analytical Engines Ltd',
+    );
+    expect(roster.authors[1]?.conflictOfInterest).toBe(
+      'No competing interests',
+    );
   });
 
   it('detects tabular paste', () => {

@@ -17,6 +17,10 @@ const FORBIDDEN_PATTERNS: RegExp[] = [
   /\breviewer\s*invit/i,
   /\bagree\b/i,
   /\battest/i,
+  /\bsave\s+and\s+continue\b/i,
+  /\bproceed\b/i,
+  /\bbuild\s+pdf\b/i,
+  /\bapprove\s+submission\b/i,
 ];
 
 /** Normalize identifiers so word boundaries work on snake_case / camelCase. */
@@ -35,6 +39,25 @@ export function isForbiddenControl(el: Element): boolean {
     el.type === 'submit'
   ) {
     return true;
+  }
+  // Text entry is not a click/attest action. A "Conflict of Interest"
+  // textarea may be filled; the matching checkbox/button may not be clicked.
+  if (el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement) {
+    return false;
+  }
+  if (el instanceof HTMLInputElement) {
+    const type = (el.type || 'text').toLowerCase();
+    if (
+      type === 'text' ||
+      type === 'email' ||
+      type === 'number' ||
+      type === 'search' ||
+      type === 'tel' ||
+      type === 'url' ||
+      type === 'hidden'
+    ) {
+      return false;
+    }
   }
   const attrs = normalizeControlText(
     [

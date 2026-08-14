@@ -14,6 +14,7 @@ Platform-independent scholarly author metadata. All imports normalize into this 
 | `orcid` | string | no | ORCID iD, normalized when present |
 | `isCorresponding` | boolean | yes | Multiple shared corresponding authors are allowed |
 | `equalContribution` | boolean | yes | Shared/co-first or equally contributing author. Canonical only: not filled into any portal without fixture evidence |
+| `conflictOfInterest` | string | no | Per-author conflict / competing-interest statement. Adapters may fill a matching **text** field when fixture evidence identifies it. Never used to click certification or “I have no conflicts” controls |
 | `affiliations` | Affiliation[] | yes (may be empty) | Ordered; one may be marked primary |
 | `sequence` | positive int | yes | 1-based author order in the roster |
 
@@ -50,6 +51,10 @@ Project-level statements are not attributed to an individual author:
 | `fundingStatements` | string[] | Unique non-empty support/funding statements from mapped columns |
 | `disclosureStatements` | string[] | Unique non-empty conflict/competing-interest/disclosure statements |
 
+A mapped Conflicts / Competing Interests / Disclosure column also copies each
+row’s value onto `author.conflictOfInterest` so later COI steps can be filled
+even when the statement was imported as project metadata.
+
 Adapters may map these only when fixture evidence identifies the corresponding
 journal fields. Importing them does not authorize certification or legal
 attestation.
@@ -69,7 +74,8 @@ Recognized headings (non-exhaustive; mapping UI must show final mapping):
 - Corresponding: `Corresponding`, `Corresponding Author`, `is_corresponding`
 - Equal contribution: `Equal contribution`, `Co-first author`, `Shared first author`
 - Funding: `Support/Funding Statement`, `Funding Statement`, `Funding`
-- Disclosure: `Conflicts of Interest`, `Competing Interests`, `Disclosure Statement`
+- Disclosure (project + per-author copy): `Conflicts of Interest`, `Competing Interests`, `Disclosure Statement`
+- Author COI: `COI`, `Author COI`, `COI statement`, `Individual conflict of interest`
 
 **Never silently guess an ambiguous column mapping.** Show the mapping to the user and require confirmation when confidence is not unique.
 

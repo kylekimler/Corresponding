@@ -8,6 +8,10 @@ You import authors once (CSV, saved local roster, or future Google Sheets read-o
 
 Active development. Supported adapters:
 
+- **ScholarOne Manuscripts** — label-based Authors & Institutions + Details &
+  Comments COI text, from official Author Center documentation
+- **Editorial Manager** — label-based Manuscript Data authors + Additional
+  Information competing-interest text, from official Aries EM Help
 - **Nature MTS / eJournalPress** — synthetic fixture based on observed field IDs
 - **bioRxiv / medRxiv author entry** — capture-backed repeated Add Author dialog;
   automated fixture coverage complete, first live smoke pending

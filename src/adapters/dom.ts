@@ -16,29 +16,64 @@ export function getInput(
   return null;
 }
 
-export function readValue(doc: Document, id: string): string {
-  const el = getInput(doc, id);
-  if (!el) return '';
+export function readControlValue(
+  el: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement,
+): string {
+  if (isCheckboxOrRadio(el)) return el.checked ? 'true' : '';
   return (el.value ?? '').trim();
 }
 
-export function setValue(
-  doc: Document,
-  id: string,
+export function readValue(doc: Document, id: string): string {
+  const el = getInput(doc, id);
+  if (!el) return '';
+  return readControlValue(el);
+}
+
+export type SetValueResult =
+  | 'filled'
+  | 'overwritten'
+  | 'preserved'
+  | 'missing_element'
+  | 'skipped_disabled';
+
+function isCheckboxOrRadio(el: Element): el is HTMLInputElement {
+  return (
+    el instanceof HTMLInputElement &&
+    (el.type === 'checkbox' || el.type === 'radio')
+  );
+}
+
+function truthyFlag(value: string): boolean {
+  const t = value.trim().toLowerCase();
+  return t === 'true' || t === '1' || t === 'yes' || t === 'y' || t === 'on';
+}
+
+export function setControlValue(
+  el: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement,
   value: string,
   options: { overwrite: boolean; dryRun: boolean },
-): 'filled' | 'overwritten' | 'preserved' | 'missing_element' | 'skipped_disabled' {
-  const el = getInput(doc, id);
-  if (!el) return 'missing_element';
+): SetValueResult {
   assertSafeMutationTarget(el);
 
-  if (
-    (el instanceof HTMLInputElement ||
-      el instanceof HTMLTextAreaElement ||
-      el instanceof HTMLSelectElement) &&
-    (el.disabled || ('readOnly' in el && el.readOnly))
-  ) {
+  if (el.disabled || ('readOnly' in el && el.readOnly)) {
     return 'skipped_disabled';
+  }
+
+  if (isCheckboxOrRadio(el)) {
+    const desired = truthyFlag(value);
+    if (el.checked && !options.overwrite && el.checked !== desired) {
+      return 'preserved';
+    }
+    if (el.checked === desired) {
+      return el.checked ? 'preserved' : 'filled';
+    }
+    if (options.dryRun) {
+      return el.checked ? 'overwritten' : 'filled';
+    }
+    el.checked = desired;
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+    return desired ? 'filled' : 'overwritten';
   }
 
   const current = (el.value ?? '').trim();
@@ -65,6 +100,17 @@ export function setValue(
   el.dispatchEvent(new Event('input', { bubbles: true }));
   el.dispatchEvent(new Event('change', { bubbles: true }));
   return current ? 'overwritten' : 'filled';
+}
+
+export function setValue(
+  doc: Document,
+  id: string,
+  value: string,
+  options: { overwrite: boolean; dryRun: boolean },
+): SetValueResult {
+  const el = getInput(doc, id);
+  if (!el) return 'missing_element';
+  return setControlValue(el, value, options);
 }
 
 export function matchSelectOption(
