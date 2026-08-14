@@ -23,6 +23,10 @@ Make scientific submission dramatically less painful. Prioritize:
 3. Nature / eJournalPress
 4. Later: ScholarOne, Editorial Manager, and other major platform families
 
+Publish compatibility as a scoreboard. Each new publisher is a release.
+Scientists should be able to open an issue, paste a redacted author-form
+screenshot, and watch an empty square become a checkmark.
+
 Prefer broad, evidence-based platform-family support over one bespoke adapter per journal. Recognition should fall through in this order:
 
 1. Exact tested selector

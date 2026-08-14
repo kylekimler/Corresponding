@@ -14,6 +14,48 @@ Corresponding is a Chrome extension that fills the **author** form from the
 spreadsheet or ORCID list you already have. Preview the plan. Fill. Check the
 result. **You** submit the paper.
 
+## Compatibility
+
+The scoreboard. This is how Corresponding grows.
+
+| Platform | Autofill |
+| --- | --- |
+| Nature Portfolio | ✅ |
+| bioRxiv / medRxiv | ✅ |
+| Editorial Manager | ⬜ |
+| ScholarOne | ⬜ |
+| Elsevier | ⬜ |
+| Wiley | ⬜ |
+| Frontiers | ⬜ |
+| PLOS | ⬜ |
+| eLife | ⬜ |
+
+**Your journal isn't supported? Open an issue and paste a screenshot.**
+
+[Open an issue — add a journal](https://github.com/kylekimler/Corresponding/issues/new?template=add-journal.yml)
+
+Redact names, emails, and manuscript text. The author-form layout is enough.
+
+A checkmark means a fixture-tested author-form fill. It does not mean every
+title under that publisher, and it never means the extension submits the paper.
+
+### Every publisher is a release
+
+Unlocking a platform is the event. That is the recurring reason to circulate.
+
+| Version | Unlock |
+| --- | --- |
+| v0.1 | Nature Portfolio |
+| v0.1 | bioRxiv / medRxiv |
+| next | Editorial Manager |
+| next | ScholarOne |
+| v0.7 | Cell Press |
+| v0.8 | Wiley |
+| v0.9 | 100 journals |
+
+See [CHANGELOG.md](CHANGELOG.md). Empty squares move to ✅ only after a
+redacted fixture and a tested adapter.
+
 ## Radically free
 
 MIT license. No account. No trial. No freemium gate. No "start trial."
@@ -30,14 +72,6 @@ Corresponding backend for author PII.
 Final submission, certification, copyright, payment, and signatures always
 stay with the human. The extension fills author metadata. It does not click
 Submit.
-
-## Status
-
-Active development. Supported adapters:
-
-- **Nature MTS / eJournalPress** — synthetic fixture based on observed field IDs
-- **bioRxiv / medRxiv author entry** — capture-backed repeated Add Author dialog;
-  automated fixture coverage complete, first live smoke pending
 
 ## Quick start
 

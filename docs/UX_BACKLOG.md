@@ -18,6 +18,7 @@ Prioritized friction for a first-time scientist. Status: `[ ]` open · `[x]` fix
 - [x] Show a data preview beside mapping selects
 - [x] Friendlier empty roster CTA: “Import authors”
 - [x] Header states Fill is free: no account, no trial
+- [x] Unknown portal invites a redacted screenshot to unlock the next platform
 - [x] No OAuth / client-ID errors on the scientist-facing UI
 
 ## Selecting a saved roster

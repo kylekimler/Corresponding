@@ -4,6 +4,13 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-14 04:50 UTC
+- Compatibility is now the public game: a giant Platform / Autofill table near the top of the README, plus "Your journal isn't supported? Open an issue and paste a screenshot."
+- Checkmarks are honest. Nature Portfolio and bioRxiv / medRxiv are ✅. Editorial Manager, ScholarOne, Elsevier, Wiley, Frontiers, PLOS, and eLife stay ⬜ until a redacted fixture exists. A test fails if the README claims a stub can fill.
+- Unlock events are listed as recurring circulation: next EM / ScholarOne, later v0.7 Cell Press, v0.8 Wiley, v0.9 100 journals.
+- Unknown-portal popup copy asks for a redacted author-form capture as the way the next platform unlocks.
+- verification pending this iteration: Vitest, typecheck, production build.
+
 ### 2026-08-14 04:45 UTC
 - Corresponding Fill is now radically free: MIT license, no account, no trial, no freemium gate.
 - README leads with the hated-form hook: `Stop entering 74 authors into journal submission forms by hand.`

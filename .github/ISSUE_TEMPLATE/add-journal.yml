@@ -1,0 +1,55 @@
+name: Add my journal
+description: Unlock a journal. Paste a redacted screenshot of the author form.
+title: 'Unlock: '
+labels:
+  - compatibility
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Each new publisher is a release. A screenshot of the **author form**
+        is enough to start.
+
+        Redact names, emails, ORCIDs, and manuscript text. Do not include
+        passwords, cookies, or the submit/payment step.
+  - type: input
+    id: journal
+    attributes:
+      label: Journal or publisher
+      placeholder: e.g. Cell Reports, Wiley, a specific society title
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Submission platform, if you know it
+      options:
+        - Not sure
+        - Editorial Manager
+        - ScholarOne
+        - Elsevier
+        - Wiley
+        - Frontiers
+        - PLOS
+        - eLife
+        - Nature Portfolio / eJournalPress
+        - bioRxiv / medRxiv
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: Redacted author-form screenshot
+      description: Drag the image in. Crop to the author fields. No PII.
+    validations:
+      required: true
+  - type: checkboxes
+    id: redaction
+    attributes:
+      label: Before you send
+      options:
+        - label: Names, emails, and manuscript text are redacted or absent
+          required: true
+        - label: This is the author form, not the final submit / payment page
+          required: true

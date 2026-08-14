@@ -26,6 +26,11 @@ A Chrome Manifest V3 extension that:
 
 ## Supported platform adapters
 
+The public scoreboard lives at the top of `README.md` and in
+`src/compatibility/catalog.ts`. A publisher is ✅ only when a fixture-tested
+adapter can fill the author form. Empty squares are the game: open an issue
+and paste a screenshot.
+
 Nature MTS / eJournalPress, based on observed DOM field IDs such as:
 
 - `num_authors`

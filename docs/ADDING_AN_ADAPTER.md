@@ -11,9 +11,11 @@
 1. Copy `src/adapters/_template/adapter.ts` to `src/adapters/<platform>/adapter.ts`.
 2. Implement `detect`, `inspect`, `fill`, `validate`.
 3. Register in `src/adapters/registry.ts`.
-4. Add `tests/adapters/<platform>.contract.test.ts` using `describeAdapterContract`.
-5. Add synthetic mount helpers; never invent selectors without fixture evidence.
-6. Run:
+4. Move the row in `src/compatibility/catalog.ts` to `supported` and keep the
+   README table in sync (the catalog test fails if they drift).
+5. Add `tests/adapters/<platform>.contract.test.ts` using `describeAdapterContract`.
+6. Add synthetic mount helpers; never invent selectors without fixture evidence.
+7. Run:
 
 ```bash
 npm run test:adapters

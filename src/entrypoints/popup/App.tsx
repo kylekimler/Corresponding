@@ -719,13 +719,19 @@ export function App({ surface = 'popup' }: { surface?: 'popup' | 'page' } = {}) 
           </button>
         )}
         {(detectStatus === 'unknown' || detectStatus === 'error') && (
-          <button
-            type="button"
-            className="linkish compatibility-link"
-            onClick={() => setView('advanced')}
-          >
-            Capture compatibility info
-          </button>
+          <>
+            <p className="muted tight">
+              Your journal isn&apos;t on the board yet. Capture a redacted
+              author-form screenshot — that is how the next platform unlocks.
+            </p>
+            <button
+              type="button"
+              className="linkish compatibility-link"
+              onClick={() => setView('advanced')}
+            >
+              Unlock this journal
+            </button>
+          </>
         )}
 
         {!selected ? (
