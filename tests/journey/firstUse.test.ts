@@ -7,6 +7,11 @@ import { rowsToRoster } from '@/import/rosterFromTable';
 import { createSampleRoster } from '@/roster/sample';
 import { createMemoryRosterStore } from '@/roster/storage';
 import { summarizePreview } from '@/popup/previewSummary';
+import {
+  countFilledAuthors,
+  countsTowardLifetime,
+  formatFillDelight,
+} from '@/popup/timeSaved';
 import { makeNAuthors, makeRoster } from '../helpers/roster';
 
 function tsvForAuthors(n: number): string {
@@ -79,6 +84,15 @@ describe('first-use journey', () => {
     const validation = natureMtsAdapter.validate(document, roster);
     expect(validation.summary.conflicts).toBe(0);
     expect(validation.summary.filledLike).toBe(roster.authors.length);
+    expect(
+      formatFillDelight(countFilledAuthors(fill, validation.summary.filledLike)),
+    ).toBe('6 authors filled. You just got 4 minutes of your life back.');
+    expect(
+      countsTowardLifetime({
+        rosterSource: roster.source,
+        isDevelopmentFixture: true,
+      }),
+    ).toBe(false);
   });
 
   it.each([3, 75, 500])(
@@ -123,6 +137,17 @@ describe('first-use journey', () => {
       const validation = natureMtsAdapter.validate(document, roster);
       expect(validation.summary.conflicts).toBe(0);
       expect(validation.summary.filledLike).toBe(slots);
+      expect(
+        formatFillDelight(
+          countFilledAuthors(fill, validation.summary.filledLike),
+        ),
+      ).toMatch(/authors filled\. You just got .+ of your life back\./);
+      expect(
+        countsTowardLifetime({
+          rosterSource: roster.source,
+          isDevelopmentFixture: true,
+        }),
+      ).toBe(false);
     },
   );
 

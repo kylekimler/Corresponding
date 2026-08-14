@@ -176,6 +176,29 @@ label.checkbox {
   margin: 6px 0 0;
 }
 
+.fill-delight {
+  margin: 0 0 var(--c-space-2);
+  color: var(--c-accent);
+  font-family: var(--c-font-display);
+  font-size: 1.02rem;
+  line-height: 1.35;
+}
+
+.lifetime-hours {
+  margin: auto 0 0;
+  padding-top: var(--c-space-3);
+  color: var(--c-muted);
+  font-size: 0.68rem;
+  letter-spacing: 0.01em;
+  line-height: 1.3;
+}
+
+.app.compact-app {
+  min-height: 388px;
+  display: flex;
+  flex-direction: column;
+}
+
 .warn { color: var(--c-status-attention); font-size: 0.85rem; }
 .danger { color: var(--c-status-conflict); font-size: 0.85rem; }
 .ok { color: var(--c-status-ready); font-size: 0.85rem; }

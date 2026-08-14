@@ -20,6 +20,10 @@ A Chrome Manifest V3 extension that:
 6. Fills the form deterministically via a platform adapter.
 7. Validates the resulting form.
 8. Leaves final submission, certification, payment, and legal actions to the human.
+9. After a successful fill, tells the scientist how many authors were filled
+   and how much time that gave back (about 40 seconds per author). The popup
+   footer keeps a local lifetime hours estimate. Example authors and test
+   fixtures are not counted. There is no community-wide counter.
 
 ## Supported platform adapters
 

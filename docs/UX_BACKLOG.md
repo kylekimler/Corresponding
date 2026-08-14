@@ -44,7 +44,7 @@ Prioritized friction for a first-time scientist. Status: `[ ]` open · `[x]` fix
 - [x] Fill disabled on unknown portal
 - [x] Optional Preview guidance near Fill; direct Fill still performs internal preflight
 - [x] Post-fill validation summary + “not submitted” message
-- [ ] Toast-style confirmation with counts only (no PII)
+- [x] Post-fill delight line (authors filled + time back) and local lifetime hours footer; example/test fills excluded
 
 ## Advanced
 

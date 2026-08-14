@@ -73,6 +73,21 @@ export function PortalBadge(props: {
   );
 }
 
+export function FillDelight(props: { message: string }) {
+  return <p className="fill-delight">{props.message}</p>;
+}
+
+export function LifetimeHours(props: { label: string }) {
+  return (
+    <p
+      className="lifetime-hours"
+      title="Local estimate on this device. About 40 seconds per author. Example authors and test fixtures are not counted."
+    >
+      {props.label}
+    </p>
+  );
+}
+
 export function PreviewResultCard(props: { summary: PreviewSummary }) {
   const s = props.summary;
   return (

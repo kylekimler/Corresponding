@@ -39,6 +39,7 @@ Status key: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked (exte
 - [x] CSV mapping data preview
 - [x] Empty-state one-click sample roster import
 - [x] Confidence badges per author block in Preview
+- [x] Post-fill delight line and local lifetime hours footer (example/test fills excluded)
 - [x] Persist last-selected roster id
 - [x] Wire audit log to chrome.storage in popup (metadata + counts, clearable)
 - [ ] Optional visual regression for popup tokens

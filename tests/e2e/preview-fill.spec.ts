@@ -60,6 +60,9 @@ async function openFixtureAndPopup(
   await expect(
     popup.getByText('Nature MTS / eJournalPress', { exact: true }),
   ).toBeVisible();
+  await expect(
+    popup.getByText('Lifetime researcher hours saved: 0'),
+  ).toBeVisible();
   return { fixture, popup };
 }
 
@@ -127,13 +130,16 @@ test('production popup previews, fills, validates, and preserves protected contr
   await fill.click();
 
   await expect(
-    popup.getByText(/Fill complete\. Validation finished/),
+    popup.getByText(/3 authors filled\. You just got 2 minutes of your life back\./),
   ).toBeVisible();
   await expect(
     popup.getByRole('heading', { name: 'After fill — validation' }),
   ).toBeVisible();
   await expect(popup.getByText('3 authors look filled')).toBeVisible();
   await expect(popup.getByText('0 conflicts')).toBeVisible();
+  await expect(
+    popup.getByText('Lifetime researcher hours saved: 0'),
+  ).toBeVisible();
 
   await expect(fixture.locator('#corr_auth_first_nm')).toHaveValue('Ada');
   await expect(fixture.locator('#corr_auth_email')).toHaveValue(
@@ -358,7 +364,7 @@ test('bioRxiv modal workflow saves each author and never continues the page', as
   await fill.click();
 
   await expect(
-    popup.getByText(/Fill complete\. Validation finished/),
+    popup.getByText(/3 authors filled\. You just got 2 minutes of your life back\./),
   ).toBeVisible();
   await expect(popup.getByText('3 authors look filled')).toBeVisible();
   const state = await fixture.evaluate(() => {
