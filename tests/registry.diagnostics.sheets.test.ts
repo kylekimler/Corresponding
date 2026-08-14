@@ -21,7 +21,7 @@ describe('adapter registry', () => {
     expect(defaultRegistry.detect(document).platformId).toBe('unknown');
   });
 
-  it('lists stub adapters without implementing selectors', () => {
+  it('lists registered platform adapters including ScholarOne', () => {
     const ids = defaultRegistry.list().map((a) => a.id);
     expect(ids).toContain('scholarone');
     expect(ids).toContain('editorial-manager');

@@ -4,6 +4,14 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-14 23:20 UTC
+- evidence: Redacted Bioinformatics ScholarOne capture (`mc.manuscriptcentral.com/bioinformatics`) confirms email-first author entry — `findAuthorEmailId` / `searchAuthorId`, `emailSearchModal_yes/no`, `AUTHOR_EMAIL_ADDRESS` / `AUTHOR_FIRST_NAME` / `AUTHOR_LAST_NAME`, affiliation `_*` slots, CRediT role checkboxes, AuthAction corresponding assignment, and forbidden `btnSubmit` Save and Continue.
+- adapter: Replaced the ScholarOne stub with a capture-backed fillAsync orchestrator. Fill opens Add Author, searches by email, waits for lookup settle (never writes names mid-lookup), confirms create-new when the modal appears, refuses linked-account identity conflicts, commits via Add Author, and may assign corresponding via AuthAction.
+- safety: Never clicks Save and Continue / submit / legal. Institution (likely Ringgold) and CRediT roles stay unmapped without value-field evidence / roster credit data.
+- recognition: Email lookup/search boxes are demoted so `AUTHOR_EMAIL_ADDRESS` wins over `findAuthorEmailId`.
+- fixtures/tests: Capture-derived harness, corpus entry, sample HTML, and unit coverage for multi-author create, linked match, conflict refusal, and zero submit clicks.
+- status: Authenticated live Manuscript Central smoke still required before claiming production validation.
+
 ### 2026-08-13 18:20 UTC
 - root cause found, from a user screenshot: entering an author email makes bioRxiv look the author up in its own directory. When the result arrives it re-renders the dialog and offers "fetch author data" via FILL INFO. Everything written during that window is discarded, which is exactly the "typed then vanished, first name required" failure. Earlier fixes treated the symptom.
 - fix: Email is now written alone, then Corresponding waits for the whole dialog to stop changing — element count, text length, input values, and the presence of the offer panel — before writing names and institution. Fields are re-resolved afterwards because the lookup can replace the input elements.

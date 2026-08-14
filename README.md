@@ -11,6 +11,9 @@ Active development. Supported adapters:
 - **Nature MTS / eJournalPress** — synthetic fixture based on observed field IDs
 - **bioRxiv / medRxiv author entry** — capture-backed repeated Add Author dialog;
   automated fixture coverage complete, first live smoke pending
+- **ScholarOne / Manuscript Central** — capture-backed from Bioinformatics
+  (`findAuthorEmailId` email lookup → `AUTHOR_*` fields); automated fixtures
+  complete, authenticated live smoke pending
 
 ## Quick start
 

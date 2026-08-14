@@ -64,4 +64,27 @@ describe('semantic recognizer', () => {
     const report = recognizeForm(document);
     expect(report.fields.some((f) => f.inputType === 'password')).toBe(false);
   });
+
+  it('prefers author email value fields over find/search email lookup boxes', () => {
+    document.body.innerHTML = `
+      <label for="findAuthorEmailId">Find using Author's email address</label>
+      <input id="findAuthorEmailId" name="findAuthorEmailId" type="text" />
+      <label for="AUTHOR_EMAIL_ADDRESS">Email Address</label>
+      <input id="AUTHOR_EMAIL_ADDRESS" name="AUTHOR_EMAIL_ADDRESS" type="text" />
+    `;
+    const report = recognizeForm(document);
+    const authorEmail = report.proposals.find(
+      (p) => p.elementKey === 'id:AUTHOR_EMAIL_ADDRESS',
+    );
+    const lookup = report.proposals.find(
+      (p) => p.elementKey === 'id:findAuthorEmailId',
+    );
+    expect(authorEmail?.canonicalField).toBe('email');
+    expect(authorEmail?.unresolved).toBe(false);
+    expect(authorEmail?.confidence).toBeGreaterThanOrEqual(
+      CONFIDENCE.fillThreshold,
+    );
+    expect(lookup?.unresolved).toBe(true);
+    expect(lookup?.evidence.join(' ')).toContain('lookup-email-not-value-field');
+  });
 });

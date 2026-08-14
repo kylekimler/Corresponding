@@ -1,0 +1,27 @@
+{
+  "id": "scholarone-bioinformatics",
+  "platformFamily": "scholarone",
+  "journalId": "bioinformatics",
+  "sourceDate": "2026-08-14",
+  "description": "Capture-backed ScholarOne / Manuscript Central author entry from Bioinformatics (mc.manuscriptcentral.com/bioinformatics). Email lookup via findAuthorEmailId + searchAuthorId precedes AUTHOR_* fields. Structural ids only — no live values.",
+  "sanitizedHtml": "<div data-platform=\"scholarone\"><header>ScholarOne Manuscripts</header><p>mc.manuscriptcentral.com/bioinformatics</p><a href=\"#\" id=\"open-add-author\">Add Author</a><div id=\"author-form\"><label for=\"findAuthorEmailId\">Find using Author's email address</label><input id=\"findAuthorEmailId\" name=\"findAuthorEmailId\" type=\"text\" /><button type=\"button\" id=\"searchAuthorId\">Search</button><a href=\"#\" id=\"emailSearchModal_yes\">Yes</a><a href=\"#\" id=\"emailSearchModal_no\">No</a><label for=\"AUTHOR_EMAIL_ADDRESS\">Email Address</label><input id=\"AUTHOR_EMAIL_ADDRESS\" name=\"AUTHOR_EMAIL_ADDRESS\" type=\"text\" /><label for=\"AUTHOR_SALUTATION\">Salutation</label><select id=\"AUTHOR_SALUTATION\" name=\"AUTHOR_SALUTATION\"><option></option><option>Dr.</option><option>Prof.</option></select><label for=\"AUTHOR_FIRST_NAME\">First Name</label><input id=\"AUTHOR_FIRST_NAME\" name=\"AUTHOR_FIRST_NAME\" type=\"text\" /><label for=\"AUTHOR_LAST_NAME\">Last Name</label><input id=\"AUTHOR_LAST_NAME\" name=\"AUTHOR_LAST_NAME\" type=\"text\" /><label for=\"AUTHOR_DEPARTMENT_1\">Department</label><input id=\"AUTHOR_DEPARTMENT_1\" name=\"AUTHOR_DEPARTMENT_1\" type=\"text\" /><label for=\"COUNTRY_1\">Country</label><select id=\"COUNTRY_1\" name=\"COUNTRY_1\"><option></option><option>United States</option><option>United Kingdom</option><option>Germany</option><option>Japan</option></select><label for=\"STATE_1\">State</label><input id=\"STATE_1\" name=\"STATE_1\" type=\"text\" /><label for=\"CITY_1\">City</label><input id=\"CITY_1\" name=\"CITY_1\" type=\"text\" /><label for=\"AUTHOR_PHONE_1\">Phone</label><input id=\"AUTHOR_PHONE_1\" name=\"AUTHOR_PHONE_1\" type=\"text\" /><label><input type=\"checkbox\" id=\"AUTHOR_CONTRIBUTOR_ROLE_SELECT_0\" name=\"AUTHOR_CONTRIBUTOR_ROLE_SELECT_0\" /> Conceptualization</label><select id=\"AUTHOR_CONTRIBUTOR_DEGREE_OF_CONTRIBUTION_ID_0\" name=\"AUTHOR_CONTRIBUTOR_DEGREE_OF_CONTRIBUTION_ID_0\"><option>Equal</option><option>Lead</option><option>Supporting</option></select><a href=\"#\" id=\"commit-add-author\">Add Author</a></div><a href=\"#\" id=\"btnSave\">Save</a><a href=\"#\" id=\"btnSubmit\" name=\"AUTHOR_REVIEWERS\">Save and Continue</a></div>",
+  "expectedDetection": {
+    "platformId": "scholarone",
+    "minConfidence": 0.5
+  },
+  "expectedMappings": [
+    { "idPattern": "AUTHOR_FIRST_NAME", "canonicalField": "givenName", "minConfidence": 0.5 },
+    { "idPattern": "AUTHOR_LAST_NAME", "canonicalField": "familyName", "minConfidence": 0.5 },
+    { "idPattern": "AUTHOR_EMAIL_ADDRESS", "canonicalField": "email", "minConfidence": 0.5 },
+    { "idPattern": "AUTHOR_DEPARTMENT_#", "canonicalField": "department", "minConfidence": 0.4 },
+    { "idPattern": "CITY_#", "canonicalField": "city", "minConfidence": 0.4 },
+    { "idPattern": "COUNTRY_#", "canonicalField": "country", "minConfidence": 0.4 },
+    { "idPattern": "STATE_#", "canonicalField": "state", "minConfidence": 0.4 }
+  ],
+  "expectedUnsupportedFields": [
+    "findAuthorEmailId",
+    "AUTHOR_CONTRIBUTOR_ROLE_SELECT_#",
+    "AUTHOR_PHONE_#",
+    "AUTHOR_SALUTATION"
+  ]
+}

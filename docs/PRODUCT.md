@@ -31,15 +31,24 @@ Nature MTS / eJournalPress, based on observed DOM field IDs such as:
 - `current_contrib_auth_{n}_author_pid`
 
 This was the first implemented adapter, not the strategic destination order.
-Near-term coverage priority is live bioRxiv/medRxiv validation, eLife fixture
-capture, then broader real-world Nature/eJournalPress validation. New adapters
-still require anonymized fixture evidence before selectors are implemented.
+Near-term coverage priority is live bioRxiv/medRxiv validation, ScholarOne
+(Manuscript Central) live smoke, eLife fixture capture, then broader real-world
+Nature/eJournalPress validation. New adapters still require anonymized fixture
+evidence before selectors are implemented.
 
 bioRxiv/medRxiv author entry is now implemented from redacted live structural
 captures as a repeated-modal workflow. It fills and saves author dialogs only;
 it refuses pages that already contain author rows and never clicks page
 continuation or submission controls. Automated fixture verification is complete;
 live smoke validation remains pending.
+
+ScholarOne / Manuscript Central author entry is implemented from the redacted
+Bioinformatics (`mc.manuscriptcentral.com/bioinformatics`) compatibility capture.
+Authors are looked up by email first (`findAuthorEmailId` + Search), then
+`AUTHOR_*` fields are filled and committed with Add Author. Save and Continue,
+CRediT role automation, and institution typeahead remain out of scope until
+further capture evidence. Automated fixture coverage is in place; authenticated
+live smoke is still required.
 
 ## Non-goals (v0)
 

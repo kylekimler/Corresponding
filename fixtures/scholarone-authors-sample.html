@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>ScholarOne Manuscripts — Bioinformatics (fixture)</title>
+    <style>
+      body {
+        font-family: Georgia, serif;
+        max-width: 52rem;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        line-height: 1.45;
+      }
+      label {
+        display: block;
+        margin-top: 0.6rem;
+      }
+      #author-form[hidden],
+      #author-details[hidden],
+      #email-search-modal[hidden] {
+        display: none;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+      }
+      th,
+      td {
+        border: 1px solid #ccc;
+        padding: 0.35rem 0.5rem;
+        text-align: left;
+      }
+      .actions a,
+      .actions button {
+        margin-right: 0.75rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="scholarone-root" data-platform="scholarone">
+      <header>ScholarOne Manuscripts</header>
+      <nav>Authors &amp; Institutions — Bioinformatics</nav>
+      <p>Fixture derived from mc.manuscriptcentral.com/bioinformatics capture (structural ids only).</p>
+
+      <table id="author-list">
+        <thead>
+          <tr>
+            <th>Order</th>
+            <th>Author</th>
+            <th>Email</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="author-rows"></tbody>
+      </table>
+
+      <p class="actions">
+        <a href="#" id="open-add-author">Add Author</a>
+        <a href="#" id="UpdateAuthorOrderBtn">Update Author Order</a>
+        <a href="#" id="btnSave">Save</a>
+        <a href="#" id="btnSubmit" name="AUTHOR_REVIEWERS">Save and Continue</a>
+      </p>
+
+      <div id="author-form" hidden>
+        <h2>Add Author</h2>
+        <label for="findAuthorEmailId">Find using Author's email address</label>
+        <input type="text" id="findAuthorEmailId" name="findAuthorEmailId" />
+        <button type="button" id="searchAuthorId">Search</button>
+
+        <div id="email-search-modal" hidden>
+          <p>No matching author found. Create a new author?</p>
+          <a href="#" id="emailSearchModal_yes">Yes</a>
+          <a href="#" id="emailSearchModal_no">No</a>
+        </div>
+
+        <div id="author-details" hidden>
+          <label for="AUTHOR_EMAIL_ADDRESS">Email Address</label>
+          <input type="text" id="AUTHOR_EMAIL_ADDRESS" name="AUTHOR_EMAIL_ADDRESS" />
+
+          <label for="AUTHOR_SALUTATION">Salutation</label>
+          <select id="AUTHOR_SALUTATION" name="AUTHOR_SALUTATION">
+            <option value=""></option>
+            <option>Dr.</option>
+            <option>Prof.</option>
+            <option>Mx</option>
+          </select>
+
+          <label for="AUTHOR_FIRST_NAME">First Name</label>
+          <input type="text" id="AUTHOR_FIRST_NAME" name="AUTHOR_FIRST_NAME" />
+          <label for="AUTHOR_LAST_NAME">Last Name</label>
+          <input type="text" id="AUTHOR_LAST_NAME" name="AUTHOR_LAST_NAME" />
+
+          <label for="AUTHOR_DEPARTMENT_1">Department</label>
+          <input type="text" id="AUTHOR_DEPARTMENT_1" name="AUTHOR_DEPARTMENT_1" />
+
+          <label for="COUNTRY_1">Country</label>
+          <select id="COUNTRY_1" name="COUNTRY_1">
+            <option value=""></option>
+            <option>United States</option>
+            <option>United Kingdom</option>
+            <option>Germany</option>
+            <option>Japan</option>
+          </select>
+
+          <label for="STATE_1">State / Province</label>
+          <input type="text" id="STATE_1" name="STATE_1" />
+
+          <label for="CITY_1">City</label>
+          <input type="text" id="CITY_1" name="CITY_1" />
+
+          <label for="AUTHOR_PHONE_1">Phone</label>
+          <input type="text" id="AUTHOR_PHONE_1" name="AUTHOR_PHONE_1" />
+
+          <p class="actions">
+            <a href="#" id="commit-add-author">Add Author</a>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Minimal interactive harness for manual smoke; unit tests use mountScholarOneFixture.
+      const saved = [];
+      const form = document.getElementById('author-form');
+      const details = document.getElementById('author-details');
+      const modal = document.getElementById('email-search-modal');
+      const rows = document.getElementById('author-rows');
+      const findEmail = document.getElementById('findAuthorEmailId');
+
+      function render() {
+        rows.innerHTML = saved
+          .map(
+            (a, i) =>
+              `<tr><td>${i + 1}</td><td>${a.first} ${a.last}</td><td>${a.email}</td>` +
+              `<td><select name="AuthAction" data-author-email="${a.email}">` +
+              `<option value="">Select...</option><option value="corr">Assign as Corresponding Author</option>` +
+              `</select></td></tr>`,
+          )
+          .join('');
+      }
+
+      document.getElementById('open-add-author').addEventListener('click', (e) => {
+        e.preventDefault();
+        form.hidden = false;
+        details.hidden = true;
+        modal.hidden = true;
+        findEmail.value = '';
+      });
+
+      document.getElementById('searchAuthorId').addEventListener('click', () => {
+        modal.hidden = false;
+        details.hidden = true;
+      });
+
+      document.getElementById('emailSearchModal_yes').addEventListener('click', (e) => {
+        e.preventDefault();
+        modal.hidden = true;
+        details.hidden = false;
+        document.getElementById('AUTHOR_EMAIL_ADDRESS').value = findEmail.value.trim();
+      });
+
+      document.getElementById('emailSearchModal_no').addEventListener('click', (e) => {
+        e.preventDefault();
+        modal.hidden = true;
+      });
+
+      document.getElementById('commit-add-author').addEventListener('click', (e) => {
+        e.preventDefault();
+        saved.push({
+          email: document.getElementById('AUTHOR_EMAIL_ADDRESS').value.trim(),
+          first: document.getElementById('AUTHOR_FIRST_NAME').value.trim(),
+          last: document.getElementById('AUTHOR_LAST_NAME').value.trim(),
+        });
+        form.hidden = true;
+        render();
+      });
+
+      document.getElementById('btnSubmit').addEventListener('click', (e) => {
+        e.preventDefault();
+      });
+    </script>
+  </body>
+</html>

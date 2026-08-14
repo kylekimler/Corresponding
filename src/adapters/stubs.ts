@@ -88,11 +88,6 @@ function emptyAdapter(
   };
 }
 
-export const scholarOneStub = emptyAdapter('scholarone', 'ScholarOne', [
-  'scholarone',
-  'manuscriptcentral',
-]);
-
 export const editorialManagerStub = emptyAdapter(
   'editorial-manager',
   'Editorial Manager',

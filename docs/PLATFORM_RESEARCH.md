@@ -33,8 +33,23 @@ Research date: 2026-08-12. Based on public documentation and vendor marketing pa
 - **Terminology:** Manuscript Central, ScholarOne Manuscripts, center sites often `*.manuscriptcentral.com`.
 - **Host patterns (publicly known):** `manuscriptcentral.com` and publisher-specific subdomains.
 - **Public APIs:** Clarivate documents publisher/integrations at a business level; no public browser-form selector documentation suitable for autofill.
-- **Integration opportunities:** Future adapter after diagnostic capture; possible institutional SSO considerations (must never touch auth tokens).
-- **Notes for Corresponding:** Expect multi-step author entry; linked author accounts likely. Capture with Diagnostics on the author step only.
+- **Capture evidence (Bioinformatics, 2026-08-14):** Redacted compatibility capture from
+  `mc.manuscriptcentral.com/bioinformatics` confirms email-first author entry:
+  `findAuthorEmailId` + `searchAuthorId`, optional `emailSearchModal_yes/no`, then
+  `AUTHOR_EMAIL_ADDRESS` / `AUTHOR_FIRST_NAME` / `AUTHOR_LAST_NAME`, affiliation
+  slots (`AUTHOR_DEPARTMENT_#`, `CITY_#`, `COUNTRY_#`, `STATE_#`), CRediT role
+  checkboxes, and `AuthAction` including Assign as Corresponding Author.
+  Page continuation is `btnSubmit` / `AUTHOR_REVIEWERS` (“Save and Continue”).
+- **Adapter status:** Capture-backed ScholarOne adapter implemented. Fill searches
+  by email first, waits for lookup settle, creates a new author when the modal
+  confirms no match, applies roster values, commits via Add Author, and may set
+  corresponding via AuthAction. Never clicks Save and Continue / submit / legal.
+  Institution appears to be Ringgold/typeahead (absent from the capture as a
+  plain text input) and stays unmapped. CRediT roles stay unmapped until roster
+  credit-role data is wired. Linked-account identity conflicts refuse overwrite.
+- **Notes for Corresponding:** Multi-step author entry; linked author accounts
+  likely. Prefer false negatives. Live smoke on an authenticated Bioinformatics
+  submission still required before claiming production validation.
 
 ## Editorial Manager (Aries / Elsevier ecosystem)
 
