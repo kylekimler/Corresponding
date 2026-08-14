@@ -665,9 +665,7 @@ export function App({ surface = 'popup' }: { surface?: 'popup' | 'page' } = {}) 
               ? `Fields were filled, but validation failed: ${v.message}`
               : 'Fields were filled, but validation returned no result.',
           );
-          setActionStatus(
-            delight ?? 'Fill complete. Review every field before submitting.',
-          );
+          setActionStatus('Fill complete. Review every field before submitting.');
           return;
         }
         setValidation(v.result);
@@ -679,10 +677,9 @@ export function App({ surface = 'popup' }: { surface?: 'popup' | 'page' } = {}) 
         );
         if (delight) setFillDelight(delight);
         setActionStatus(
-          delight ??
-            (v.result.ok
-              ? 'Fill complete. Validation finished; you review and submit.'
-              : 'Fill complete. Validation found issues that need review.'),
+          v.result.ok
+            ? 'Fill complete. Validation finished; you review and submit.'
+            : 'Fill complete. Validation found issues that need review.',
         );
         if (detectStatus !== 'ready') void runDetect();
       }
@@ -973,6 +970,7 @@ export function App({ surface = 'popup' }: { surface?: 'popup' | 'page' } = {}) 
                 aria-live="polite"
                 aria-atomic="true"
               >
+                {fillDelight && <FillDelight message={fillDelight} />}
                 {actionStatus && <p className="ok tight">{actionStatus}</p>}
                 {actionError && (
                   <p
@@ -990,7 +988,6 @@ export function App({ surface = 'popup' }: { surface?: 'popup' | 'page' } = {}) 
             {validation && (
               <section className="panel">
                 <h2>After fill — validation</h2>
-                {fillDelight && <FillDelight message={fillDelight} />}
                 <ul className="compact">
                   <li>{validation.summary.filledLike} authors look filled</li>
                   <li>{validation.summary.missingEmail} missing email</li>

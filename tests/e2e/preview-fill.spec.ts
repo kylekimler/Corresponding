@@ -129,9 +129,9 @@ test('production popup previews, fills, validates, and preserves protected contr
   await keepFixtureActive(fixture, popup);
   await fill.click();
 
-  await expect(
-    popup.getByText(/3 authors filled\. You just got 2 minutes of your life back\./),
-  ).toBeVisible();
+  await expect(popup.locator('.fill-delight')).toHaveText(
+    /3 authors filled\. You just got 2 minutes of your life back\./,
+  );
   await expect(
     popup.getByRole('heading', { name: 'After fill — validation' }),
   ).toBeVisible();
@@ -363,9 +363,9 @@ test('bioRxiv modal workflow saves each author and never continues the page', as
   await keepFixtureActive(fixture, popup, BIORXIV_FIXTURE_URL);
   await fill.click();
 
-  await expect(
-    popup.getByText(/3 authors filled\. You just got 2 minutes of your life back\./),
-  ).toBeVisible();
+  await expect(popup.locator('.fill-delight')).toHaveText(
+    /3 authors filled\. You just got 2 minutes of your life back\./,
+  );
   await expect(popup.getByText('3 authors look filled')).toBeVisible();
   const state = await fixture.evaluate(() => {
     return (

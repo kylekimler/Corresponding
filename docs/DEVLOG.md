@@ -9,7 +9,7 @@ Chronological overnight / autonomous iteration log.
 - The main popup footer shows `Lifetime researcher hours saved: N` in small grey text. That number is a local estimate on this device, stored in `chrome.storage.local`.
 - Sample roster fills and development-fixture tabs never increment the lifetime counter. Unit tests and e2e journeys stay at zero.
 - No backend, no opt-in telemetry, no community-wide number. There is no analytics pipeline, so a global screenshot number would be invented.
-- verification pending this iteration: Vitest, typecheck, production build, and Playwright journeys.
+- verification: 209 Vitest tests, typecheck, and production build passed. Playwright journeys still to run.
 
 ### 2026-08-13 18:20 UTC
 - root cause found, from a user screenshot: entering an author email makes bioRxiv look the author up in its own directory. When the result arrives it re-renders the dialog and offers "fetch author data" via FILL INFO. Everything written during that window is discarded, which is exactly the "typed then vanished, first name required" failure. Earlier fixes treated the symptom.

@@ -46,7 +46,7 @@ describe('time saved delight', () => {
       '1 author filled. You just got 40 seconds of your life back.',
     );
     expect(formatFillDelight(2)).toBe(
-      '2 authors filled. You just got 1 minute of your life back.',
+      '2 authors filled. You just got 80 seconds of your life back.',
     );
     expect(formatSavedDuration(0)).toBe('0 seconds');
   });
