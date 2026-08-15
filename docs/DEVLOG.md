@@ -11,6 +11,13 @@ Chronological overnight / autonomous iteration log.
 - fixture now renders the offer as a `v-alert` so this cannot regress silently.
 - verification: 204 Vitest tests, typecheck, and production build passed.
 
+### 2026-08-14 04:30 UTC
+- After a successful fill the popup now says, for example, `73 authors filled. You just got 49 minutes of your life back.` The estimate is 40 seconds per author actually written or planned on this page.
+- The main popup footer shows `Lifetime researcher hours saved: N` in small grey text. That number is a local estimate on this device, stored in `chrome.storage.local`.
+- Sample roster fills and development-fixture tabs never increment the lifetime counter. Unit tests and e2e journeys stay at zero.
+- No backend, no opt-in telemetry, no community-wide number. There is no analytics pipeline, so a global screenshot number would be invented.
+- verification: 209 Vitest tests, typecheck, production build, and six Playwright MV3 journeys passed.
+
 ### 2026-08-13 18:20 UTC
 - root cause found, from a user screenshot: entering an author email makes bioRxiv look the author up in its own directory. When the result arrives it re-renders the dialog and offers "fetch author data" via FILL INFO. Everything written during that window is discarded, which is exactly the "typed then vanished, first name required" failure. Earlier fixes treated the symptom.
 - fix: Email is now written alone, then Corresponding waits for the whole dialog to stop changing — element count, text length, input values, and the presence of the offer panel — before writing names and institution. Fields are re-resolved afterwards because the lookup can replace the input elements.

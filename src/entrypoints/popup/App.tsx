@@ -41,7 +41,14 @@ import {
   chooseSelectedRosterId,
   createPopupPreferences,
 } from '@/popup/preferences';
+import { createLifetimeHoursStore } from '@/popup/lifetimeHours';
 import { summarizePreview } from '@/popup/previewSummary';
+import {
+  countFilledAuthors,
+  countsTowardLifetime,
+  formatFillDelight,
+  formatLifetimeHours,
+} from '@/popup/timeSaved';
 import {
   getActiveTabTarget,
   isActiveDevelopmentFixtureTab,
@@ -51,6 +58,8 @@ import {
 import {
   AttentionList,
   ColumnSelect,
+  FillDelight,
+  LifetimeHours,
   PortalBadge,
   PreviewResultCard,
   downloadText,
@@ -59,6 +68,7 @@ import {
 const store = createRosterStore();
 const sheetsClient = createChromeGoogleSheetsClient();
 const auditLog = createChromeAuditLog();
+const lifetimeHours = createLifetimeHoursStore();
 const popupPreferences = createPopupPreferences();
 // Clearly-labelled example data is useful in every build, including for
 // end-to-end testing against a real portal.
@@ -123,6 +133,8 @@ export function App({ surface = 'popup' }: { surface?: 'popup' | 'page' } = {}) 
   const [menuOpen, setMenuOpen] = useState(false);
   const [sampleCreating, setSampleCreating] = useState(false);
   const [auditCount, setAuditCount] = useState(0);
+  const [lifetimeAuthors, setLifetimeAuthors] = useState(0);
+  const [fillDelight, setFillDelight] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const sampleCreatingRef = useRef(false);
@@ -209,6 +221,27 @@ export function App({ surface = 'popup' }: { surface?: 'popup' | 'page' } = {}) 
     setAuditCount((await auditLog.list()).length);
   }
 
+  async function refreshLifetimeHours() {
+    setLifetimeAuthors(await lifetimeHours.getAuthorsFilled());
+  }
+
+  async function recordLifetimeIfEligible(
+    report: FillReport,
+    filledLike: number | undefined,
+    rosterSource: RosterSource,
+    isDevelopmentFixture: boolean,
+  ): Promise<string | undefined> {
+    const authors = countFilledAuthors(report, filledLike);
+    const delight = formatFillDelight(authors);
+    if (
+      authors > 0 &&
+      countsTowardLifetime({ rosterSource, isDevelopmentFixture })
+    ) {
+      setLifetimeAuthors(await lifetimeHours.recordEligibleFill(authors));
+    }
+    return delight;
+  }
+
   async function recordLocalActivity(report: FillReport, rosterId: string) {
     try {
       await auditLog.append(auditRecordFromFillReport(report, rosterId));
@@ -228,6 +261,7 @@ export function App({ surface = 'popup' }: { surface?: 'popup' | 'page' } = {}) 
     void refreshRosters();
     void runDetect();
     void refreshAuditCount();
+    void refreshLifetimeHours();
   }, []);
 
   useEffect(() => {
@@ -534,6 +568,7 @@ export function App({ surface = 'popup' }: { surface?: 'popup' | 'page' } = {}) 
     setActionError('');
     setActionInFlight('fill');
     setValidation(null);
+    setFillDelight('');
     try {
       let currentSession =
         previewSession && previewAllowsFill ? previewSession : null;
@@ -617,21 +652,30 @@ export function App({ surface = 'popup' }: { surface?: 'popup' | 'page' } = {}) 
           { type: 'VALIDATE', roster: selected },
           expectedTarget,
         );
-        if (v.type === 'ERROR') {
-          reportActionError(
-            `Fields were filled, but validation failed: ${v.message}`,
+        if (v.type === 'ERROR' || v.type !== 'VALIDATE_RESULT') {
+          const delight = await recordLifetimeIfEligible(
+            res.result,
+            undefined,
+            selected.source,
+            await isActiveDevelopmentFixtureTab(),
           );
-          setActionStatus('Fill complete. Review every field before submitting.');
-          return;
-        }
-        if (v.type !== 'VALIDATE_RESULT') {
+          if (delight) setFillDelight(delight);
           reportActionError(
-            'Fields were filled, but validation returned no result.',
+            v.type === 'ERROR'
+              ? `Fields were filled, but validation failed: ${v.message}`
+              : 'Fields were filled, but validation returned no result.',
           );
           setActionStatus('Fill complete. Review every field before submitting.');
           return;
         }
         setValidation(v.result);
+        const delight = await recordLifetimeIfEligible(
+          res.result,
+          v.result.summary.filledLike,
+          selected.source,
+          await isActiveDevelopmentFixtureTab(),
+        );
+        if (delight) setFillDelight(delight);
         setActionStatus(
           v.result.ok
             ? 'Fill complete. Validation finished; you review and submit.'
@@ -926,6 +970,7 @@ export function App({ surface = 'popup' }: { surface?: 'popup' | 'page' } = {}) 
                 aria-live="polite"
                 aria-atomic="true"
               >
+                {fillDelight && <FillDelight message={fillDelight} />}
                 {actionStatus && <p className="ok tight">{actionStatus}</p>}
                 {actionError && (
                   <p
@@ -969,6 +1014,7 @@ export function App({ surface = 'popup' }: { surface?: 'popup' | 'page' } = {}) 
 
         {status && <p className="ok">{status}</p>}
         {error && <p className="danger">{error}</p>}
+        <LifetimeHours label={formatLifetimeHours(lifetimeAuthors)} />
       </div>
     );
   }

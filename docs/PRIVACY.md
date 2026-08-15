@@ -2,7 +2,7 @@
 
 **Product:** Corresponding
 **Status:** Draft for development and Chrome Web Store preparation  
-**Last updated:** 2026-08-12
+**Last updated:** 2026-08-14
 
 ## Summary
 
@@ -17,6 +17,9 @@ On your device, the extension may store:
   DOCX author table. Full manuscript prose is not retained.
 - Column-mapping preferences for CSV/Sheets imports
 - Extension settings (e.g., overwrite preference)
+- A local count of authors filled on this device, used only to estimate
+  lifetime researcher hours saved. Sample authors and development fixtures
+  are not counted.
 
 Storage uses Chrome extension local storage APIs.
 
@@ -58,6 +61,9 @@ The extension never clicks final submission, certification, copyright acceptance
 - Journal submission portals receive only the form values you choose to fill into their pages (same as manual entry).
 - Google (optional Sheets import) receives OAuth consent and read requests for sheets you authorize.
 - There is no analytics pipeline that transmits author PII.
+- Lifetime hours saved are a clearly labeled local estimate on this device.
+  The extension does not send usage telemetry and does not compute a
+  community-wide counter.
 
 ## Contact
 
