@@ -20,6 +20,7 @@ import {
 } from '@/roster/sample';
 import type { Roster, RosterSource } from '@/schema/author';
 import { previewCapture } from '@/diagnostics/capture';
+import { STRUCTURAL_FRAME_PROBE } from '@/diagnostics/consoleProbe';
 import { createChromeGoogleSheetsClient } from '@/sheets/chromeClient';
 import { sanitizeSheetsError } from '@/sheets/errors';
 import { loadSheetPreview } from '@/sheets/importFlow';
@@ -1376,6 +1377,21 @@ export function App({ surface = 'popup' }: { surface?: 'popup' | 'page' } = {}) 
         </p>
         <button type="button" className="secondary" onClick={() => void runDiagnostic()}>
           Capture diagnostic
+        </button>
+        <button
+          type="button"
+          className="secondary"
+          onClick={() => {
+            void navigator.clipboard.writeText(STRUCTURAL_FRAME_PROBE).then(
+              () =>
+                setStatus(
+                  'Console probe copied. Paste it in DevTools on the Add Author document, then send the result.',
+                ),
+              () => setError('Could not copy the console probe.'),
+            );
+          }}
+        >
+          Copy console frame probe
         </button>
         {diagText && (
           <>

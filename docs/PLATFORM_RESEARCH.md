@@ -57,6 +57,11 @@ This is **Editorial Manager**, not ScholarOne. ScholarOne hosts are
 Editorial Manager. Host-family detection now labels `editorialmanager.com` as
 Editorial Manager without inventing field selectors.
 
+A fourth capture (2026-08-15) from the same PLOS Genetics URL was still the
+pre-iframe-walk format (no `iframeSeen`). The installed extension is still the
+old top-document build. Use the structural console probe on the Add Author
+document itself (DevTools context picker, or F12 on the popup window).
+
 If a later capture still shows only the role dropdown after all-frame injection,
 the Add Author UI is likely a **separate browser window**. Capture while that
 window is focused.
