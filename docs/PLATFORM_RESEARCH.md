@@ -44,6 +44,67 @@ Research date: 2026-08-12. Based on public documentation and vendor marketing pa
 - **Integration opportunities:** Adapter after redacted fixture; careful with corresponding-author and affiliation widgets.
 - **Notes:** Do not scrape reviewer or decision pages.
 
+### PLOS Genetics live shell capture (2026-08-14)
+
+A third redacted capture from `https://www.editorialmanager.com/pgenetics/default2.aspx`
+was taken after clicking inside an author field in the Add New Author popup. It
+was still chrome only (`RoleDropdown`, hamburger, user icon) and still lacked
+`iframeSeen` lines, which means the installed build was the pre-iframe-walk
+extension and the content script only saw the top document.
+
+This is **Editorial Manager**, not ScholarOne. ScholarOne hosts are
+`*.manuscriptcentral.com`. PLOS titles (ONE, Genetics, and others) use Aries
+Editorial Manager. Host-family detection now labels `editorialmanager.com` as
+Editorial Manager without inventing field selectors.
+
+A fourth capture (2026-08-15) from the same PLOS Genetics URL was still the
+pre-iframe-walk format (no `iframeSeen`). The installed extension is still the
+old top-document build. Use the structural console probe on the Add Author
+document itself (DevTools context picker, or F12 on the popup window).
+
+If a later capture still shows only the role dropdown after all-frame injection,
+the Add Author UI is likely a **separate browser window**. Capture while that
+window is focused.
+
+### PLOS ONE live shell capture (2026-08-14)
+
+Two redacted compatibility captures from `https://www.editorialmanager.com/pone/default2.aspx`
+(before and after opening “+ Add Another Author”) were **identical**. Both were
+structural chrome only:
+
+- `fieldCount: 1`, `controlCount: 2`, `authorGroupCount: 0`
+- `select RoleDropdown` options `Author` / `Reviewer`
+- `div hamBurger` and `div userIcon` (open-menu controls)
+- No given/family/email/affiliation fields, no author groups
+
+This is the Editorial Manager post-login role/home shell, not the author-entry
+form. Opening “+ Add Another Author” did not add inputs to the top document the
+diagnostic could see. Likely causes, in order:
+
+1. Capture was not on Manuscript Data → author-entry.
+2. Author fields live in a nested iframe (common for EM). The diagnostic now
+   walks same-origin `iframe` / `frame` documents and reports
+   `iframeSeen` / `iframeReadable` / `iframeBlocked`.
+3. The add-author UI is an overlay that was not in the captured top DOM.
+
+### PLOS ONE author-form console probe (2026-08-15)
+
+A same-origin iframe walk from `default2.aspx` reached:
+
+`RequiredRegistrationQuestions.aspx` (title Add/Edit/Author) with stable IDs:
+
+- Author: `FirstName`, `MiddleName`, `LastName`, `Email`, `Affiliation`,
+  `Institution`, `Department`, `City`, `State`, `CountryCode`,
+  `CorrespondingAuthorCheckbox`
+- Author actions: `SaveButton`, `CancelButton`, `EditButton` (image inputs)
+- Same page also has manuscript editors (`txtFullTitle`, `txtAbstract`,
+  CKEditor frames) and CRediT `ContributorRole_#` checkboxes — never filled
+  or clicked by Corresponding
+- Session query parameters (`SessionThreadIdField`) are redacted and never stored
+
+Adapter implemented from these IDs. Do not add address/ZIP/degree/title
+salutation or CRediT writes without a roster mapping and another capture.
+
 ## eJournalPress
 
 - **Terminology:** eJournalPress (eJP); used by multiple publishers including some Nature-family workflows historically observed in this repo’s Nature MTS notes.

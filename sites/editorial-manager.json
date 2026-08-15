@@ -6,5 +6,5 @@
     "text": ["editorial manager", "editorialmanager"],
     "maxConfidence": 0.35
   },
-  "notes": "Detect-only until a redacted author-form fixture exists. Do not guess field IDs."
+  "notes": "Detect-only JSON. Capture-backed fill lives in src/adapters/editorial-manager/ and wins in the registry. Do not guess field IDs here."
 }

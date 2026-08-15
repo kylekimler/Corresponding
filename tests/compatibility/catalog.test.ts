@@ -28,7 +28,7 @@ describe('compatibility scoreboard', () => {
   });
 
   it('marks ✅ only for adapters that can actually fill', () => {
-    expect(supportedCompatibilityCount()).toBe(2);
+    expect(supportedCompatibilityCount()).toBe(4);
 
     const empty = document.implementation.createHTMLDocument('empty');
     const roster = createEmptyRoster('Scoreboard');
@@ -55,7 +55,12 @@ describe('compatibility scoreboard', () => {
     const claimed = COMPATIBILITY_CATALOG.filter(
       (row) => row.autofill === 'supported',
     ).map((row) => row.platform);
-    expect(claimed).toEqual(['Nature Portfolio', 'bioRxiv / medRxiv']);
+    expect(claimed).toEqual([
+      'Nature Portfolio',
+      'bioRxiv / medRxiv',
+      'Editorial Manager',
+      'PLOS',
+    ]);
     expect(formatCompatibilityMarkdownTable()).toContain('| Elsevier | ⬜ |');
     expect(formatCompatibilityMarkdownTable()).toContain('| Wiley | ⬜ |');
     expect(formatCompatibilityMarkdownTable()).toContain('| eLife | ⬜ |');

@@ -21,7 +21,37 @@ describe('adapter registry', () => {
     expect(defaultRegistry.detect(document).platformId).toBe('unknown');
   });
 
-  it('lists stub adapters without implementing selectors', () => {
+  it('recognizes Editorial Manager from hostname, not ScholarOne', () => {
+    document.body.innerHTML = `
+      <select id="RoleDropdown"><option>Author</option></select>
+    `;
+    const plosGenetics = defaultRegistry.detect(
+      document,
+      'https://www.editorialmanager.com/pgenetics/default2.aspx',
+    );
+    expect(plosGenetics.platformId).toBe('editorial-manager');
+    expect(plosGenetics.confidence).toBeGreaterThanOrEqual(0.5);
+    expect(plosGenetics.label).toMatch(/Editorial Manager/);
+    expect(plosGenetics.label).not.toMatch(/ScholarOne/);
+    expect(plosGenetics.evidence).toContain('host:www.editorialmanager.com');
+
+    const scholarOne = defaultRegistry.detect(
+      document,
+      'https://mc.manuscriptcentral.com/example',
+    );
+    expect(scholarOne.platformId).toBe('scholarone');
+  });
+
+  it('does not let a host family override a real adapter', () => {
+    mountNatureMtsFixture({ slots: 1 });
+    const detected = defaultRegistry.detect(
+      document,
+      'https://www.editorialmanager.com/pone/default2.aspx',
+    );
+    expect(detected.platformId).toBe('nature-mts');
+  });
+
+  it('lists Editorial Manager, ScholarOne, and generic eJournalPress', () => {
     const ids = defaultRegistry.list().map((a) => a.id);
     expect(ids).toContain('scholarone');
     expect(ids).toContain('editorial-manager');

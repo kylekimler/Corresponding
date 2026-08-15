@@ -1,3 +1,5 @@
+import { mergeDiagnosticReports } from '@/diagnostics/merge';
+import type { DiagnosticReport } from '@/diagnostics/formProbe';
 import type { ExtensionRequest, ExtensionResponse } from '@/messaging/protocol';
 import type { TabTarget } from '@/popup/previewSession';
 
@@ -102,12 +104,26 @@ async function injectContentScript(tabId: number): Promise<void> {
     Parameters<typeof browser.scripting.executeScript>[0]['files']
   >[number];
   await browser.scripting.executeScript({
-    target: { tabId },
+    target: { tabId, allFrames: true },
     // Chrome's executeScript API expects a relative path without a leading
     // slash. WXT's generated ScriptPublicPath type models packaged URLs with
     // a leading slash, so narrow the known build artifact at this boundary.
     files: [CONTENT_SCRIPT_FILE as ScriptFile],
   });
+}
+
+async function listInjectableFrameIds(tabId: number): Promise<number[]> {
+  const results = await browser.scripting.executeScript({
+    target: { tabId, allFrames: true },
+    func: () => true,
+  });
+  return [
+    ...new Set(
+      results
+        .map((result) => result.frameId)
+        .filter((id): id is number => typeof id === 'number'),
+    ),
+  ];
 }
 
 async function ensureContentScript(tabId: number): Promise<void> {
@@ -134,9 +150,13 @@ async function ensureContentScript(tabId: number): Promise<void> {
 async function sendOnce(
   tabId: number,
   message: ExtensionRequest,
+  frameId?: number,
 ): Promise<ExtensionResponse> {
   try {
-    const raw = await browser.tabs.sendMessage(tabId, message);
+    const raw =
+      frameId === undefined
+        ? await browser.tabs.sendMessage(tabId, message)
+        : await browser.tabs.sendMessage(tabId, message, { frameId });
     return normalizeTabResponse(raw);
   } catch (err) {
     return {
@@ -203,5 +223,41 @@ export async function sendToActiveTab(
 
   // Do not reinject on a typed ERROR: it may be an intentional application
   // refusal (unsupported/unsafe mapping), not a transport failure.
+  if (message.type === 'DIAGNOSTIC') {
+    return collectDiagnosticFromAllFrames(tab.id, message);
+  }
   return sendOnce(tab.id, message);
+}
+
+async function collectDiagnosticFromAllFrames(
+  tabId: number,
+  message: ExtensionRequest,
+): Promise<ExtensionResponse> {
+  let frameIds: number[] = [];
+  try {
+    frameIds = await listInjectableFrameIds(tabId);
+  } catch {
+    frameIds = [];
+  }
+  if (frameIds.length === 0) {
+    return sendOnce(tabId, message);
+  }
+
+  const reports: DiagnosticReport[] = [];
+  for (const frameId of frameIds) {
+    const response = await sendOnce(tabId, message, frameId);
+    if (response.type === 'DIAGNOSTIC_RESULT') {
+      reports.push(response.result);
+    }
+  }
+  if (reports.length === 0) {
+    return sendOnce(tabId, message);
+  }
+  if (reports.length === 1) {
+    return { type: 'DIAGNOSTIC_RESULT', result: reports[0]! };
+  }
+  return {
+    type: 'DIAGNOSTIC_RESULT',
+    result: mergeDiagnosticReports(reports),
+  };
 }

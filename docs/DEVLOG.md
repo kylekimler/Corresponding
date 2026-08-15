@@ -4,6 +4,27 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-15 04:40 UTC
+- Console probe from PLOS ONE found the author form in a same-origin iframe: `RequiredRegistrationQuestions.aspx`, IDs `FirstName`, `LastName`, `Email`, `Institution`, `Department`, `Affiliation`, `CountryCode`, `CorrespondingAuthorCheckbox`, plus author `SaveButton`. Manuscript title/abstract editors share that page and are never written.
+- Editorial Manager adapter fills the open Add/Edit Author form through the iframe, saves one author at a time, and clicks Add Another Author only when that control’s accessible name is present. Identity conflicts are not overwritten. Session IDs in URLs are redacted.
+- verification: 229 Vitest tests, typecheck, and production build passed.
+
+### 2026-08-15 04:25 UTC
+- Fourth PLOS Genetics capture was still the old top-document format (no `iframeSeen`). The installed extension has not picked up the iframe/all-frames work.
+- Added a copy-paste structural console probe (Advanced → Copy console frame probe). It walks readable frames, omits values/passwords/hidden auth, and is meant to be run on the Add Author document itself via the DevTools context picker or the popup window.
+
+### 2026-08-14 23:20 UTC
+- PLOS Genetics capture from `editorialmanager.com/pgenetics/default2.aspx` after clicking inside Add New Author was still RoleDropdown chrome. That is Editorial Manager, not ScholarOne (`manuscriptcentral.com`). The installed capture also lacked `iframeSeen`, so it came from a build that never left the top frame.
+- Detection now uses the tab hostname: `*.editorialmanager.com` → Editorial Manager, `*.manuscriptcentral.com` → ScholarOne. Stub HTML hints stay below the fill threshold; host family is labeled but Fill stays off until an author-form fixture exists.
+- Diagnostic injection uses `allFrames: true` and merges every injectable frame capture. If Add Author is a separate window, the capture must be taken while that window is focused. Still no PLOS/EM field selectors.
+- verification: 219 Vitest tests, typecheck, and production build passed.
+
+### 2026-08-14 22:55 UTC
+- PLOS ONE live captures from `editorialmanager.com/pone/default2.aspx` (before and after “+ Add Another Author”) were identical chrome: `RoleDropdown` Author/Reviewer, hamburger, user icon. No author fields. That is the EM home/role shell, not Manuscript Data → Authors.
+- Diagnostic capture now walks nested same-origin `iframe` / `frame` documents and reports `iframeSeen` / `iframeReadable` / `iframeBlocked` with redacted `srcPattern`. Cross-origin frames are counted, never read. No PLOS or EM fill selectors were added.
+- Chrome-only EM captures add a note to open the author-entry step and click inside an author field. Advanced explains the same. Still need a capture that lists Given/First, Family/Last, Email, affiliation.
+- verification: 209 Vitest tests, typecheck, and production build passed. Nested frames are matched by tag name so iframe realms cannot hide them.
+
 ### 2026-08-14 16:55 UTC
 - reported: bioRxiv Fill stopped after 0 authors with `bioRxiv reported: check_circlefound author … click to fetch author data … fill info`.
 - root cause: the email-lookup offer is a Vuetify `v-alert` / `role="alert"` with a Material `check_circle` ligature. After Save, `portalErrorText` treated that informational panel as a new fatal banner.

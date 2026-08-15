@@ -81,21 +81,28 @@ describe('declarative sites', () => {
     expect(preview.errors).toEqual([]);
   });
 
-  it('refuses ScholarOne and Editorial Manager fill until fields exist', () => {
+  it('keeps ScholarOne and Editorial Manager site JSON detect-only', () => {
     const scholarone = loadSiteDefinitions().find((s) => s.id === 'scholarone');
     const em = loadSiteDefinitions().find((s) => s.id === 'editorial-manager');
     expect(scholarone?.autofill).toBe(false);
     expect(scholarone?.authors).toBeUndefined();
     expect(em?.autofill).toBe(false);
     expect(em?.authors).toBeUndefined();
+    expect(JSON.stringify(scholarone?.authors ?? null)).toBe('null');
+    expect(JSON.stringify(em?.authors ?? null)).toBe('null');
 
+    // Capture-backed TypeScript adapters win in the registry. Site JSON
+    // must not grow guessed field IDs; ScholarOne fill stays a stub until
+    // the capture-backed adapter is registered.
     const report = defaultRegistry.require('scholarone').fill(
       document,
       makeRoster(makeNAuthors(1)),
       { overwrite: false, dryRun: true },
     );
     expect(report.errors[0]).toMatch(/Unsupported platform: scholarone/);
-    expect(JSON.stringify(scholarone?.authors ?? null)).toBe('null');
+    expect(defaultRegistry.require('editorial-manager').label).toBe(
+      'Editorial Manager',
+    );
   });
 
   it('rejects CSS selectors and click actions in site files', () => {

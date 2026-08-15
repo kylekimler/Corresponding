@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { isFillablePlatform } from '@/adapters/hosts';
 import type { DetectResult, FillReport, ValidateReport } from '@/adapters/types';
 import { parseCsv } from '@/import/csv';
 import {
@@ -19,6 +20,7 @@ import {
 } from '@/roster/sample';
 import type { Roster, RosterSource } from '@/schema/author';
 import { previewCapture } from '@/diagnostics/capture';
+import { STRUCTURAL_FRAME_PROBE } from '@/diagnostics/consoleProbe';
 import { createChromeGoogleSheetsClient } from '@/sheets/chromeClient';
 import { sanitizeSheetsError } from '@/sheets/errors';
 import { loadSheetPreview } from '@/sheets/importFlow';
@@ -197,7 +199,10 @@ export function App({ surface = 'popup' }: { surface?: 'popup' | 'page' } = {}) 
       if (res.type === 'DETECT_RESULT') {
         setDetected(res.result);
         setDetectStatus(
-          res.result.platformId === 'unknown' ? 'unknown' : 'ready',
+          res.result.platformId === 'unknown' ||
+            !isFillablePlatform(res.result.platformId)
+            ? 'unknown'
+            : 'ready',
         );
         return;
       }
@@ -736,11 +741,15 @@ export function App({ surface = 'popup' }: { surface?: 'popup' | 'page' } = {}) 
   const portalDetail =
     detectStatus === 'error'
       ? detectError || 'Open a submission form, then retry.'
-      : detectStatus === 'unknown'
-        ? 'Unsupported on this page'
-        : detectStatus === 'ready' && detected
-          ? `${Math.round(detected.confidence * 100)}% · ${detected.platformId}`
-          : undefined;
+      : detectStatus === 'unknown' &&
+          detected &&
+          detected.platformId !== 'unknown'
+        ? 'Recognized. Author form not supported yet — capture the Add Author fields.'
+        : detectStatus === 'unknown'
+          ? 'Unsupported on this page'
+          : detectStatus === 'ready' && detected
+            ? `${Math.round(detected.confidence * 100)}% · ${detected.platformId}`
+            : undefined;
 
   /* ---------------- MAIN VIEW ---------------- */
   if (view === 'main') {
@@ -1412,8 +1421,30 @@ export function App({ surface = 'popup' }: { surface?: 'popup' | 'page' } = {}) 
           author dialog, capture once before opening it and once while an empty
           dialog is open.
         </p>
+        <p className="muted">
+          PLOS journals use Editorial Manager (editorialmanager.com), not
+          ScholarOne (manuscriptcentral.com). If you only see a role dropdown,
+          you are on the home screen. Open Manuscript Data → Authors. If Add
+          Author is a separate window, click the Corresponding icon while that
+          window is focused, then capture again.
+        </p>
         <button type="button" className="secondary" onClick={() => void runDiagnostic()}>
           Capture diagnostic
+        </button>
+        <button
+          type="button"
+          className="secondary"
+          onClick={() => {
+            void navigator.clipboard.writeText(STRUCTURAL_FRAME_PROBE).then(
+              () =>
+                setStatus(
+                  'Console probe copied. Paste it in DevTools on the Add Author document, then send the result.',
+                ),
+              () => setError('Could not copy the console probe.'),
+            );
+          }}
+        >
+          Copy console frame probe
         </button>
         {diagText && (
           <>

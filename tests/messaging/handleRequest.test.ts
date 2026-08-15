@@ -4,6 +4,21 @@ import { handleExtensionRequest } from '@/messaging/handleRequest';
 import { createSampleRoster } from '@/roster/sample';
 
 describe('content message handler', () => {
+  it('detects Editorial Manager from the tab URL, not ScholarOne', async () => {
+    document.body.innerHTML =
+      '<select id="RoleDropdown"><option>Author</option></select>';
+    const response = await handleExtensionRequest(
+      { type: 'DETECT' },
+      document,
+      'https://www.editorialmanager.com/pgenetics/default2.aspx',
+    );
+    expect(response.type).toBe('DETECT_RESULT');
+    if (response.type === 'DETECT_RESULT') {
+      expect(response.result.platformId).toBe('editorial-manager');
+      expect(response.result.label).not.toMatch(/ScholarOne/);
+    }
+  });
+
   it('returns PONG through the Chrome sendResponse-compatible handler', async () => {
     expect(
       await handleExtensionRequest(

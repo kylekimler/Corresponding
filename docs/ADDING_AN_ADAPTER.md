@@ -16,8 +16,10 @@ Most journals do not need a TypeScript adapter. Add a file under `sites/`.
 Site files may only name element IDs. No CSS selectors, XPath, or click
 actions. Corresponding never clicks submit, certify, pay, or sign.
 
-`sites/scholarone.json` and `sites/editorial-manager.json` are detect-only
-until a redacted fixture exists. Do not invent their field IDs.
+`sites/scholarone.json` is detect-only until a redacted fixture exists.
+`sites/editorial-manager.json` is also detect-only JSON; the capture-backed
+fill is `src/adapters/editorial-manager/` and wins in the registry. Do not
+invent field IDs in those JSON files.
 
 ## When you still need TypeScript
 

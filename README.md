@@ -22,12 +22,12 @@ The scoreboard. This is how Corresponding grows.
 | --- | --- |
 | Nature Portfolio | ✅ |
 | bioRxiv / medRxiv | ✅ |
-| Editorial Manager | ⬜ |
+| Editorial Manager | ✅ |
 | ScholarOne | ⬜ |
 | Elsevier | ⬜ |
 | Wiley | ⬜ |
 | Frontiers | ⬜ |
-| PLOS | ⬜ |
+| PLOS | ✅ |
 | eLife | ⬜ |
 
 **Your journal isn't supported? Open an issue and paste a screenshot.**
@@ -47,7 +47,7 @@ Unlocking a platform is the event. That is the recurring reason to circulate.
 | --- | --- |
 | v0.1 | Nature Portfolio |
 | v0.1 | bioRxiv / medRxiv |
-| next | Editorial Manager |
+| v0.2 | Editorial Manager / PLOS author form |
 | next | ScholarOne |
 | v0.7 | Cell Press |
 | v0.8 | Wiley |
@@ -97,6 +97,10 @@ Corresponding backend for author PII.
 Final submission, certification, copyright, payment, and signatures always
 stay with the human. The extension fills author metadata. It does not click
 Submit.
+
+Editorial Manager (including PLOS ONE / PLOS Genetics) fills the open Add/Edit
+Author form from captured `FirstName` / `LastName` / `Email` fields inside the
+manuscript-data iframe. It never writes title, abstract, funding, or submit.
 
 ## Quick start
 
@@ -295,7 +299,7 @@ rules.
 - `src/import` — CSV + column mapping
 - `src/roster` — local saved rosters
 - `src/sheets` — Google Sheets read-only abstraction (credentials blocked)
-- `src/diagnostics` — redacted form probe for new portals
+- `src/diagnostics` — redacted form probe for new portals (walks same-origin iframes)
 - `entrypoints/popup` — React UI
 - `docs/` — product, privacy, roadmap, backlog, threat model, release checklist
 

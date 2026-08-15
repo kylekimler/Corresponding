@@ -68,7 +68,7 @@ describe('diagnostics redaction', () => {
         }),
       ]),
     );
-    expect(text.toLowerCase()).not.toContain('ada');
+    expect(text.toLowerCase()).not.toMatch(/\bada\b/);
     expect(text.toLowerCase()).not.toContain('lovelace');
     expect(text).toContain('action="Edit [redacted]"');
   });

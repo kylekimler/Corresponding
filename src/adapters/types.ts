@@ -102,7 +102,7 @@ export interface PlatformAdapter {
 
 export interface AdapterRegistry {
   list(): PlatformAdapter[];
-  detect(doc: Document): DetectResult;
+  detect(doc: Document, url?: string): DetectResult;
   get(id: PlatformId): PlatformAdapter | undefined;
   require(id: PlatformId): PlatformAdapter;
 }

@@ -31,7 +31,7 @@ export const COMPATIBILITY_CATALOG: readonly CompatibilityRow[] = [
   {
     id: 'editorial-manager',
     platform: 'Editorial Manager',
-    autofill: 'needs_fixture',
+    autofill: 'supported',
     adapterId: 'editorial-manager',
   },
   {
@@ -58,7 +58,8 @@ export const COMPATIBILITY_CATALOG: readonly CompatibilityRow[] = [
   {
     id: 'plos',
     platform: 'PLOS',
-    autofill: 'needs_fixture',
+    autofill: 'supported',
+    adapterId: 'editorial-manager',
   },
   {
     id: 'elife',
