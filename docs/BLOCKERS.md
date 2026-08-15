@@ -6,9 +6,8 @@
 2. **Real Nature MTS / eJournalPress HTML capture**  
    Synthetic + corpus fixtures cover observed IDs. A redacted live capture validates edge cases.
 
-3. **Real DOM fixtures for ScholarOne / Editorial Manager author-entry**  
-   Stubs + research notes exist. PLOS ONE live captures (2026-08-14) are the EM
-   role/home shell only — no author field IDs. Do not invent selectors. Recapture
-   on Manuscript Data → Authors after clicking inside the author fields.
+3. **Real DOM fixtures for ScholarOne author-entry**  
+   Editorial Manager author IDs are now capture-backed (PLOS ONE 2026-08-15).
+   ScholarOne still needs a redacted author-form capture before selectors.
 
 Everything else in the reliability backlog is local and unblocked.
