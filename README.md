@@ -11,6 +11,11 @@ Active development. Supported adapters:
 - **Nature MTS / eJournalPress** — synthetic fixture based on observed field IDs
 - **bioRxiv / medRxiv author entry** — capture-backed repeated Add Author dialog;
   automated fixture coverage complete, first live smoke pending
+- **Editorial Manager author form** — capture-backed `FirstName` / `LastName` /
+  `Email` fields inside the manuscript-data iframe (PLOS ONE 2026-08-15).
+  Fills the open Add/Edit Author form only; never writes title, abstract,
+  funding, or submit. Live multi-author Save + Add Another Author still needs
+  a smoke on a real journal tab.
 
 ## Quick start
 

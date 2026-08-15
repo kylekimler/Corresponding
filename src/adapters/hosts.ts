@@ -33,7 +33,7 @@ function hostnameMatches(hostname: string, root: string): boolean {
 
 /** Implemented adapters that may Fill. Stubs are recognized but not fillable. */
 export function isFillablePlatform(id: PlatformId): boolean {
-  return id === 'nature-mts' || id === 'biorxiv';
+  return id === 'nature-mts' || id === 'biorxiv' || id === 'editorial-manager';
 }
 
 export function detectHostFamily(url: string | undefined): DetectResult | null {

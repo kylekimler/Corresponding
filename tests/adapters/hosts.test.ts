@@ -33,10 +33,10 @@ describe('host family detection', () => {
     expect(detectHostFamily(undefined)).toBeNull();
   });
 
-  it('treats only Nature and bioRxiv as fillable', () => {
+  it('treats Nature, bioRxiv, and Editorial Manager as fillable', () => {
     expect(isFillablePlatform('nature-mts')).toBe(true);
     expect(isFillablePlatform('biorxiv')).toBe(true);
-    expect(isFillablePlatform('editorial-manager')).toBe(false);
+    expect(isFillablePlatform('editorial-manager')).toBe(true);
     expect(isFillablePlatform('scholarone')).toBe(false);
     expect(isFillablePlatform('unknown')).toBe(false);
   });

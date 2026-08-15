@@ -4,6 +4,10 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-15 04:40 UTC
+- Console probe from PLOS ONE found the author form in a same-origin iframe: `RequiredRegistrationQuestions.aspx`, IDs `FirstName`, `LastName`, `Email`, `Institution`, `Department`, `Affiliation`, `CountryCode`, `CorrespondingAuthorCheckbox`, plus author `SaveButton`. Manuscript title/abstract editors share that page and are never written.
+- Editorial Manager adapter fills the open Add/Edit Author form through the iframe, saves one author at a time, and clicks Add Another Author only when that control’s accessible name is present. Identity conflicts are not overwritten. Session IDs in URLs are redacted.
+
 ### 2026-08-15 04:25 UTC
 - Fourth PLOS Genetics capture was still the old top-document format (no `iframeSeen`). The installed extension has not picked up the iframe/all-frames work.
 - Added a copy-paste structural console probe (Advanced → Copy console frame probe). It walks readable frames, omits values/passwords/hidden auth, and is meant to be run on the Add Author document itself via the DevTools context picker or the popup window.

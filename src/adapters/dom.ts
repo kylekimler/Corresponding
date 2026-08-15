@@ -6,12 +6,10 @@ export function getInput(
 ): HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | null {
   const el = doc.getElementById(id);
   if (!el) return null;
-  if (
-    el instanceof HTMLInputElement ||
-    el instanceof HTMLTextAreaElement ||
-    el instanceof HTMLSelectElement
-  ) {
-    return el;
+  const tag = el.tagName.toLowerCase();
+  // Tag checks, not instanceof: iframe documents have a different realm.
+  if (tag === 'input' || tag === 'textarea' || tag === 'select') {
+    return el as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
   }
   return null;
 }
@@ -32,12 +30,7 @@ export function setValue(
   if (!el) return 'missing_element';
   assertSafeMutationTarget(el);
 
-  if (
-    (el instanceof HTMLInputElement ||
-      el instanceof HTMLTextAreaElement ||
-      el instanceof HTMLSelectElement) &&
-    (el.disabled || ('readOnly' in el && el.readOnly))
-  ) {
+  if (el.disabled || ('readOnly' in el && el.readOnly)) {
     return 'skipped_disabled';
   }
 
@@ -50,8 +43,8 @@ export function setValue(
     return current ? 'overwritten' : 'filled';
   }
 
-  if (el instanceof HTMLSelectElement) {
-    const matched = matchSelectOption(el, value);
+  if (el.tagName.toLowerCase() === 'select') {
+    const matched = matchSelectOption(el as HTMLSelectElement, value);
     if (matched) {
       el.value = matched;
     } else {

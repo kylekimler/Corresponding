@@ -11,7 +11,11 @@ export const STRUCTURAL_FRAME_PROBE = String.raw`(() => {
     String(value || '')
       .replace(EMAIL, '[REDACTED_EMAIL]')
       .replace(ORCID, '[REDACTED_ORCID]')
-      .replace(/\b[A-Z][a-z]{1,30} [A-Z][a-z]{1,30}\b/g, '[REDACTED_NAME]');
+      .replace(/\b[A-Z][a-z]{1,30} [A-Z][a-z]{1,30}\b/g, '[REDACTED_NAME]')
+      .replace(
+        /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi,
+        '[REDACTED_ID]',
+      );
   const norm = (value) => String(value || '').replace(/\d+/g, '#');
   const omit = (el) => {
     const type = String(el.type || '').toLowerCase();

@@ -48,7 +48,8 @@ Status key: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked (exte
 
 - [!] Google OAuth client ID for Sheets read-only
 - [!] Real Nature MTS HTML capture to validate synthetic IDs
-- [!] Real ScholarOne / Editorial Manager **author-entry** fixtures before selectors. PLOS ONE and PLOS Genetics 2026-08-14 captures are EM chrome only (`RoleDropdown`); see `docs/PLATFORM_RESEARCH.md`.
+- [x] Editorial Manager author-form IDs from PLOS ONE 2026-08-15 console probe (`FirstName` / `LastName` / `Email` in `RequiredRegistrationQuestions.aspx`). Live multi-author Save smoke still pending.
+- [!] Real ScholarOne author-entry fixtures before selectors.
 
 ## Security / quality (post PR #1)
 

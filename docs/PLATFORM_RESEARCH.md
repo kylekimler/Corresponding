@@ -87,14 +87,23 @@ diagnostic could see. Likely causes, in order:
    `iframeSeen` / `iframeReadable` / `iframeBlocked`.
 3. The add-author UI is an overlay that was not in the captured top DOM.
 
-**Still required before any PLOS / EM fill selectors:** a capture that lists
-Given/First, Family/Last, Email, and affiliation — taken on the author-entry
-step, with those inputs visible. If the improved diagnostic still shows
-`iframeReadable: 0` while `iframeSeen > 0`, the form is likely cross-origin and
-we need a capture from that frame or a redacted HTML fixture of the inner form.
+### PLOS ONE author-form console probe (2026-08-15)
 
-Do not invent PLOS or EM field IDs from this shell capture. PLOS stays
-unsupported until author-entry evidence exists.
+A same-origin iframe walk from `default2.aspx` reached:
+
+`RequiredRegistrationQuestions.aspx` (title Add/Edit/Author) with stable IDs:
+
+- Author: `FirstName`, `MiddleName`, `LastName`, `Email`, `Affiliation`,
+  `Institution`, `Department`, `City`, `State`, `CountryCode`,
+  `CorrespondingAuthorCheckbox`
+- Author actions: `SaveButton`, `CancelButton`, `EditButton` (image inputs)
+- Same page also has manuscript editors (`txtFullTitle`, `txtAbstract`,
+  CKEditor frames) and CRediT `ContributorRole_#` checkboxes — never filled
+  or clicked by Corresponding
+- Session query parameters (`SessionThreadIdField`) are redacted and never stored
+
+Adapter implemented from these IDs. Do not add address/ZIP/degree/title
+salutation or CRediT writes without a roster mapping and another capture.
 
 ## eJournalPress
 

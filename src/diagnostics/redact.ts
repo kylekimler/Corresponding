@@ -70,7 +70,7 @@ export function redactUrl(url: string): string | undefined {
     parsed.password = '';
     parsed.hash = '';
     const sensitiveParams =
-      /^(token|csrf|xsrf|session|sid|auth|key|code|state|manuscript|msid|article|email)/i;
+      /^(token|csrf|xsrf|session|sid|auth|key|code|state|manuscript|msid|article|email|sessionthreadidfield)/i;
     for (const key of [...parsed.searchParams.keys()]) {
       if (sensitiveParams.test(key)) {
         parsed.searchParams.set(key, '[REDACTED]');
@@ -79,7 +79,13 @@ export function redactUrl(url: string): string | undefined {
     let path = parsed.pathname.replace(/\/[a-f0-9]{16,}\b/gi, '/[REDACTED_ID]');
     path = path.replace(/\/(ms|manuscript|article)\/[^/]+/gi, '/$1/[REDACTED_ID]');
     parsed.pathname = path;
-    return parsed.toString().replace(/%5BREDACTED%5D/gi, '[REDACTED]');
+    return parsed
+      .toString()
+      .replace(
+        /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi,
+        '[REDACTED_ID]',
+      )
+      .replace(/%5BREDACTED%5D/gi, '[REDACTED]');
   } catch {
     return '[REDACTED_URL]';
   }
