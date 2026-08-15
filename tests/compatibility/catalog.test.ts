@@ -28,7 +28,7 @@ describe('compatibility scoreboard', () => {
   });
 
   it('marks ✅ only for adapters that can actually fill', () => {
-    expect(supportedCompatibilityCount()).toBe(4);
+    expect(supportedCompatibilityCount()).toBe(5);
 
     const empty = document.implementation.createHTMLDocument('empty');
     const roster = createEmptyRoster('Scoreboard');
@@ -59,6 +59,7 @@ describe('compatibility scoreboard', () => {
       'Nature Portfolio',
       'bioRxiv / medRxiv',
       'Editorial Manager',
+      'ScholarOne',
       'PLOS',
     ]);
     expect(formatCompatibilityMarkdownTable()).toContain('| Elsevier | ⬜ |');

@@ -6,5 +6,5 @@
     "text": ["scholarone", "manuscriptcentral"],
     "maxConfidence": 0.35
   },
-  "notes": "Detect-only until a redacted author-form fixture exists. Do not guess field IDs."
+  "notes": "Detect-only JSON. Capture-backed fill lives in src/adapters/scholarone/ and wins in the registry. Do not guess field IDs here."
 }

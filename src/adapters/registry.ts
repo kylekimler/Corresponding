@@ -1,6 +1,7 @@
 import { loadSiteAdapters } from '@/sites/load';
 import { biorxivAdapter } from './biorxiv/adapter';
 import { editorialManagerAdapter } from './editorial-manager/adapter';
+import { scholarOneAdapter } from './scholarone/adapter';
 import { detectHostFamily } from './hosts';
 import type {
   AdapterRegistry,
@@ -20,6 +21,7 @@ function assembleAdapters(): PlatformAdapter[] {
     byId.set(adapter.id, adapter);
   }
   byId.set('editorial-manager', editorialManagerAdapter);
+  byId.set('scholarone', scholarOneAdapter);
   byId.set('biorxiv', biorxivAdapter);
   return [...byId.values()];
 }

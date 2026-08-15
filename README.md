@@ -23,7 +23,7 @@ The scoreboard. This is how Corresponding grows.
 | Nature Portfolio | ✅ |
 | bioRxiv / medRxiv | ✅ |
 | Editorial Manager | ✅ |
-| ScholarOne | ⬜ |
+| ScholarOne | ✅ |
 | Elsevier | ⬜ |
 | Wiley | ⬜ |
 | Frontiers | ⬜ |
@@ -48,7 +48,7 @@ Unlocking a platform is the event. That is the recurring reason to circulate.
 | v0.1 | Nature Portfolio |
 | v0.1 | bioRxiv / medRxiv |
 | v0.2 | Editorial Manager / PLOS author form |
-| next | ScholarOne |
+| v0.2 | ScholarOne / Bioinformatics |
 | v0.7 | Cell Press |
 | v0.8 | Wiley |
 | v0.9 | 100 journals |
@@ -101,6 +101,10 @@ Submit.
 Editorial Manager (including PLOS ONE / PLOS Genetics) fills the open Add/Edit
 Author form from captured `FirstName` / `LastName` / `Email` fields inside the
 manuscript-data iframe. It never writes title, abstract, funding, or submit.
+
+ScholarOne / Manuscript Central fills from the Bioinformatics capture:
+email lookup (`findAuthorEmailId`) then `AUTHOR_*` fields. It never clicks
+Save and Continue.
 
 ## Quick start
 

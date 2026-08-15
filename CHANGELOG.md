@@ -7,11 +7,12 @@ that every title under a logo already fills.
 
 - **v0.1** — Nature Portfolio (eJournalPress / MTS author form)
 - **v0.1** — bioRxiv / medRxiv (Add Author dialog)
+- **v0.2** — Editorial Manager / PLOS author form
+- **v0.2** — ScholarOne / Bioinformatics (email-lookup author entry)
 
 ## Next
 
-- Editorial Manager
-- ScholarOne
+Empty squares on the README scoreboard are the queue.
 
 ## Later events
 

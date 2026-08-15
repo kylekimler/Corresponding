@@ -92,14 +92,14 @@ describe('declarative sites', () => {
     expect(JSON.stringify(em?.authors ?? null)).toBe('null');
 
     // Capture-backed TypeScript adapters win in the registry. Site JSON
-    // must not grow guessed field IDs; ScholarOne fill stays a stub until
-    // the capture-backed adapter is registered.
-    const report = defaultRegistry.require('scholarone').fill(
+    // must not grow guessed field IDs.
+    const scholaroneFill = defaultRegistry.require('scholarone').fill(
       document,
       makeRoster(makeNAuthors(1)),
       { overwrite: false, dryRun: true },
     );
-    expect(report.errors[0]).toMatch(/Unsupported platform: scholarone/);
+    expect(scholaroneFill.errors.join(' ')).not.toMatch(/adapter is a stub/i);
+    expect(defaultRegistry.require('scholarone').label).toMatch(/ScholarOne/);
     expect(defaultRegistry.require('editorial-manager').label).toBe(
       'Editorial Manager',
     );

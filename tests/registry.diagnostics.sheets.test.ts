@@ -51,7 +51,7 @@ describe('adapter registry', () => {
     expect(detected.platformId).toBe('nature-mts');
   });
 
-  it('lists Editorial Manager, ScholarOne, and generic eJournalPress', () => {
+  it('lists registered platform adapters including ScholarOne', () => {
     const ids = defaultRegistry.list().map((a) => a.id);
     expect(ids).toContain('scholarone');
     expect(ids).toContain('editorial-manager');

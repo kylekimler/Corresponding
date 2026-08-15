@@ -37,7 +37,7 @@ export const COMPATIBILITY_CATALOG: readonly CompatibilityRow[] = [
   {
     id: 'scholarone',
     platform: 'ScholarOne',
-    autofill: 'needs_fixture',
+    autofill: 'supported',
     adapterId: 'scholarone',
   },
   {

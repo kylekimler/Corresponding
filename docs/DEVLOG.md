@@ -19,6 +19,14 @@ Chronological overnight / autonomous iteration log.
 - Diagnostic injection uses `allFrames: true` and merges every injectable frame capture. If Add Author is a separate window, the capture must be taken while that window is focused. Still no PLOS/EM field selectors.
 - verification: 219 Vitest tests, typecheck, and production build passed.
 
+### 2026-08-14 23:19 UTC
+- evidence: Redacted Bioinformatics ScholarOne capture (`mc.manuscriptcentral.com/bioinformatics`) confirms email-first author entry — `findAuthorEmailId` / `searchAuthorId`, `emailSearchModal_yes/no`, `AUTHOR_EMAIL_ADDRESS` / `AUTHOR_FIRST_NAME` / `AUTHOR_LAST_NAME`, affiliation `_*` slots, CRediT role checkboxes, AuthAction corresponding assignment, and forbidden `btnSubmit` Save and Continue.
+- adapter: Replaced the ScholarOne stub with a capture-backed fillAsync orchestrator. Fill opens Add Author, searches by email, waits for lookup settle (never writes names mid-lookup), confirms create-new when the modal appears, refuses linked-account identity conflicts, commits via Add Author, and may assign corresponding via AuthAction.
+- safety: Never clicks Save and Continue / submit / legal. Institution (likely Ringgold) and CRediT roles stay unmapped without value-field evidence / roster credit data.
+- recognition: Email lookup/search boxes are demoted so `AUTHOR_EMAIL_ADDRESS` wins over `findAuthorEmailId`.
+- fixtures/tests: Capture-derived harness, corpus entry, sample HTML, and unit coverage for multi-author create, linked match, conflict refusal, and zero submit clicks.
+- status: Authenticated live Manuscript Central smoke still required before claiming production validation.
+
 ### 2026-08-14 22:55 UTC
 - PLOS ONE live captures from `editorialmanager.com/pone/default2.aspx` (before and after “+ Add Another Author”) were identical chrome: `RoleDropdown` Author/Reviewer, hamburger, user icon. No author fields. That is the EM home/role shell, not Manuscript Data → Authors.
 - Diagnostic capture now walks nested same-origin `iframe` / `frame` documents and reports `iframeSeen` / `iframeReadable` / `iframeBlocked` with redacted `srcPattern`. Cross-origin frames are counted, never read. No PLOS or EM fill selectors were added.

@@ -53,7 +53,7 @@ Status key: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked (exte
 - [!] Google OAuth client ID for Sheets read-only
 - [!] Real Nature MTS HTML capture to validate synthetic IDs
 - [x] Editorial Manager author-form IDs from PLOS ONE 2026-08-15 console probe (`FirstName` / `LastName` / `Email` in `RequiredRegistrationQuestions.aspx`). Live multi-author Save smoke still pending.
-- [!] Real ScholarOne author-entry fixtures before selectors.
+- [x] Real ScholarOne fixture — Bioinformatics Manuscript Central capture (2026-08-14); live smoke still pending.
 
 ## Security / quality (post PR #1)
 
@@ -84,9 +84,11 @@ Status key: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked (exte
 ### Soon
 
 - [x] bioRxiv/medRxiv redacted capture + repeated-modal adapter and fixture.
+- [x] ScholarOne redacted Bioinformatics capture + email-lookup adapter and fixture.
 - [ ] eLife public workflow research + redacted compatibility capture plan.
 - [!] Implement eLife only after a real anonymized fixture exists.
 - [!] Validate and broaden Nature/eJournalPress only from real captured HTML.
+- [!] Authenticated live smoke for ScholarOne / Manuscript Central (Bioinformatics).
 - [ ] Expand adversarial coverage for popup bridges, provenance, migration, redaction, and 1/75/500/1000-author flows.
 - [x] Local DOCX structured author-table extraction with mapping preview and no prose retention.
 - [!] Paragraph/superscript DOCX and PDF extraction require anonymized manuscript fixtures.

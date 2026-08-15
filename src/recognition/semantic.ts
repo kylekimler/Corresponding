@@ -127,6 +127,15 @@ function scoreFeature(feature: FieldFeatures, rule: Rule): {
       confidence -= 0.05;
       evidence.push(`type-mismatch:${feature.inputType}`);
     }
+    // Lookup/search email boxes (ScholarOne findAuthorEmailId) are not the
+    // author email value field — prefer AUTHOR_EMAIL_ADDRESS-style controls.
+    if (
+      rule.field === 'email' &&
+      /\b(find|search|lookup)\b/.test(text)
+    ) {
+      confidence = Math.min(confidence, CONFIDENCE.semanticLabelAmbiguous);
+      evidence.push('lookup-email-not-value-field');
+    }
     // Country selects with many options get a small boost.
     if (
       rule.field === 'country' &&
