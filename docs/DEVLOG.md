@@ -4,6 +4,10 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-15 04:25 UTC
+- Fourth PLOS Genetics capture was still the old top-document format (no `iframeSeen`). The installed extension has not picked up the iframe/all-frames work.
+- Added a copy-paste structural console probe (Advanced → Copy console frame probe). It walks readable frames, omits values/passwords/hidden auth, and is meant to be run on the Add Author document itself via the DevTools context picker or the popup window.
+
 ### 2026-08-14 23:20 UTC
 - PLOS Genetics capture from `editorialmanager.com/pgenetics/default2.aspx` after clicking inside Add New Author was still RoleDropdown chrome. That is Editorial Manager, not ScholarOne (`manuscriptcentral.com`). The installed capture also lacked `iframeSeen`, so it came from a build that never left the top frame.
 - Detection now uses the tab hostname: `*.editorialmanager.com` → Editorial Manager, `*.manuscriptcentral.com` → ScholarOne. Stub HTML hints stay below the fill threshold; host family is labeled but Fill stays off until an author-form fixture exists.
