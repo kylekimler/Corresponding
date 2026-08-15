@@ -4,6 +4,13 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-15 04:55 UTC
+- Merged open PRs onto main in an order that keeps capture-backed IDs and the honest scoreboard: #30 FILL INFO, #26 fill delight, #29 declarative sites (includes #27 radically-free and #28 scoreboard), #31 Editorial Manager iframe adapter, #32 ScholarOne Bioinformatics adapter.
+- Conflicts were only docs / README / registry. Resolution: `sites/*.json` stay detect-only; TypeScript adapters win on id collision; host-family detect remains for `*.editorialmanager.com` and `*.manuscriptcentral.com`.
+- Skipped #25 (guessed EM + ScholarOne selectors + COI schema). It would have overwritten the PLOS and Bioinformatics captures.
+- Scoreboard now marks Nature, bioRxiv/medRxiv, Editorial Manager, ScholarOne, and PLOS ✅. Elsevier, Wiley, Frontiers, and eLife stay ⬜.
+- verification: 257 Vitest tests, typecheck, and production build passed.
+
 ### 2026-08-15 04:40 UTC
 - Console probe from PLOS ONE found the author form in a same-origin iframe: `RequiredRegistrationQuestions.aspx`, IDs `FirstName`, `LastName`, `Email`, `Institution`, `Department`, `Affiliation`, `CountryCode`, `CorrespondingAuthorCheckbox`, plus author `SaveButton`. Manuscript title/abstract editors share that page and are never written.
 - Editorial Manager adapter fills the open Add/Edit Author form through the iframe, saves one author at a time, and clicks Add Another Author only when that control’s accessible name is present. Identity conflicts are not overwritten. Session IDs in URLs are redacted.
