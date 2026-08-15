@@ -749,6 +749,7 @@ export function App({ surface = 'popup' }: { surface?: 'popup' | 'page' } = {}) 
         <header className="app-header">
           <h1>Corresponding</h1>
           <p className="brand-line">Giving scientists more time to do science.</p>
+          <p className="free-line">Free. No account. No trial.</p>
         </header>
 
         <PortalBadge
@@ -762,19 +763,25 @@ export function App({ surface = 'popup' }: { surface?: 'popup' | 'page' } = {}) 
           </button>
         )}
         {(detectStatus === 'unknown' || detectStatus === 'error') && (
-          <button
-            type="button"
-            className="linkish compatibility-link"
-            onClick={() => setView('advanced')}
-          >
-            Capture compatibility info
-          </button>
+          <>
+            <p className="muted tight">
+              Your journal isn&apos;t on the board yet. Capture a redacted
+              author-form screenshot — that is how the next platform unlocks.
+            </p>
+            <button
+              type="button"
+              className="linkish compatibility-link"
+              onClick={() => setView('advanced')}
+            >
+              Unlock this journal
+            </button>
+          </>
         )}
 
         {!selected ? (
           <section className="panel empty-state">
             <p className="stat">
-              Import your author list to get started.
+              Import a spreadsheet or author list. Then you submit the paper.
             </p>
             <div className="empty-state-actions">
               <button type="button" onClick={openImport}>

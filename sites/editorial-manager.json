@@ -1,0 +1,10 @@
+{
+  "id": "editorial-manager",
+  "label": "Editorial Manager",
+  "autofill": false,
+  "detect": {
+    "text": ["editorial manager", "editorialmanager"],
+    "maxConfidence": 0.35
+  },
+  "notes": "Detect-only until a redacted author-form fixture exists. Do not guess field IDs."
+}

@@ -1,6 +1,6 @@
 # Public platform research (planning only)
 
-**Rule:** Do not implement selectors from screenshots, tutorials, or guesses. Real anonymized fixtures required before adapter work.
+**Rule:** Do not implement selectors from screenshots, tutorials, or guesses. Real anonymized fixtures required before adapter work. The public README scoreboard may show ⬜ for a publisher people want; it may not show ✅ until this rule is met.
 
 Research date: 2026-08-12. Based on public documentation and vendor marketing pages — not authenticated portal access.
 

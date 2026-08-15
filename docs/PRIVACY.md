@@ -6,7 +6,10 @@
 
 ## Summary
 
-Corresponding is a local-first browser extension. Author roster data stays on your device by default. The extension does not transmit author personally identifiable information (PII) to a Corresponding backend.
+Corresponding is a local-first browser extension. There is no Corresponding
+account and no trial. Author roster data stays on your device by default. The
+extension does not transmit author personally identifiable information (PII)
+to a Corresponding backend.
 
 ## Data we process locally
 

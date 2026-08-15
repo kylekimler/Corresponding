@@ -19,6 +19,7 @@
 - [ ] No secrets / OAuth client secrets committed
 - [ ] DEVLOG entry for the release commit
 - [ ] Store screenshots show Preview/Fill and “not submitted” messaging
+- [ ] LICENSE is MIT; listing and popup say free / no account / no trial
 
 ## Post-release
 

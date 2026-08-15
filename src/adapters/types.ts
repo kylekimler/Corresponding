@@ -1,12 +1,7 @@
 import type { Author, Roster } from '@/schema/author';
 
-export type PlatformId =
-  | 'biorxiv'
-  | 'nature-mts'
-  | 'ejournalpress-generic'
-  | 'scholarone'
-  | 'editorial-manager'
-  | 'unknown';
+/** Stable adapter id. New journals add a `sites/*.json` file; ids are kebab-case. */
+export type PlatformId = string;
 
 export interface DetectResult {
   platformId: PlatformId;

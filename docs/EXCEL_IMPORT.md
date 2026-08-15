@@ -16,7 +16,7 @@ Scientists should be able to upload `.xlsx` author tables the same way they uplo
 
 - Prefer a **read-only** parse path; never evaluate formulas.
 - Pin an exact version; run `npm audit` before enabling.
-- Proprietary commercial product: MIT / Apache-2.0 are acceptable; avoid GPL.
+- Corresponding is MIT; prefer MIT / Apache-2.0 dependencies; avoid GPL.
 - Browser MV3: parse in the popup (or offscreen document) — no Node `fs`.
 
 ### Recommendation

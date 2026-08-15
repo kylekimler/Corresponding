@@ -5,10 +5,12 @@
     "strict": true,
     "noEmit": true,
     "skipLibCheck": true,
+    "resolveJsonModule": true,
     "types": ["chrome", "vitest/globals", "vite/client"]
   },
   "include": [
     "src",
+    "sites",
     "tests",
     "dev",
     "wxt.config.ts",

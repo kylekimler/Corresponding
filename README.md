@@ -1,16 +1,102 @@
 # Corresponding
 
-Local-first scientific identity and submission assistance. The Chrome Manifest V3 extension fills manuscript **author** forms from a canonical local roster — never the final submit.
+**Stop entering 74 authors into journal submission forms by hand.**
 
-You import authors once (CSV, saved local roster, or future Google Sheets read-only), preview the fill plan on the active portal, then fill and validate. **Final submission, certification, copyright, payment, and signatures always stay with the human.**
+That is the whole product.
 
-## Status
+Every scientist knows this form. Given name. Family name. Email. Affiliation.
+Department. City. Country. ORCID. Corresponding author? Then the next author.
+Then the next. Then you fat-finger an email and the journal sends the proofs
+to the wrong person. Large collaborations make it worse: 40 authors, 74
+authors, a consortium. The science is done. The hated part is still ahead.
 
-Active development. Supported adapters:
+Corresponding is a Chrome extension that fills the **author** form from the
+spreadsheet or ORCID list you already have. Preview the plan. Fill. Check the
+result. **You** submit the paper.
 
-- **Nature MTS / eJournalPress** — synthetic fixture based on observed field IDs
-- **bioRxiv / medRxiv author entry** — capture-backed repeated Add Author dialog;
-  automated fixture coverage complete, first live smoke pending
+## Compatibility
+
+The scoreboard. This is how Corresponding grows.
+
+| Platform | Autofill |
+| --- | --- |
+| Nature Portfolio | ✅ |
+| bioRxiv / medRxiv | ✅ |
+| Editorial Manager | ⬜ |
+| ScholarOne | ⬜ |
+| Elsevier | ⬜ |
+| Wiley | ⬜ |
+| Frontiers | ⬜ |
+| PLOS | ⬜ |
+| eLife | ⬜ |
+
+**Your journal isn't supported? Open an issue and paste a screenshot.**
+
+[Open an issue — add a journal](https://github.com/kylekimler/Corresponding/issues/new?template=add-journal.yml)
+
+Redact names, emails, and manuscript text. The author-form layout is enough.
+
+A checkmark means a fixture-tested author-form fill. It does not mean every
+title under that publisher, and it never means the extension submits the paper.
+
+### Every publisher is a release
+
+Unlocking a platform is the event. That is the recurring reason to circulate.
+
+| Version | Unlock |
+| --- | --- |
+| v0.1 | Nature Portfolio |
+| v0.1 | bioRxiv / medRxiv |
+| next | Editorial Manager |
+| next | ScholarOne |
+| v0.7 | Cell Press |
+| v0.8 | Wiley |
+| v0.9 | 100 journals |
+
+See [CHANGELOG.md](CHANGELOG.md). Empty squares move to ✅ only after a
+redacted fixture and a tested adapter.
+
+**Your journal broken? Add support in ~10 lines.**
+
+Scientists PR their society journals. Coverage compounds.
+
+```json
+{
+  "id": "example-society",
+  "label": "Example Society Journal",
+  "autofill": true,
+  "detect": { "ids": ["author_1_first"] },
+  "authors": {
+    "slot": "author_{n}_first",
+    "fields": {
+      "givenName": "author_{n}_first",
+      "familyName": "author_{n}_last",
+      "email": "author_{n}_email"
+    }
+  }
+}
+```
+
+Drop that in [`sites/`](sites/). IDs only — no clicks, no guessed selectors.
+See [`sites/_example-society.json`](sites/_example-society.json) and
+[`docs/ADDING_AN_ADAPTER.md`](docs/ADDING_AN_ADAPTER.md).
+
+## Radically free
+
+MIT license. No account. No trial. No freemium gate. No "start trial."
+
+The loop is:
+
+**Install the extension → import a spreadsheet or ORCIDs → fill the form → submit the paper yourself.**
+
+Author data stays on your device. There is no Corresponding login and no
+Corresponding backend for author PII.
+
+## What it never does
+
+Final submission, certification, copyright, payment, and signatures always
+stay with the human. The extension fills author metadata. It does not click
+Submit.
 
 ## Quick start
 
@@ -204,7 +290,8 @@ rules.
 ## Architecture
 
 - `src/schema` — canonical Author / Roster model (Zod)
-- `src/adapters` — platform adapters (`detect` / `inspect` / `fill` / `validate`)
+- `sites/` — declarative journal/platform adapters (element IDs only)
+- `src/adapters` — TypeScript adapters for multi-step widgets (`detect` / `inspect` / `fill` / `validate`)
 - `src/import` — CSV + column mapping
 - `src/roster` — local saved rosters
 - `src/sheets` — Google Sheets read-only abstraction (credentials blocked)
@@ -222,4 +309,4 @@ Never stores: passwords, cookies, auth tokens, unrelated browsing history.
 
 ## License
 
-Proprietary — all rights reserved (commercial product).
+[MIT](LICENSE). Use it, share it, fork it. No account required.

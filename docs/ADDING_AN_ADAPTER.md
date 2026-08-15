@@ -1,27 +1,35 @@
-# Adding a platform adapter
+# Adding a journal or platform
 
-## Prerequisites
+Most journals do not need a TypeScript adapter. Add a file under `sites/`.
 
-1. An anonymized fixture from Diagnostics / Compatibility Capture (no PII values).
-2. Placement under `fixtures/corpus/`.
-3. Replay test green for detection expectations.
+## Tiny declarative site (preferred)
 
-## Steps
+1. Capture a redacted author-form screenshot or fixture. Do not guess IDs.
+2. Copy `sites/_example-society.json` to `sites/<your-journal>.json`.
+3. Put the real element IDs in `detect` and `authors.fields`. `{n}` is the
+   1-based author slot.
+4. Set `"autofill": true` only after those IDs exist on a fixture.
+5. If this publisher is on the README scoreboard, move the row to ✅ in
+   `src/compatibility/catalog.ts` (the catalog test fails if they drift).
+6. Run `npm test`, `npm run typecheck`, `npm run build`.
 
-1. Copy `src/adapters/_template/adapter.ts` to `src/adapters/<platform>/adapter.ts`.
-2. Implement `detect`, `inspect`, `fill`, `validate`.
-3. Register in `src/adapters/registry.ts`.
-4. Add `tests/adapters/<platform>.contract.test.ts` using `describeAdapterContract`.
-5. Add synthetic mount helpers; never invent selectors without fixture evidence.
-6. Run:
+Site files may only name element IDs. No CSS selectors, XPath, or click
+actions. Corresponding never clicks submit, certify, pay, or sign.
 
-```bash
-npm run test:adapters
-npm run test:fixtures
-npm test
-npm run typecheck
-npm run build
-```
+`sites/scholarone.json` and `sites/editorial-manager.json` are detect-only
+until a redacted fixture exists. Do not invent their field IDs.
+
+## When you still need TypeScript
+
+Repeated dialogs, directory lookups, or other multi-step widgets (bioRxiv)
+stay in `src/adapters/<platform>/`. Then:
+
+1. Place an anonymized fixture under `fixtures/corpus/`.
+2. Copy `src/adapters/_template/adapter.ts`.
+3. Implement `detect`, `inspect`, `fill`, `validate`.
+4. Register the adapter next to `loadSiteAdapters()` in
+   `src/adapters/registry.ts`.
+5. Add `tests/adapters/<platform>.contract.test.ts`.
 
 ## Confidence rules
 

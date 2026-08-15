@@ -11,6 +11,27 @@ Chronological overnight / autonomous iteration log.
 - fixture now renders the offer as a `v-alert` so this cannot regress silently.
 - verification: 204 Vitest tests, typecheck, and production build passed.
 
+### 2026-08-14 05:00 UTC
+- Journal coverage is now a folder of tiny JSON files in `sites/`. Nature MTS is `sites/nature.json` driven by a shared declarative engine. Existing Nature contract, chaos, and property tests still run against that file.
+- ScholarOne, Editorial Manager, and generic eJournalPress are detect-only JSON. No field IDs were guessed. bioRxiv stays a TypeScript adapter because it is a repeated dialog with a directory lookup.
+- Site files may only name element IDs. CSS selectors and click actions are rejected so a drive-by PR cannot submit a manuscript.
+- README: `Your journal broken? Add support in ~10 lines.` plus the example society file. That is the contributor flywheel.
+- verification: 214 Vitest tests, typecheck, production build, and six Playwright MV3 journeys passed.
+
+### 2026-08-14 04:50 UTC
+- Compatibility is now the public game: a giant Platform / Autofill table near the top of the README, plus "Your journal isn't supported? Open an issue and paste a screenshot."
+- Checkmarks are honest. Nature Portfolio and bioRxiv / medRxiv are ✅. Editorial Manager, ScholarOne, Elsevier, Wiley, Frontiers, PLOS, and eLife stay ⬜ until a redacted fixture exists. A test fails if the README claims a stub can fill.
+- Unlock events are listed as recurring circulation: next EM / ScholarOne, later v0.7 Cell Press, v0.8 Wiley, v0.9 100 journals.
+- Unknown-portal popup copy asks for a redacted author-form capture as the way the next platform unlocks.
+- verification: 209 Vitest tests, typecheck, production build, and six Playwright MV3 journeys passed.
+
+### 2026-08-14 04:45 UTC
+- Corresponding Fill is now radically free: MIT license, no account, no trial, no freemium gate.
+- README leads with the hated-form hook: `Stop entering 74 authors into journal submission forms by hand.`
+- The entitlement stub (free/pro/team plans, author caps) is gone. Access is a locked `FREE_ACCESS` object so a paywall cannot grow by accident.
+- Popup header says `Free. No account. No trial.` Store description and privacy copy match.
+- verification: 206 Vitest tests, typecheck, production build, and six Playwright MV3 journeys passed.
+
 ### 2026-08-14 04:30 UTC
 - After a successful fill the popup now says, for example, `73 authors filled. You just got 49 minutes of your life back.` The estimate is 40 seconds per author actually written or planned on this page.
 - The main popup footer shows `Lifetime researcher hours saved: N` in small grey text. That number is a local estimate on this device, stored in `chrome.storage.local`.

@@ -34,6 +34,9 @@ Status key: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked (exte
 
 ## Local remaining (not blocked)
 
+- [x] Declarative `sites/*.json` adapters (Nature proven; S1/EM detect-only)
+- [x] Public compatibility scoreboard (honest ✅ / ⬜, issue CTA, unlock releases)
+- [x] MIT license + no-account / no-trial fill (README hook, locked FREE_ACCESS)
 - [x] Compact first-use popup + Import authors (paste/CSV) + read-only review
 - [x] Preview result card with mapping breakdown (exact/semantic/…)
 - [x] CSV mapping data preview
@@ -99,6 +102,6 @@ Status key: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked (exte
 
 - [ ] Public scientist search/recruitment marketplace.
 - [ ] Cloud graph database before private workflows earn the data.
-- [ ] Elaborate billing or entitlement infrastructure.
+- [x] Fill stays radically free: MIT, no account, no trial, no entitlement gate.
 - [ ] Speculative AI filling or unconfirmed low-confidence mutation.
 - [ ] General frameworks without an immediate tested user workflow.

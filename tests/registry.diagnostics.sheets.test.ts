@@ -8,7 +8,7 @@ import {
 import { createMockGoogleSheetsClient } from '@/sheets/mockClient';
 import { parseGoogleSheetUrl } from '@/sheets/types';
 import { createChromeGoogleSheetsClient } from '@/sheets/chromeClient';
-import { createOpenEntitlementClient } from '@/entitlements/types';
+import { FREE_ACCESS, getAccess } from '@/entitlements/types';
 
 describe('adapter registry', () => {
   it('detects nature-mts from fixture', () => {
@@ -87,9 +87,16 @@ describe('google sheets abstraction', () => {
   });
 });
 
-describe('entitlements stub', () => {
-  it('allows core operations while payments are deferred', async () => {
-    const status = await createOpenEntitlementClient().getStatus();
-    expect(status.canFill).toBe(true);
+describe('radically free access', () => {
+  it('never gates fill behind an account, trial, or author cap', () => {
+    const access = getAccess();
+    expect(access).toEqual(FREE_ACCESS);
+    expect(access.license).toBe('MIT');
+    expect(access.accountRequired).toBe(false);
+    expect(access.trialRequired).toBe(false);
+    expect(access.paidPlanRequired).toBe(false);
+    expect(access.authorLimit).toBeNull();
+    expect(access.canFill).toBe(true);
+    expect(access.canImport).toBe(true);
   });
 });

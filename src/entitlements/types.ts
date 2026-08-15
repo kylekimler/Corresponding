@@ -1,33 +1,21 @@
 /**
- * Future entitlement checking interface.
- * Do not build payments until the core form-filling flow is reliable.
+ * Corresponding Fill is radically free.
+ * There is no account, trial, author cap, or paid plan.
+ * This module exists so a paywall cannot grow by accident.
  */
 
-export type EntitlementPlan = 'free' | 'pro' | 'team' | 'unknown';
+export const FREE_ACCESS = {
+  license: 'MIT',
+  accountRequired: false,
+  trialRequired: false,
+  paidPlanRequired: false,
+  authorLimit: null,
+  canFill: true,
+  canImport: true,
+} as const;
 
-export interface EntitlementStatus {
-  plan: EntitlementPlan;
-  canFill: boolean;
-  canImportSheets: boolean;
-  maxAuthors: number | null;
-  message?: string;
-}
+export type FreeAccess = typeof FREE_ACCESS;
 
-export interface EntitlementClient {
-  getStatus(): Promise<EntitlementStatus>;
-}
-
-/** Local-only stub: everything allowed while core fill flow matures. */
-export function createOpenEntitlementClient(): EntitlementClient {
-  return {
-    async getStatus(): Promise<EntitlementStatus> {
-      return {
-        plan: 'free',
-        canFill: true,
-        canImportSheets: true,
-        maxAuthors: null,
-        message: 'Entitlements not enforced in this build.',
-      };
-    },
-  };
+export function getAccess(): FreeAccess {
+  return FREE_ACCESS;
 }

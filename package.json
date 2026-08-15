@@ -2,7 +2,8 @@
   "name": "corresponding",
   "version": "0.1.0",
   "private": true,
-  "description": "Corresponding — local-first scientific identity and submission assistance Chrome extension.",
+  "license": "MIT",
+  "description": "Stop entering authors into journal submission forms by hand. Free Chrome extension. No account.",
   "type": "module",
   "scripts": {
     "dev": "wxt",

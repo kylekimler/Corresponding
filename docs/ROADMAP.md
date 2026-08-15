@@ -30,11 +30,11 @@ Diagnostic utility extracting form metadata (tag, type, id, name, label, options
 
 ## Milestone 8 — Platform architecture
 
-Adapter registration + detection; empty stubs for ScholarOne, Editorial Manager, generic eJournalPress; unsupported platforms return diagnostic reports.
+Adapter registration + detection; declarative `sites/*.json` for ordinary journals; TypeScript adapters for multi-step widgets; unsupported platforms return diagnostic reports.
 
-## Milestone 9 — Commercial readiness
+## Milestone 9 — Store readiness
 
-Privacy draft, CWS permission explanation, threat model, release checklist, versioning, error boundary, local roster schema migrations; entitlement interface without payments; no PII analytics.
+Privacy draft, CWS permission explanation, threat model, release checklist, versioning, error boundary, local roster schema migrations; MIT license; no account, trial, or paid gate; no PII analytics.
 
 ## Founder-context opportunities
 
@@ -66,6 +66,6 @@ Privacy draft, CWS permission explanation, threat model, release checklist, vers
 
 - Public scientist search or recruitment marketplace.
 - Cloud graph infrastructure before workflow-generated data justifies it.
-- Elaborate billing and publisher enterprise/OEM work.
+- Billing, trials, or a freemium gate on Fill; publisher enterprise/OEM work.
 - Speculative AI filling or automatic low-confidence mutations.
 - Generalized frameworks without a testable user-visible vertical slice.
