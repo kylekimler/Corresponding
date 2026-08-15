@@ -230,7 +230,7 @@ export const editorialManagerAdapter: PlatformAdapter = {
         evidence: [],
       };
     }
-    const evidence = [
+    const evidence: string[] = [
       AUTHOR_FIELD_IDS.firstName,
       AUTHOR_FIELD_IDS.lastName,
       AUTHOR_FIELD_IDS.email,
