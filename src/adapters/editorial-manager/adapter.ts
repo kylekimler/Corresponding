@@ -6,6 +6,7 @@ import {
   type Roster,
 } from '@/schema/author';
 import { identitiesConflict, readValue, setValue } from '../dom';
+import { evaluatePortalRequirements } from '../requirements';
 import { assertSafeMutationTarget, listDangerousControls } from '../safety';
 import type {
   DetectResult,
@@ -279,6 +280,10 @@ export const editorialManagerAdapter: PlatformAdapter = {
     const form = findAuthorFormDocument(doc);
     const manuscriptBefore = snapshotManuscript(doc);
 
+    // What this portal will refuse to save. Reported rather than blocking, so
+    // Corresponding still fills what it can and the person completes the rest.
+    const requirements = evaluatePortalRequirements('editorial-manager', roster);
+
     if (!form) {
       return {
         platformId: 'editorial-manager',
@@ -295,6 +300,7 @@ export const editorialManagerAdapter: PlatformAdapter = {
         errors: [
           'Editorial Manager author form was not found. Open Manuscript Data → Authors (Add/Edit Author), then retry.',
         ],
+        requirements,
       };
     }
 
@@ -378,6 +384,7 @@ export const editorialManagerAdapter: PlatformAdapter = {
       ...summarize(plans),
       warnings,
       errors,
+      requirements,
     };
   },
 

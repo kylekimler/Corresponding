@@ -1,10 +1,13 @@
 import { z } from 'zod';
+import { CreditRoleSchema } from './credit';
 
 export const AffiliationSchema = z.object({
   institution: z.string().min(1),
   department: z.string().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
+  /** Required by Editorial Manager's author form. */
+  postalCode: z.string().optional(),
   country: z.string().optional(),
   isPrimary: z.boolean().default(false),
 });
@@ -25,6 +28,11 @@ export const AuthorSchema = z.object({
    * only: no portal field is filled from it without fixture evidence.
    */
   equalContribution: z.boolean().default(false),
+  /**
+   * CRediT contributor roles this author declared. Some portals, including
+   * Editorial Manager, refuse to save an author without at least one.
+   */
+  creditRoles: z.array(CreditRoleSchema).default([]),
   affiliations: z.array(AffiliationSchema).default([]),
   sequence: z.number().int().positive(),
 });

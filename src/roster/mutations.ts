@@ -88,6 +88,7 @@ export function addAuthor(
     isCorresponding:
       partial?.isCorresponding ?? roster.authors.length === 0,
     equalContribution: partial?.equalContribution ?? false,
+    creditRoles: partial?.creditRoles ?? [],
     affiliations: partial?.affiliations ?? [],
     sequence,
   };

@@ -14,6 +14,7 @@ Platform-independent scholarly author metadata. All imports normalize into this 
 | `orcid` | string | no | ORCID iD, normalized when present |
 | `isCorresponding` | boolean | yes | Multiple shared corresponding authors are allowed |
 | `equalContribution` | boolean | yes | Shared/co-first or equally contributing author. Canonical only: not filled into any portal without fixture evidence |
+| `creditRoles` | CreditRole[] | yes (may be empty) | CRediT contributor roles. Editorial Manager refuses to save an author without at least one |
 | `affiliations` | Affiliation[] | yes (may be empty) | Ordered; one may be marked primary |
 | `sequence` | positive int | yes | 1-based author order in the roster |
 
@@ -25,6 +26,7 @@ Platform-independent scholarly author metadata. All imports normalize into this 
 | `department` | string | no | |
 | `city` | string | no | |
 | `state` | string | no | |
+| `postalCode` | string | no | Required by Editorial Manager's author form |
 | `country` | string | no | Prefer ISO-ish display names matching portal selects when known |
 | `isPrimary` | boolean | yes | Exactly one primary per author when affiliations exist |
 
@@ -98,3 +100,18 @@ Optional v2 fields (on `IdentityPerson` inside `IdentityDocument.people`):
 | Teams | `teamMemberships[]` |
 
 Provenance (`src/schema/provenance.ts`): each externally sourced assertion may carry `source`, `timestamp`, `verificationStatus` (`unverified` \| `self_attested` \| `externally_verified`), and optional `note`. Defaults are `unverified`; never infer `externally_verified`.
+
+## CRediT contributor roles
+
+`src/schema/credit.ts` holds the 14-role taxonomy plus an `other` catch-all.
+`parseCreditRoles` reads spreadsheet cells listing several roles, tolerating
+en dashes, ampersands, and common shorthands. Unrecognized text is dropped
+rather than guessed, so a roster never claims a role an author did not declare.
+
+## Portal requirements
+
+`src/adapters/requirements.ts` declares, per portal and only from captured
+forms, which canonical fields that portal refuses to save without. Adapters
+report unmet requirements on the fill report so the popup can name the field and
+the affected authors. Requirements are reported, not enforced: Corresponding
+still fills what the portal accepts.

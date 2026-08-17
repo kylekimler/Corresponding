@@ -8,9 +8,11 @@ export type CanonicalColumn =
   | 'department'
   | 'city'
   | 'state'
+  | 'postalCode'
   | 'country'
   | 'isCorresponding'
   | 'equalContribution'
+  | 'creditRoles'
   | 'sequence'
   | 'fundingStatement'
   | 'disclosureStatement'
@@ -71,6 +73,24 @@ const ALIASES: Record<Exclude<CanonicalColumn, 'ignore'>, string[]> = {
   department: ['department', 'dept', 'division'],
   city: ['city', 'town'],
   state: ['state', 'province', 'region'],
+  postalCode: [
+    'postal code',
+    'postcode',
+    'post code',
+    'zip',
+    'zip code',
+    'zip or postal code',
+  ],
+  creditRoles: [
+    'contributor roles',
+    'contributor role',
+    'credit',
+    'credit roles',
+    'credit taxonomy',
+    'contributions',
+    'contribution',
+    'roles',
+  ],
   country: ['country', 'nation'],
   isCorresponding: [
     'corresponding',

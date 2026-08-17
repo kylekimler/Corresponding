@@ -1,4 +1,5 @@
 import fc from 'fast-check';
+import { CREDIT_ROLES } from '@/schema/credit';
 import {
   ROSTER_SCHEMA_VERSION,
   type Affiliation,
@@ -67,6 +68,7 @@ export function authorArb(sequence: number): fc.Arbitrary<Author> {
     ),
     isCorresponding: fc.boolean(),
     equalContribution: fc.boolean(),
+    creditRoles: fc.subarray([...CREDIT_ROLES]),
     affiliations: fc.array(affiliationArb, { minLength: 0, maxLength: 3 }),
     sequence: fc.constant(sequence),
   }).map((a) => {

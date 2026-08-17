@@ -8,27 +8,12 @@ import {
   type Author,
   type Roster,
 } from './author';
+import { CreditRoleSchema } from './credit';
 import { ProvenanceAssertionSchema } from './provenance';
 
 export const IDENTITY_SCHEMA_VERSION = 2;
 
-export const CreditRoleSchema = z.enum([
-  'conceptualization',
-  'data_curation',
-  'formal_analysis',
-  'funding_acquisition',
-  'investigation',
-  'methodology',
-  'project_administration',
-  'resources',
-  'software',
-  'supervision',
-  'validation',
-  'visualization',
-  'writing_original_draft',
-  'writing_review_editing',
-  'other',
-]);
+export { CreditRoleSchema } from './credit';
 
 export const TypedEmailSchema = z.object({
   value: z.string().email(),
