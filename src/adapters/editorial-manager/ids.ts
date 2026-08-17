@@ -40,6 +40,10 @@ export const AUTHOR_SAVE_CLASS = 'fl-flToolSave';
 export const INSTITUTION_WARNING_RE =
   /institution could not be identified|proceed with this institution/i;
 
+/** Inline typeahead state shown when the typed name is not a Ringgold pick. */
+export const INSTITUTION_UNVERIFIED_RE =
+  /author institution is unverified|start typing to display potentially matching institutions/i;
+
 /** Parent-page control that opens the next Add New Author dialog. */
 export const ADD_ANOTHER_AUTHOR_CLASS = 'fl-add-btn';
 

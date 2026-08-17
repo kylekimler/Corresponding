@@ -10,6 +10,7 @@ import {
   COLLAPSE_SAVE_ROLES_RE,
   EDIT_ROLES_ID,
   EDIT_ROLES_RE,
+  INSTITUTION_UNVERIFIED_RE,
   INSTITUTION_WARNING_RE,
   SAVE_THIS_AUTHOR_RE,
   SELECT_ROLES_RE,
@@ -135,6 +136,59 @@ export function findInstitutionWarningOk(root: Document): HTMLElement | null {
     }
   }
   return null;
+}
+
+function normalizeInstitution(value: string): string {
+  return value.replace(/\s+/g, ' ').trim().toLowerCase();
+}
+
+/**
+ * A visible typeahead suggestion whose text equals the roster institution.
+ * Never returns the first unmatched item — a near match is not selected.
+ */
+export function institutionTypeaheadOpen(root: Document): boolean {
+  for (const doc of documentsIn(root)) {
+    const nodes = doc.querySelectorAll<HTMLElement>(
+      '[role="option"], [role="listbox"], .ui-autocomplete, .ui-menu-item, #institution-suggestions',
+    );
+    for (const el of nodes) {
+      if (isShown(el) && (el.textContent ?? '').trim()) return true;
+    }
+  }
+  return false;
+}
+
+export function findInstitutionSuggestion(
+  root: Document,
+  desired: string,
+): HTMLElement | null {
+  const needle = normalizeInstitution(desired);
+  if (!needle) return null;
+  for (const doc of documentsIn(root)) {
+    const nodes = doc.querySelectorAll<HTMLElement>(
+      '[role="option"], [role="listbox"] li, .ui-menu-item, .ui-autocomplete li, li, [data-institution]',
+    );
+    for (const el of nodes) {
+      if (!isShown(el)) continue;
+      const label = normalizeInstitution(el.textContent ?? '');
+      if (label === needle) return el;
+    }
+  }
+  return null;
+}
+
+export function institutionLooksUnverified(root: Document): boolean {
+  for (const doc of documentsIn(root)) {
+    const nodes = doc.querySelectorAll('div, span, p, li, [role="dialog"]');
+    for (const node of nodes) {
+      if (!isShown(node)) continue;
+      const text = (node.textContent ?? '').replace(/\s+/g, ' ');
+      if (text.length > 400) continue;
+      if (INSTITUTION_UNVERIFIED_RE.test(text)) return true;
+    }
+    if (findInstitutionWarningOk(root)) return true;
+  }
+  return false;
 }
 
 /**

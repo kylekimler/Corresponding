@@ -205,6 +205,44 @@ describe('Editorial Manager contributor-role requirement', () => {
     expect(form.getElementById('roles-warning')?.hidden).toBe(false);
   });
 
+  it('picks an exact institution typeahead match and does not guess a neighbour', async () => {
+    const form = mountEditorialManagerFixture({ includeAddAnotherAuthor: false });
+    const rosterAuthor = author(1, ['methodology']);
+    rosterAuthor.affiliations[0] = {
+      ...rosterAuthor.affiliations[0]!,
+      institution: 'University of London',
+      isPrimary: true,
+    };
+    let picked = '';
+    let valueWhenPicked = '';
+    form.getElementById('institution-suggestions')?.addEventListener('click', (event) => {
+      picked = (event.target as HTMLElement).textContent?.trim() ?? '';
+      valueWhenPicked =
+        (form.getElementById('Institution') as HTMLInputElement).value;
+    });
+
+    const report = await editorialManagerAdapter.fillAsync!(
+      document,
+      makeRoster([rosterAuthor]),
+      { overwrite: true, dryRun: false },
+    );
+
+    console.log('EM institution typeahead', {
+      errors: report.errors,
+      warnings: report.warnings,
+      picked,
+      valueWhenPicked,
+      authorsCount: (form.getElementById('authorsCount') as HTMLInputElement)
+        .value,
+    });
+    expect(report.errors).toEqual([]);
+    expect(picked).toBe('University of London');
+    expect(valueWhenPicked).toBe('University of London');
+    expect(
+      (form.getElementById('authorsCount') as HTMLInputElement).value,
+    ).toBe('1');
+  });
+
   it('confirms the unidentified-institution warning with OK, never Cancel', async () => {
     const form = mountEditorialManagerFixture({
       warnUnidentifiedInstitution: true,

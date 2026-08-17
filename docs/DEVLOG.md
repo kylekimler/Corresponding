@@ -4,6 +4,12 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-17 19:25 UTC
+- Editorial Manager save was shaking because Institution is a Ringgold typeahead, not a plain text box. The screenshot shows “Author Institution is Unverified” / “Start typing to display potentially matching institutions.” Setting the value and blurring immediately never opens the list, so the portal treats the name as invalid and the dialog shakes instead of offering “Proceed anyway?”
+- Fill now types into Institution (input/keydown/keyup), waits for a suggestion whose text equals the roster name, and clicks only that exact match. A neighbour in the list is never chosen. If nothing matches, the typed value stays and Save + OK on the proceed warning is the fallback; a second save is tried if the first only shakes.
+- Institution is not blurred in the generic field writer. Zipcode still blurs for Knockout.
+- verification: fixture typeahead with a decoy plus “University of London”; exact match is picked; unmatched names still take the OK path.
+
 ### 2026-08-17 18:50 UTC
 - Save This Author on Editorial Manager is followed by a jQuery UI warning: "The Institution could not be identified by the system. Proceed with this Institution anyway?" OK is `<span class="ui-button-text">OK</span>` in a second `ui-dialog` (div[14]); Cancel must never be clicked. Fill now dismisses that warning with OK after the floppy click, then waits for the author dialog to close.
 - Save finding prefers the visible toolbox floppy: `.fl-toolbox [data-toolname=AuthorSave]` / `button.fl-flToolSave`, and the click is a full mouse sequence (pointer/mouse down-up plus click) because the toolbox is a CSS icon button with no text.
