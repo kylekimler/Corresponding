@@ -92,8 +92,12 @@ follows the banner link when it appears.
 
 The same capture exposed the institution field: `name="AUTHOR_INSTITUTION_1"`
 with `id="combobox-1014-inputEl"`. The id carries a generated number, so only
-the name is stable. Corresponding writes the institution text; ScholarOne may
-still require the person to pick a matching institution from its own list.
+the name is stable. Corresponding writes the institution text without blurring
+the ExtJS combobox. A free-text name can raise ScholarOne’s own
+“Institution not connected to Ringgold” dialog (proceed control labelled
+**OKAY**) or the generic “An error has occurred. Please try again.” dialog
+(**Close**). Those are dismissed so the create-author form can finish;
+unrelated `alertButton` refusals are still reported verbatim and left open.
 
 `AUTHOR_CONTRIBUTOR_DEGREE_OF_CONTRIBUTION_ID_#` (Equal, Lead, Supporting)
 remains untouched — the roster has no canonical degree-of-contribution concept.
@@ -131,8 +135,14 @@ hypothesis.
 
 Institution is a typeahead (“Author Institution is Unverified”). Corresponding
 types the roster name and clicks only an exact-text suggestion; it does not
-pick the first Ringgold hit. Unmatched names still go through Save + OK on
-“Proceed with this Institution anyway?” Cancel is never clicked.
+pick the first Ringgold hit. An unmatched name is still saveable: PLOS can
+commit after Save This Author with no extra field edits. The portal may show
+“Validation found issues. Review the highlighted counts and form.” and then
+sometimes “Proceed with this Institution anyway?” — both are OK click-throughs,
+not a reason to abandon the save. Cancel is never clicked.
+
+The “Institution not connected to Ringgold” / **OKAY** dialog is ScholarOne,
+not Editorial Manager.
 
 `Zipcode` is required and is now filled from the roster postal code (PLOS
 Genetics Add New Author, 2026-08-17). The Add New Author dialog can open as its

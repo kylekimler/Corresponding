@@ -25,9 +25,9 @@ import {
   findAuthorSaveControl,
   findInstitutionSuggestion,
   findInstitutionWarningOk,
+  findValidationIssuesOk,
   institutionTypeaheadOpen,
   findRolesCollapseSave,
-  institutionLooksUnverified,
   findSelectRolesControl,
   isAuthorsListPage,
 } from './documents';
@@ -429,6 +429,20 @@ function dismissInstitutionWarning(root: Document): boolean {
   return true;
 }
 
+function dismissValidationIssues(root: Document): boolean {
+  const ok = findValidationIssuesOk(root);
+  if (!ok) return false;
+  clickControl(ok);
+  return true;
+}
+
+/** Click through the save-state dialogs; never Cancel. */
+function dismissSaveDialogs(root: Document): boolean {
+  const validation = dismissValidationIssues(root);
+  const institution = dismissInstitutionWarning(root);
+  return validation || institution;
+}
+
 function givenNameValue(root: Document): string {
   const form = findAuthorFormDocument(root);
   return form ? readValue(form, AUTHOR_FIELD_IDS.firstName) : '';
@@ -452,7 +466,7 @@ async function waitAfterAuthorSave(
   const started = Date.now();
   while (Date.now() - started < SAVE_WATCH_MS) {
     if (rolesWarningText(root) || rolesWarningText(form)) return 'warning';
-    dismissInstitutionWarning(root);
+    dismissSaveDialogs(root);
     if (!authorFormVisible(root)) return 'closed';
     const given = givenNameValue(root);
     if (givenNameBefore && given !== givenNameBefore) return 'cleared';
@@ -780,31 +794,39 @@ export const editorialManagerAdapter: PlatformAdapter = {
         break;
       }
       if (afterSave === 'timeout') {
-        // First save often only shakes and shows the unverified-institution
-        // warning. Confirm OK, or click save once more to raise the dialog.
-        if (findInstitutionWarningOk(doc) || institutionLooksUnverified(doc)) {
-          dismissInstitutionWarning(doc);
-          if (authorFormVisible(doc)) clickAuthorSave(doc);
-          const retry = await waitAfterAuthorSave(doc, currentForm, givenBefore);
-          if (retry === 'closed' || retry === 'cleared') {
-            // continue to Add Another Author
-          } else if (retry === 'warning') {
-            const warning = rolesWarningText(doc) || rolesWarningText(currentForm);
+        // Unverified institution is not a hard stop. The portal may show
+        // “Validation found issues…” then “Proceed with this Institution
+        // anyway?” — click OK on each and, if the form is still open, save
+        // once more. Do not abandon because the inline unverified text is up.
+        dismissSaveDialogs(doc);
+        if (authorFormVisible(doc)) clickAuthorSave(doc);
+        const retry = await waitAfterAuthorSave(doc, currentForm, givenBefore);
+        if (retry === 'closed' || retry === 'cleared') {
+          // continue to Add Another Author
+        } else if (retry === 'warning') {
+          const warning = rolesWarningText(doc) || rolesWarningText(currentForm);
+          errors.push(
+            `Editorial Manager refused author ${author.sequence}: ${warning}`,
+          );
+          break;
+        } else {
+          dismissSaveDialogs(doc);
+          const third = await waitAfterAuthorSave(doc, currentForm, givenBefore);
+          if (third === 'closed' || third === 'cleared') {
+            // dialogs were the only remaining step
+          } else if (third === 'warning') {
+            const warning =
+              rolesWarningText(doc) || rolesWarningText(currentForm);
             errors.push(
               `Editorial Manager refused author ${author.sequence}: ${warning}`,
             );
             break;
           } else {
             warnings.push(
-              `Author ${author.sequence}: institution is unverified. Editorial Manager needs a matching institution from its list, or OK on “Proceed with this Institution anyway?”`,
+              `Save This Author was clicked for author ${author.sequence} but the form is still open. If Editorial Manager is showing “Validation found issues” or “Proceed with this Institution anyway?”, click OK to finish the save.`,
             );
             break;
           }
-        } else {
-          warnings.push(
-            `Save This Author was clicked for author ${author.sequence} but the form is still open.`,
-          );
-          break;
         }
       }
 

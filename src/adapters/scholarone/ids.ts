@@ -47,6 +47,21 @@ export function authorInstitutionName(index = 1): string {
 /** ScholarOne's own alert dialog, which can refuse a save. Observed 2026-08-17. */
 export const ALERT_BUTTON = 'alertButton';
 
+/**
+ * ScholarOne dialog when the institution was typed instead of picked from
+ * the Ringgold list. The proceed control is labelled OKAY. Observed 2026-08-17.
+ */
+export const RINGGOLD_DIALOG_RE = /institution not connected to ringgold/i;
+export const RINGGOLD_OKAY_RE = /^okay$/i;
+
+/**
+ * Generic ExtJS error that can appear after a Ringgold lookup. Close
+ * dismisses it so the create-author form stays usable.
+ */
+export const GENERIC_ERROR_RE =
+  /an error has occurred\.?\s*please try again/i;
+export const GENERIC_ERROR_CLOSE_RE = /^close$/i;
+
 /** Inline banner offered when an email search finds no existing co-author. */
 export const CREATE_NEW_COAUTHOR_RE = /create\s+a\s+new\s+co-?author/i;
 

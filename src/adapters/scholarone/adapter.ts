@@ -47,6 +47,10 @@ import {
   authorInstitutionName,
   CREATE_NEW_COAUTHOR_RE,
   CREDIT_ROLE_PREFIX,
+  GENERIC_ERROR_CLOSE_RE,
+  GENERIC_ERROR_RE,
+  RINGGOLD_DIALOG_RE,
+  RINGGOLD_OKAY_RE,
 } from './ids';
 
 const WAIT_TIMEOUT_MS = 10_000;
@@ -55,6 +59,7 @@ const LOOKUP_INTERVAL_MS = 80;
 const COMMIT_TIMEOUT_MS = 6_000;
 const COMMIT_INTERVAL_MS = 80;
 const WRITE_VERIFY_DELAY_MS = 80;
+const INSTITUTION_DIALOG_WAIT_MS = 1_200;
 
 const lastFill = new WeakMap<
   Document,
@@ -514,6 +519,15 @@ function authorDetailsReady(doc: Document): boolean {
   return !!first && isVisible(first);
 }
 
+async function waitForCreateFormEmail(doc: Document): Promise<void> {
+  const started = Date.now();
+  while (Date.now() - started < 1_200) {
+    const email = byId<HTMLInputElement>(doc, AUTHOR_EMAIL);
+    if (email && isVisible(email)) return;
+    await delay(50);
+  }
+}
+
 /**
  * Email search can re-render the author panel. Wait until the modal or the
  * AUTHOR_* details stabilize — never write names while the lookup is in flight.
@@ -629,11 +643,11 @@ function readAuthorIdentity(doc: Document): {
   };
 }
 
-function writeAuthorDetails(
+async function writeAuthorDetails(
   doc: Document,
   author: Author,
   overwrite: boolean,
-): void {
+): Promise<void> {
   for (const field of fillableFields(author)) {
     if (!field.value?.trim()) continue;
     const el = byId<
@@ -642,14 +656,16 @@ function writeAuthorDetails(
     if (!el || !isVisible(el)) continue;
     writeInput(el, field.value, overwrite);
   }
-  applyInstitution(doc, author, overwrite);
   applyCreditRoles(doc, author);
+  applyInstitution(doc, author, overwrite);
+  await settleInstitutionDialogs(doc);
 }
 
 /**
  * Institution is a typeahead whose id contains a generated number, so it is
- * located by name. The text is written; ScholarOne may still require the person
- * to pick a matching institution from its own list.
+ * located by name. The text is written without blur: ScholarOne's ExtJS
+ * combobox treats blur as a Ringgold lookup, which can raise the generic
+ * “An error has occurred” dialog or “Institution not connected to Ringgold”.
  */
 function applyInstitution(
   doc: Document,
@@ -662,7 +678,135 @@ function applyInstitution(
     `input[name="${authorInstitutionName(1)}"]`,
   );
   if (!input || !isVisible(input)) return;
-  writeInput(input, institution, overwrite);
+  if (input.disabled || input.readOnly) return;
+  const current = input.value.trim();
+  if (current && !overwrite) return;
+  assertSafeMutationTarget(input);
+  const win = input.ownerDocument.defaultView;
+  const setter = win
+    ? Object.getOwnPropertyDescriptor(win.HTMLInputElement.prototype, 'value')
+        ?.set
+    : undefined;
+  if (setter) setter.call(input, institution);
+  else input.value = institution;
+  input.dispatchEvent(
+    new InputEvent('input', {
+      bubbles: true,
+      data: institution,
+      inputType: 'insertText',
+    }),
+  );
+}
+
+function dialogLabel(el: HTMLElement): string {
+  return (
+    el.textContent ??
+    el.getAttribute('value') ??
+    el.getAttribute('aria-label') ??
+    ''
+  )
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function findDialogWithText(doc: Document, textRe: RegExp): HTMLElement | null {
+  const nodes = doc.querySelectorAll<HTMLElement>(
+    '[role="dialog"], .modal, .ui-dialog, .x-window, .x-message-box, .x-window-dlg',
+  );
+  for (const node of nodes) {
+    if (!isVisible(node)) continue;
+    const text = (node.textContent ?? '').replace(/\s+/g, ' ');
+    if (textRe.test(text)) return node;
+  }
+  // Headings only — do not scan every div, or a hidden dialog's text inside
+  // the page root would match after the dialog is dismissed.
+  for (const node of Array.from(
+    doc.querySelectorAll<HTMLElement>('h1, h2, h3, h4, p, legend'),
+  )) {
+    if (!isVisible(node)) continue;
+    const text = (node.textContent ?? '').replace(/\s+/g, ' ');
+    if (text.length > 400 || !textRe.test(text)) continue;
+    return (
+      (node.closest(
+        '[role="dialog"], .modal, .ui-dialog, .x-window, .x-message-box',
+      ) as HTMLElement | null) ??
+      node.parentElement
+    );
+  }
+  return null;
+}
+
+function findButtonIn(
+  scope: HTMLElement,
+  labelRe: RegExp,
+): HTMLElement | null {
+  const labeled = Array.from(
+    scope.querySelectorAll<HTMLElement>(
+      'button, [role="button"], a, input[type="button"], .x-btn',
+    ),
+  ).find((el) => {
+    if (!isVisible(el)) return false;
+    return labelRe.test(dialogLabel(el));
+  });
+  if (!labeled) return null;
+  return (
+    labeled.closest('button') ??
+    labeled.closest('[role="button"]') ??
+    labeled.closest('a') ??
+    labeled
+  );
+}
+
+/** Proceed control on “Institution not connected to Ringgold”. */
+export function findRinggoldOkay(doc: Document): HTMLElement | null {
+  const dialog = findDialogWithText(doc, RINGGOLD_DIALOG_RE);
+  if (!dialog) return null;
+  return findButtonIn(dialog, RINGGOLD_OKAY_RE);
+}
+
+/** Close on the generic “An error has occurred. Please try again.” dialog. */
+export function findGenericErrorClose(doc: Document): HTMLElement | null {
+  const dialog = findDialogWithText(doc, GENERIC_ERROR_RE);
+  if (!dialog) return null;
+  return findButtonIn(dialog, GENERIC_ERROR_CLOSE_RE);
+}
+
+function dismissRinggoldOkay(doc: Document): boolean {
+  const okay = findRinggoldOkay(doc);
+  if (!okay) return false;
+  assertSafeMutationTarget(okay);
+  okay.click();
+  return true;
+}
+
+function dismissGenericError(doc: Document): boolean {
+  const close = findGenericErrorClose(doc);
+  if (!close) return false;
+  assertSafeMutationTarget(close);
+  close.click();
+  return true;
+}
+
+function dismissScholarOneProceedDialogs(doc: Document): boolean {
+  const ringgold = dismissRinggoldOkay(doc);
+  const error = dismissGenericError(doc);
+  return ringgold || error;
+}
+
+function isDismissibleScholarOneAlert(text: string): boolean {
+  return RINGGOLD_DIALOG_RE.test(text) || GENERIC_ERROR_RE.test(text);
+}
+
+async function settleInstitutionDialogs(doc: Document): Promise<void> {
+  const started = Date.now();
+  while (Date.now() - started < INSTITUTION_DIALOG_WAIT_MS) {
+    dismissScholarOneProceedDialogs(doc);
+    const ringgold = findDialogWithText(doc, RINGGOLD_DIALOG_RE);
+    const error = findDialogWithText(doc, GENERIC_ERROR_RE);
+    if (!ringgold && !error && Date.now() - started > 240) return;
+    await delay(LOOKUP_INTERVAL_MS);
+  }
+  dismissScholarOneProceedDialogs(doc);
 }
 
 /**
@@ -689,9 +833,21 @@ async function commitAuthor(doc: Document, beforeCount: number): Promise<void> {
     );
   }
   assertSafeMutationTarget(commit);
-  const alertBefore = portalAlertText(doc);
-  commit.click();
-  await waitForAuthorCommit(doc, beforeCount, alertBefore);
+  let lastError: Error | null = null;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    dismissScholarOneProceedDialogs(doc);
+    const alertBefore = portalAlertText(doc);
+    commit.click();
+    try {
+      await waitForAuthorCommit(doc, beforeCount, alertBefore);
+      return;
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      dismissScholarOneProceedDialogs(doc);
+      if (existingAuthorCount(doc) > beforeCount) return;
+    }
+  }
+  throw lastError ?? new Error('ScholarOne did not add the author to the list after commit');
 }
 
 /**
@@ -719,8 +875,13 @@ async function waitForAuthorCommit(
   const started = Date.now();
   while (Date.now() - started < COMMIT_TIMEOUT_MS) {
     if (existingAuthorCount(doc) > beforeCount) return;
+    dismissScholarOneProceedDialogs(doc);
     const alertNow = portalAlertText(doc);
-    if (alertNow && alertNow !== alertBefore) {
+    if (
+      alertNow &&
+      alertNow !== alertBefore &&
+      !isDismissibleScholarOneAlert(alertNow)
+    ) {
       throw new Error(`ScholarOne reported: ${alertNow}`);
     }
     await delay(COMMIT_INTERVAL_MS);
@@ -885,8 +1046,11 @@ export const scholarOneAdapter: PlatformAdapter = {
         }
 
         // Roster values win after lookup settles (never write during search).
+        // The create-author form can paint First Name before E-Mail; wait
+        // briefly so the email box is written when it is present.
+        await waitForCreateFormEmail(doc);
         await delay(WRITE_VERIFY_DELAY_MS);
-        writeAuthorDetails(doc, author, options.overwrite || lookup === 'created');
+        await writeAuthorDetails(doc, author, options.overwrite || lookup === 'created');
 
         await delay(WRITE_VERIFY_DELAY_MS);
         const first = byId<HTMLInputElement>(doc, AUTHOR_FIRST_NAME)?.value.trim();

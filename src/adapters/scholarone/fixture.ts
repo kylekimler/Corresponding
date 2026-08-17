@@ -87,6 +87,16 @@ export interface ScholarOneFixtureOptions {
    * co-author" banner instead of the confirmation modal.
    */
   inlineCreateBanner?: boolean;
+  /**
+   * Writing a free-text institution shows “Institution not connected to
+   * Ringgold” with an OKAY button. Commit stays blocked until OKAY.
+   */
+  ringgoldOnInstitution?: boolean;
+  /**
+   * Writing institution shows the generic “An error has occurred. Please
+   * try again.” dialog. Close dismisses it; commit stays blocked until then.
+   */
+  errorOnInstitution?: boolean;
 }
 
 export interface ScholarOneFixtureHarness {
@@ -97,6 +107,8 @@ export interface ScholarOneFixtureHarness {
   submitClicks(): number;
   modalYesClicks(): number;
   createCoauthorClicks(): number;
+  ringgoldOkayClicks(): number;
+  errorCloseClicks(): number;
   /** Name fields written while an email lookup was still in flight. */
   namesWrittenDuringLookup(): number;
   formVisible(): boolean;
@@ -171,6 +183,26 @@ export function mountScholarOneFixture(
         <div id="scholarone-alert" role="dialog" hidden>
           ${options.alertOnCommit ?? ''}
           <a href="#" id="${ALERT_BUTTON}">Ok</a>
+        </div>
+
+        <div id="ringgold-dialog" role="dialog" hidden>
+          <h2>Institution not connected to Ringgold</h2>
+          <p>
+            Your selected institution was manually entered and not connected to
+            Ringgold. To connect your institution to Ringgold select the
+            institution from the dropdown of institutions provided as you type.
+          </p>
+          <button type="button" id="ringgold-okay">OKAY</button>
+        </div>
+
+        <div id="scholarone-error" role="dialog" hidden>
+          <h2>Error</h2>
+          <p>
+            An error has occurred. Please try again. If the problem persists,
+            please contact the Support Team for more information and
+            instructions.
+          </p>
+          <button type="button" id="scholarone-error-close">Close</button>
         </div>
 
         <div id="no-coauthor-banner" hidden>
@@ -257,6 +289,15 @@ export function mountScholarOneFixture(
   const modal = document.getElementById('email-search-modal')!;
   const banner = document.getElementById('no-coauthor-banner')!;
   const alertBox = document.getElementById('scholarone-alert')!;
+  const ringgoldDialog = document.getElementById('ringgold-dialog')!;
+  const errorDialog = document.getElementById('scholarone-error')!;
+  const ringgoldOkay = document.getElementById('ringgold-okay') as HTMLButtonElement;
+  const errorClose = document.getElementById(
+    'scholarone-error-close',
+  ) as HTMLButtonElement;
+  const institutionInput = document.querySelector<HTMLInputElement>(
+    `input[name="${authorInstitutionName(1)}"]`,
+  );
   const createCoauthor = document.getElementById('create-new-coauthor')!;
   const rows = document.getElementById('author-rows')!;
   const findEmail = document.getElementById(FIND_AUTHOR_EMAIL) as HTMLInputElement;
@@ -274,6 +315,8 @@ export function mountScholarOneFixture(
   let submitClicks = 0;
   let modalYesClicks = 0;
   let createCoauthorClicks = 0;
+  let ringgoldOkayClicks = 0;
+  let errorCloseClicks = 0;
   let lookupInFlight = false;
   let namesWrittenDuringLookup = 0;
   let pendingEmail = '';
@@ -370,6 +413,8 @@ export function mountScholarOneFixture(
     details.hidden = true;
     modal.hidden = true;
     banner.hidden = true;
+    ringgoldDialog.hidden = true;
+    errorDialog.hidden = true;
     findEmail.value = '';
     clearDetails();
   }
@@ -437,8 +482,27 @@ export function mountScholarOneFixture(
     details.hidden = true;
   });
 
+  institutionInput?.addEventListener('input', () => {
+    if (!institutionInput.value.trim()) return;
+    if (options.ringgoldOnInstitution) ringgoldDialog.hidden = false;
+    if (options.errorOnInstitution) errorDialog.hidden = false;
+  });
+
+  ringgoldOkay.addEventListener('click', (event) => {
+    event.preventDefault();
+    ringgoldOkayClicks += 1;
+    ringgoldDialog.hidden = true;
+  });
+
+  errorClose.addEventListener('click', (event) => {
+    event.preventDefault();
+    errorCloseClicks += 1;
+    errorDialog.hidden = true;
+  });
+
   commitAdd.addEventListener('click', (event) => {
     event.preventDefault();
+    if (!ringgoldDialog.hidden || !errorDialog.hidden) return;
     const email = readField(AUTHOR_EMAIL);
     const firstName = readField(AUTHOR_FIRST_NAME);
     const lastName = readField(AUTHOR_LAST_NAME);
@@ -504,6 +568,8 @@ export function mountScholarOneFixture(
     submitClicks: () => submitClicks,
     modalYesClicks: () => modalYesClicks,
     createCoauthorClicks: () => createCoauthorClicks,
+    ringgoldOkayClicks: () => ringgoldOkayClicks,
+    errorCloseClicks: () => errorCloseClicks,
     namesWrittenDuringLookup: () => namesWrittenDuringLookup,
     formVisible: () => !form.hidden,
   };

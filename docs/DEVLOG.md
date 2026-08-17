@@ -4,6 +4,23 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-17 22:05 UTC
+- PLOS / Editorial Manager: after Fill, Save This Author can succeed with an
+  unverified institution and no typeahead pick. The adapter was treating the
+  inline “Author Institution is Unverified” state as a hard stop and not
+  clicking through “Validation found issues. Review the highlighted counts
+  and form.” Fill now OKs that dialog, then OKs “Proceed with this Institution
+  anyway?” when it appears, and no longer aborts because the unverified text
+  is visible.
+- ScholarOne: the Ringgold warning is this portal, not PLOS. Writing
+  `AUTHOR_INSTITUTION_1` can raise “Institution not connected to Ringgold”
+  (**OKAY**) or the generic “An error has occurred. Please try again.”
+  (**Close**). Fill dismisses those, does not blur the ExtJS combobox, waits
+  for the create-form email box when it lags the name fields, and still
+  reports other `alertButton` refusals verbatim.
+- verification: fixture paths for both dialog sequences; unit tests assert
+  the click-throughs and a completed save.
+
 ### 2026-08-17 19:25 UTC
 - Editorial Manager save was shaking because Institution is a Ringgold typeahead, not a plain text box. The screenshot shows “Author Institution is Unverified” / “Start typing to display potentially matching institutions.” Setting the value and blurring immediately never opens the list, so the portal treats the name as invalid and the dialog shakes instead of offering “Proceed anyway?”
 - Fill now types into Institution (input/keydown/keyup), waits for a suggestion whose text equals the roster name, and clicks only that exact match. A neighbour in the list is never chosen. If nothing matches, the typed value stays and Save + OK on the proceed warning is the fallback; a second save is tried if the first only shakes.

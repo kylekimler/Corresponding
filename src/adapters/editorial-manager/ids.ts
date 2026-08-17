@@ -34,13 +34,21 @@ export const AUTHOR_SAVE_TOOL = 'AuthorSave';
 export const AUTHOR_SAVE_CLASS = 'fl-flToolSave';
 
 /**
- * jQuery UI warning after Save This Author when Ringgold cannot match the
- * institution. OK proceeds; Cancel must never be clicked.
+ * jQuery UI warning after Save This Author when the institution is not in
+ * the portal directory. OK proceeds; Cancel must never be clicked.
  */
 export const INSTITUTION_WARNING_RE =
   /institution could not be identified|proceed with this institution/i;
 
-/** Inline typeahead state shown when the typed name is not a Ringgold pick. */
+/**
+ * First save dialog when the form still has highlighted issues (often the
+ * inline “Author Institution is Unverified” state). OK continues the save;
+ * it is not a hard stop.
+ */
+export const VALIDATION_ISSUES_RE =
+  /validation found issues\.?\s*review the highlighted counts and form/i;
+
+/** Inline typeahead state shown when the typed name is not a directory pick. */
 export const INSTITUTION_UNVERIFIED_RE =
   /author institution is unverified|start typing to display potentially matching institutions/i;
 

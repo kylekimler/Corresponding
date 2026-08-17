@@ -28,6 +28,12 @@ export interface EditorialManagerFixtureOptions {
    * until OK is clicked. Cancel must not commit.
    */
   warnUnidentifiedInstitution?: boolean;
+  /**
+   * Save first shows “Validation found issues. Review the highlighted
+   * counts and form.” OK continues; then the unidentified-institution
+   * warning is used when that option is also on.
+   */
+  warnValidationIssues?: boolean;
 }
 
 const COUNTRIES = ['', 'United States', 'Germany', 'United Kingdom', 'Canada'];
@@ -155,6 +161,15 @@ function authorFormHtml(options: EditorialManagerFixtureOptions): string {
         ></button>
       </div>
     </div>
+    <div id="validation-issues" class="ui-dialog" hidden>
+      <div class="ui-dialog-titlebar">Warning</div>
+      Validation found issues. Review the highlighted counts and form.
+      <div class="ui-dialog-buttonset">
+        <button type="button" class="ui-button" id="validation-issues-ok">
+          <span class="ui-button-text">OK</span>
+        </button>
+      </div>
+    </div>
     <div id="institution-warning" class="ui-dialog" hidden>
       <div class="ui-dialog-titlebar">Warning</div>
       The Institution could not be identified by the system. Proceed with this
@@ -240,7 +255,15 @@ function wireAuthorForm(
   });
 
   let institutionProceeded = false;
+  let validationProceeded = false;
   const institutionWarning = doc.getElementById('institution-warning');
+  const validationIssues = doc.getElementById('validation-issues');
+  doc.getElementById('validation-issues-ok')?.addEventListener('click', (event) => {
+    event.preventDefault();
+    validationProceeded = true;
+    if (validationIssues) validationIssues.hidden = true;
+    commitAuthor(event);
+  });
   doc.getElementById('institution-warning-ok')?.addEventListener('click', (event) => {
     event.preventDefault();
     institutionProceeded = true;
@@ -256,6 +279,10 @@ function wireAuthorForm(
 
   const commitAuthor = (event: Event) => {
     event.preventDefault();
+    if (options.warnValidationIssues && !validationProceeded) {
+      if (validationIssues) validationIssues.hidden = false;
+      return;
+    }
     if (options.warnUnidentifiedInstitution && !institutionProceeded) {
       if (institutionWarning) institutionWarning.hidden = false;
       return;

@@ -223,4 +223,96 @@ describe('ScholarOne capture-backed adapter (Bioinformatics)', () => {
     );
     expect(harness.submitClicks()).toBe(0);
   });
+
+  it('dismisses Institution not connected to Ringgold with OKAY and still commits', async () => {
+    const harness = mountScholarOneFixture({
+      emailLookupMs: 10,
+      ringgoldOnInstitution: true,
+    });
+    const roster = makeRoster([
+      makeAuthor({
+        givenName: 'Ada',
+        familyName: 'Lovelace',
+        email: 'ada@example.org',
+        sequence: 1,
+        affiliations: [
+          {
+            institution: 'Analytical Engines Institute',
+            city: 'London',
+            country: 'United Kingdom',
+            isPrimary: true,
+          },
+        ],
+      }),
+    ]);
+
+    const report = await scholarOneAdapter.fillAsync!(document, roster, {
+      overwrite: true,
+      dryRun: false,
+    });
+
+    console.log('ScholarOne Ringgold OKAY', {
+      errors: report.errors,
+      warnings: report.warnings,
+      okayClicks: harness.ringgoldOkayClicks(),
+      errorCloseClicks: harness.errorCloseClicks(),
+      saved: harness.savedAuthors(),
+      ringgoldHidden: document.getElementById('ringgold-dialog')?.hidden,
+    });
+    expect(report.errors).toEqual([]);
+    expect(harness.ringgoldOkayClicks()).toBeGreaterThan(0);
+    expect(harness.savedAuthors()).toEqual([
+      expect.objectContaining({
+        email: 'ada@example.org',
+        firstName: 'Ada',
+        lastName: 'Lovelace',
+      }),
+    ]);
+    expect(document.getElementById('ringgold-dialog')?.hidden).toBe(true);
+    expect(harness.submitClicks()).toBe(0);
+  });
+
+  it('dismisses the generic Please try again error with Close and still commits', async () => {
+    const harness = mountScholarOneFixture({
+      emailLookupMs: 10,
+      errorOnInstitution: true,
+    });
+    const roster = makeRoster([
+      makeAuthor({
+        givenName: 'Ada',
+        familyName: 'Lovelace',
+        email: 'ada@example.org',
+        sequence: 1,
+        affiliations: [
+          {
+            institution: 'Analytical Engines Institute',
+            city: 'London',
+            country: 'United Kingdom',
+            isPrimary: true,
+          },
+        ],
+      }),
+    ]);
+
+    const report = await scholarOneAdapter.fillAsync!(document, roster, {
+      overwrite: true,
+      dryRun: false,
+    });
+
+    console.log('ScholarOne generic error Close', {
+      errors: report.errors,
+      warnings: report.warnings,
+      okayClicks: harness.ringgoldOkayClicks(),
+      errorCloseClicks: harness.errorCloseClicks(),
+      saved: harness.savedAuthors(),
+      errorHidden: document.getElementById('scholarone-error')?.hidden,
+      email:
+        (document.getElementById('AUTHOR_EMAIL_ADDRESS') as HTMLInputElement | null)
+          ?.value,
+    });
+    expect(report.errors).toEqual([]);
+    expect(harness.errorCloseClicks()).toBeGreaterThan(0);
+    expect(harness.savedAuthors()).toHaveLength(1);
+    expect(document.getElementById('scholarone-error')?.hidden).toBe(true);
+  });
 });

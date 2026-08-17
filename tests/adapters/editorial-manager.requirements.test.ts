@@ -284,6 +284,62 @@ describe('Editorial Manager contributor-role requirement', () => {
     ).toBe('1');
   });
 
+  it('clicks through Validation found issues, then institution OK, and still saves', async () => {
+    const form = mountEditorialManagerFixture({
+      warnValidationIssues: true,
+      warnUnidentifiedInstitution: true,
+      includeAddAnotherAuthor: false,
+    });
+    const validationOk = form.getElementById(
+      'validation-issues-ok',
+    ) as HTMLButtonElement;
+    const institutionOk = form.getElementById(
+      'institution-warning-ok',
+    ) as HTMLButtonElement;
+    const cancel = form.getElementById(
+      'institution-warning-cancel',
+    ) as HTMLButtonElement;
+    let validationClicks = 0;
+    let institutionClicks = 0;
+    let cancelClicks = 0;
+    validationOk.addEventListener('click', () => {
+      validationClicks += 1;
+    });
+    institutionOk.addEventListener('click', () => {
+      institutionClicks += 1;
+    });
+    cancel.addEventListener('click', () => {
+      cancelClicks += 1;
+    });
+
+    const report = await editorialManagerAdapter.fillAsync!(
+      document,
+      makeRoster([author(1, ['methodology'])]),
+      { overwrite: true, dryRun: false },
+    );
+
+    console.log('EM validation-then-institution click-through', {
+      errors: report.errors,
+      warnings: report.warnings,
+      validationClicks,
+      institutionClicks,
+      cancelClicks,
+      authorsCount: (form.getElementById('authorsCount') as HTMLInputElement)
+        .value,
+      validationHidden: form.getElementById('validation-issues')?.hidden,
+      institutionHidden: form.getElementById('institution-warning')?.hidden,
+      unverifiedHidden: form.getElementById('institution-unverified')?.hidden,
+    });
+    expect(report.errors).toEqual([]);
+    expect(report.warnings.join(' ')).not.toMatch(/institution is unverified/i);
+    expect(validationClicks).toBeGreaterThan(0);
+    expect(institutionClicks).toBeGreaterThan(0);
+    expect(cancelClicks).toBe(0);
+    expect(
+      (form.getElementById('authorsCount') as HTMLInputElement).value,
+    ).toBe('1');
+  });
+
   it('saves with Save This Author, then Add Another Author reopens the dialog', async () => {
     const form = mountEditorialManagerFixture();
     const save = form.querySelector(

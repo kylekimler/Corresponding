@@ -12,6 +12,7 @@ import {
   EDIT_ROLES_RE,
   INSTITUTION_UNVERIFIED_RE,
   INSTITUTION_WARNING_RE,
+  VALIDATION_ISSUES_RE,
   SAVE_THIS_AUTHOR_RE,
   SELECT_ROLES_RE,
 } from './ids';
@@ -106,33 +107,75 @@ export function findAuthorSaveControl(root: Document): HTMLElement | null {
   return null;
 }
 
+function findDialogButton(
+  root: Document,
+  dialogText: RegExp,
+  buttonText: RegExp,
+): HTMLElement | null {
+  for (const doc of documentsIn(root)) {
+    const dialogs = doc.querySelectorAll(
+      '.ui-dialog, [role="dialog"], .ui-widget-content, .modal',
+    );
+    for (const dialog of dialogs) {
+      if (!isShown(dialog)) continue;
+      const text = (dialog.textContent ?? '').replace(/\s+/g, ' ');
+      if (!dialogText.test(text)) continue;
+      const labeled = Array.from(
+        dialog.querySelectorAll<HTMLElement>(
+          'button, [role="button"], .ui-button, .ui-button-text, a, input[type="button"]',
+        ),
+      ).find((el) => {
+        const label = (
+          el.textContent ??
+          el.getAttribute('value') ??
+          ''
+        )
+          .replace(/\s+/g, ' ')
+          .trim();
+        return buttonText.test(label);
+      });
+      if (!labeled) continue;
+      return (
+        labeled.closest('button') ??
+        labeled.closest('[role="button"]') ??
+        labeled
+      ) as HTMLElement;
+    }
+  }
+  return null;
+}
+
 /**
  * OK on the "Institution could not be identified… Proceed anyway?" warning.
  * Cancel is never returned.
  */
 export function findInstitutionWarningOk(root: Document): HTMLElement | null {
+  return findDialogButton(root, INSTITUTION_WARNING_RE, /^ok$/i);
+}
+
+/**
+ * OK on “Validation found issues. Review the highlighted counts and form.”
+ * That dialog is a click-through, not a reason to abandon Save This Author.
+ */
+export function findValidationIssuesOk(root: Document): HTMLElement | null {
+  const fromDialog = findDialogButton(root, VALIDATION_ISSUES_RE, /^ok$/i);
+  if (fromDialog) return fromDialog;
   for (const doc of documentsIn(root)) {
-    const dialogs = doc.querySelectorAll(
-      '.ui-dialog, [role="dialog"], .ui-widget-content',
-    );
-    for (const dialog of dialogs) {
-      if (!isShown(dialog)) continue;
-      const text = (dialog.textContent ?? '').replace(/\s+/g, ' ');
-      if (!INSTITUTION_WARNING_RE.test(text)) continue;
+    const nodes = doc.querySelectorAll('div, section, aside, p, span');
+    for (const node of nodes) {
+      if (!isShown(node)) continue;
+      const text = (node.textContent ?? '').replace(/\s+/g, ' ');
+      if (text.length > 400 || !VALIDATION_ISSUES_RE.test(text)) continue;
+      const scope =
+        node.closest('.ui-dialog, [role="dialog"], .modal') ?? node;
       const labeled = Array.from(
-        dialog.querySelectorAll<HTMLElement>(
-          'button, [role="button"], .ui-button, .ui-button-text',
+        scope.querySelectorAll<HTMLElement>(
+          'button, [role="button"], .ui-button, a',
         ),
-      ).find((el) => {
-        const label = (el.textContent ?? '').replace(/\s+/g, ' ').trim();
-        return /^ok$/i.test(label);
-      });
-      if (!labeled) continue;
-      const button =
-        labeled.closest('button') ??
-        labeled.closest('[role="button"]') ??
-        labeled;
-      return button as HTMLElement;
+      ).find((el) => /^ok$/i.test((el.textContent ?? '').trim()));
+      if (labeled) {
+        return (labeled.closest('button') ?? labeled) as HTMLElement;
+      }
     }
   }
   return null;
