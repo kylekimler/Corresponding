@@ -32,10 +32,12 @@ describe('ScholarOne capture-backed adapter (Bioinformatics)', () => {
     expect(preview.errors).toEqual([]);
     expect(preview.dryRun).toBe(true);
     expect(preview.plans.some((plan) => plan.authorSequence === 3)).toBe(true);
+    // The 2026-08-17 capture exposed AUTHOR_INSTITUTION_1, so institution is
+    // now written rather than left for manual entry.
     expect(
       preview.plans.some(
         (plan) =>
-          plan.fieldId.endsWith('.institution') && plan.action === 'unmapped',
+          plan.fieldId.endsWith('.institution') && plan.action === 'fill',
       ),
     ).toBe(true);
     expect(document.body.innerHTML).toBe(before);

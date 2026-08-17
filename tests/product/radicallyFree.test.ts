@@ -63,7 +63,7 @@ describe('radically free product', () => {
 
     // The popup must still state plainly that the product costs nothing.
     expect(readRepo('src/entrypoints/popup/App.tsx')).toContain(
-      'This app is free!',
+      'Free for scientists forever!',
     );
   });
 });

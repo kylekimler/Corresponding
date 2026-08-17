@@ -4,6 +4,40 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-17 17:10 UTC
+- CRediT on Editorial Manager is a two-control sequence, not a checkbox row sitting on the form. The pencil is `input type=image id=EditButton title="Edit Contributor Roles"` (`ToggleToEditMode()`). After ticking, the floppy `title="Collapse and Save Changes"` (`SaveHandler()`) commits the grid. That floppy also uses `id=SaveButton`, so author save now skips any control whose title is the collapse phrase.
+- There are 14 CRediT roles, so the boxes are `ContributorRole_0` through `ContributorRole_13` (0-based, not 13 boxes). Names live under `ContributorRolesGridView`. XPaths were location context only.
+- Fill now: open EditButton if no visible boxes → tick by label → collapse-and-save roles → author save. The older "Click here to select roles" text remains a fallback.
+- verification: EM fixture mirrors both image inputs; the pencil/floppy test asserts 14 ids, both clicks, and that the grid is collapsed afterwards.
+
+### 2026-08-17 17:00 UTC
+- PLOS Genetics Add New Author inspection (ids, not the structural probe): `ContributorRole_0` / `ContributorRole_1` with names under `ContributorRolesGridView`, confirming the 2026-08-15 prefix. XPaths were recorded only as location context and are not used as selectors.
+- `id="Zipcode"` / `name="ctl01$Zipcode"` is the required postal field. It is now filled from `affiliation.postalCode`. The input is Knockout-bound with `valueUpdate: 'blur'`, so every EM text write now dispatches blur after input/change; without that the model would keep an empty zip even when the box looked filled.
+- verification: unit tests for Zipcode write + blur, plus the existing EM / probe suites.
+
+### 2026-08-17 16:50 UTC
+- The latest Editorial Manager probe was `SubManuscriptData.aspx` titled Add/Edit/Remove Authors — the parent Manuscript Data page, not the Add New Author dialog. CKEditor toolbars drowned the output; no author-form ids were in it.
+- The built-in console probe now skips `cke_*` / `StepIndicator_*` chrome, reports `hasOpener` and iframe counts, and prefers author-like fields so a parent-page paste no longer hides the form.
+- Preview/Fill on that parent page now says it is the Authors list and that the form lives in the Add New Author window, instead of the generic not-found sentence.
+- CRediT: the 2026-08-15 PLOS ONE capture already had `ContributorRole_#` checkboxes; they are now ticked from roster roles, matching by visible label. If the panel is collapsed, Fill clicks "Click here to select roles" (screenshot text) and waits for the boxes. A save that the portal refuses with "Please select at least one Contributor Role" is reported in those words. Visibility checks are realm-safe — iframe documents have their own `HTMLElement`, so `instanceof` was treating a visible warning dialog as invisible.
+- verification: lint (eval warnings in the probe tests only), typecheck, 281 Vitest tests, production build, and six Playwright MV3 journeys passed.
+
+### 2026-08-17 16:00 UTC
+- A probe meant for Editorial Manager was run against ScholarOne, so Editorial Manager's two gaps are still uncaptured. The ScholarOne evidence was used rather than discarded.
+- ScholarOne control matching now reads `title`, not just `aria-label` and text. The probe showed many anchors carry their label only in attributes and have no text ("Add Author Link", "Institution", "Quick Fill"), which would have made the page-level Add Author control unfindable.
+- ScholarOne commit now watches for `alertButton`, the portal's own alert dialog, and reports its text verbatim. Previously a dialog-refused save would have run out the clock and produced a generic "did not add the author" message — the same unhelpful failure shape Editorial Manager's Contributor Roles warning produced. Casing is preserved because the text is shown to the person, and the dialog is left open for them to dismiss.
+- removed two dead timing constants that lint had been failing on.
+- verification: lint (one pre-existing warning), typecheck, 277 Vitest tests, production build, and six Playwright MV3 journeys passed.
+
+### 2026-08-17 14:00 UTC
+- ScholarOne, from the 2026-08-17 capture: institution is `name="AUTHOR_INSTITUTION_1"` with a generated combobox id, so it is now located by name and filled. It had previously been reported unmapped because the earlier capture lacked the field.
+- ScholarOne new-co-author path: an unknown email produces an inline "create a new co-author" banner rather than the Yes/No modal. Lookup now settles on either outcome and follows the banner link, so an unrecognised email no longer stalls.
+- Editorial Manager: the reported failure is not a fill failure. The screenshots show the open form correctly filled and the portal refusing only on Contributor Roles. Two gaps remain, both needing capture evidence rather than guessed ids: the roles panel behind the pencil icon, and the unlabelled toolbar icon for Save and Add Another Author. Control matching now also reads `title` and `alt`, which is how icon buttons carry labels, and clicks the nearest actionable ancestor; this is a hypothesis pending a capture.
+- Editorial Manager message: the author-form-not-found error now names the separate-window case, which is what the popup actually hits when Add New Author opens its own window.
+- known gap: `Zip or Postal Code` is required on the Editorial Manager form but absent from the captured ids, so the requirement is reported and cannot yet be filled.
+- copy: "This app is free!" became "Free for scientists forever!", with the `radicallyFree` guard updated to match.
+- verification: 276 Vitest tests, typecheck, production build, and six Playwright MV3 journeys passed.
+
 ### 2026-08-17 13:15 UTC
 - ScholarOne recognition, root cause: `DETECT`, `PREVIEW`, and `FILL` were broadcast to every frame with `tabs.sendMessage`, and Chrome resolves with whichever frame replies first. The `mc.manuscriptcentral.com/bioinformatics` capture shows a second readable frame with zero fields, so that frame could answer "unknown" and win the race even though the top frame scored ~0.95. Diagnostics already walked frames; the fill path did not.
 - fix: detection now asks every injectable frame and keeps the strongest answer, preferring a real platform match over the highest raw confidence. The winning frame id is remembered per tab and reused for Preview, Fill, and Validate through `TabTarget.frameId`, so operations target the frame that recognised the portal. The adapter ids and thresholds were already correct and are unchanged.

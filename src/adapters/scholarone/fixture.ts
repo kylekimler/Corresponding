@@ -6,6 +6,7 @@
 
 import {
   ADD_REMOVE_AUTHOR,
+  ALERT_BUTTON,
   AUTHOR_EMAIL,
   AUTHOR_FIRST_NAME,
   AUTHOR_LAST_NAME,
@@ -25,6 +26,7 @@ import {
   authorCountry,
   authorDepartment,
   authorPhone,
+  authorInstitutionName,
   authorState,
   authorStateId,
 } from './ids';
@@ -75,6 +77,16 @@ export interface ScholarOneFixtureOptions {
   >;
   /** Countries available in COUNTRY_1. */
   countries?: string[];
+  /**
+   * The portal refuses the commit through its own alert dialog instead of
+   * rejecting a field, and shows this text.
+   */
+  alertOnCommit?: string;
+  /**
+   * Unknown emails produce the inline "No co-author found … create a new
+   * co-author" banner instead of the confirmation modal.
+   */
+  inlineCreateBanner?: boolean;
 }
 
 export interface ScholarOneFixtureHarness {
@@ -84,6 +96,7 @@ export interface ScholarOneFixtureHarness {
   saveClicks(): number;
   submitClicks(): number;
   modalYesClicks(): number;
+  createCoauthorClicks(): number;
   /** Name fields written while an email lookup was still in flight. */
   namesWrittenDuringLookup(): number;
   formVisible(): boolean;
@@ -155,6 +168,16 @@ export function mountScholarOneFixture(
           <a href="#" id="${EMAIL_SEARCH_MODAL_NO}">No</a>
         </div>
 
+        <div id="scholarone-alert" role="dialog" hidden>
+          ${options.alertOnCommit ?? ''}
+          <a href="#" id="${ALERT_BUTTON}">Ok</a>
+        </div>
+
+        <div id="no-coauthor-banner" hidden>
+          No co-author found. Please search again using another e-mail address or
+          <a href="#" id="create-new-coauthor">create a new co-author</a>
+        </div>
+
         <div id="author-details" hidden>
           <label for="${AUTHOR_EMAIL}">Email Address</label>
           <input type="text" id="${AUTHOR_EMAIL}" name="${AUTHOR_EMAIL}" />
@@ -183,6 +206,13 @@ export function mountScholarOneFixture(
 
           <label for="ORDER_1">Order</label>
           <select id="ORDER_1" name="ORDER_1"><option value="1">1</option></select>
+
+          <label for="combobox-1014-inputEl">Institution</label>
+          <input
+            type="text"
+            id="combobox-1014-inputEl"
+            name="${authorInstitutionName(1)}"
+          />
 
           <label for="${authorDepartment(1)}">Department</label>
           <input type="text" id="${authorDepartment(1)}" name="${authorDepartment(1)}" />
@@ -225,6 +255,9 @@ export function mountScholarOneFixture(
   const form = document.getElementById('author-form')!;
   const details = document.getElementById('author-details')!;
   const modal = document.getElementById('email-search-modal')!;
+  const banner = document.getElementById('no-coauthor-banner')!;
+  const alertBox = document.getElementById('scholarone-alert')!;
+  const createCoauthor = document.getElementById('create-new-coauthor')!;
   const rows = document.getElementById('author-rows')!;
   const findEmail = document.getElementById(FIND_AUTHOR_EMAIL) as HTMLInputElement;
   const searchBtn = document.getElementById(SEARCH_AUTHOR) as HTMLButtonElement;
@@ -240,6 +273,7 @@ export function mountScholarOneFixture(
   let saveClicks = 0;
   let submitClicks = 0;
   let modalYesClicks = 0;
+  let createCoauthorClicks = 0;
   let lookupInFlight = false;
   let namesWrittenDuringLookup = 0;
   let pendingEmail = '';
@@ -335,6 +369,7 @@ export function mountScholarOneFixture(
     form.hidden = false;
     details.hidden = true;
     modal.hidden = true;
+    banner.hidden = true;
     findEmail.value = '';
     clearDetails();
   }
@@ -369,9 +404,22 @@ export function mountScholarOneFixture(
         writeField(authorPhone(1), known.phone ?? '');
         return;
       }
+      if (options.inlineCreateBanner) {
+        banner.hidden = false;
+        details.hidden = true;
+        return;
+      }
       modal.hidden = false;
       details.hidden = true;
     }, delayMs);
+  });
+
+  createCoauthor.addEventListener('click', (event) => {
+    event.preventDefault();
+    createCoauthorClicks += 1;
+    banner.hidden = true;
+    details.hidden = false;
+    writeField(AUTHOR_EMAIL, pendingEmail);
   });
 
   modalYes.addEventListener('click', (event) => {
@@ -395,6 +443,10 @@ export function mountScholarOneFixture(
     const firstName = readField(AUTHOR_FIRST_NAME);
     const lastName = readField(AUTHOR_LAST_NAME);
     if (!email || !firstName || !lastName) return;
+    if (options.alertOnCommit) {
+      alertBox.hidden = false;
+      return;
+    }
     saved.push({
       email,
       firstName,
@@ -451,6 +503,7 @@ export function mountScholarOneFixture(
     saveClicks: () => saveClicks,
     submitClicks: () => submitClicks,
     modalYesClicks: () => modalYesClicks,
+    createCoauthorClicks: () => createCoauthorClicks,
     namesWrittenDuringLookup: () => namesWrittenDuringLookup,
     formVisible: () => !form.hidden,
   };

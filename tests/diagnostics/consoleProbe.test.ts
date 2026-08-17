@@ -44,4 +44,21 @@ describe('structural frame probe', () => {
     expect(text).not.toContain('hunter2');
     expect(text).not.toContain('id=password');
   });
+
+  it('omits CKEditor and step-indicator chrome so author fields stay visible', () => {
+    document.body.innerHTML = `
+      <button id="StepIndicator_stepManuscriptDataButton">Manuscript Data</button>
+      <a id="cke_12" title="Paste from Word">Paste</a>
+      <input id="FirstName" name="FirstName" />
+      <a title="Click here to select roles">roles</a>
+    `;
+
+    const text = eval(STRUCTURAL_FRAME_PROBE) as string;
+    expect(text).toContain('id=FirstName');
+    expect(text).toContain('Click here to select roles');
+    expect(text).not.toContain('StepIndicator');
+    expect(text).not.toContain('id=cke_');
+    expect(text).toContain('authorFieldCount:');
+    expect(text).toContain('hasOpener:');
+  });
 });

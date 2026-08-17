@@ -1,6 +1,8 @@
 /**
  * Editorial Manager author-form IDs from the 2026-08-15 PLOS ONE
- * RequiredRegistrationQuestions.aspx capture. Do not invent additional IDs.
+ * RequiredRegistrationQuestions.aspx capture, plus Zipcode and confirmed
+ * ContributorRole_# from the 2026-08-17 PLOS Genetics Add New Author dialog.
+ * Do not invent additional IDs.
  */
 
 export const AUTHOR_FIELD_IDS = {
@@ -13,6 +15,7 @@ export const AUTHOR_FIELD_IDS = {
   department: 'Department',
   city: 'City',
   state: 'State',
+  zipcode: 'Zipcode',
   country: 'CountryCode',
   corresponding: 'CorrespondingAuthorCheckbox',
 } as const;
@@ -34,3 +37,32 @@ export const MANUSCRIPT_FIELD_IDS = [
 ] as const;
 
 export const ADD_ANOTHER_AUTHOR_RE = /add\s+another\s+author/i;
+
+/**
+ * CRediT checkboxes from the 2026-08-15 PLOS ONE RequiredRegistrationQuestions
+ * capture. Index is not a role mapping — match by the visible label.
+ */
+export const CONTRIBUTOR_ROLE_PREFIX = 'ContributorRole_';
+
+/**
+ * Pencil that runs ToggleToEditMode. Observed 2026-08-17 on PLOS Genetics:
+ * `<input type="image" id="EditButton" title="Edit Contributor Roles">`.
+ */
+export const EDIT_ROLES_ID = 'EditButton';
+export const EDIT_ROLES_RE = /edit contributor roles/i;
+
+/** Fallback text next to the pencil when the title is missing. */
+export const SELECT_ROLES_RE = /click here to select roles/i;
+
+/**
+ * Floppy that commits the ticked roles and collapses the grid.
+ * Same id as the author SaveButton (`SaveButton`), distinguished by title:
+ * "Collapse and Save Changes" / onclick SaveHandler().
+ */
+export const COLLAPSE_SAVE_ROLES_RE = /collapse and save changes/i;
+
+/** Portal dialog that refuses a save with no role chosen. */
+export const ROLES_WARNING_RE = /please select at least one contributor role/i;
+
+/** Parent Manuscript Data authors list, not the Add New Author form. */
+export const AUTHORS_LIST_TITLE_RE = /add\/edit\/remove authors/i;

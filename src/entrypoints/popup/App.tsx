@@ -760,7 +760,7 @@ export function App({ surface = 'popup' }: { surface?: 'popup' | 'page' } = {}) 
         <header className="app-header">
           <h1>Corresponding</h1>
           <p className="brand-line">Giving scientists more time to do science.</p>
-          <p className="free-line">This app is free!</p>
+          <p className="free-line">Free for scientists forever!</p>
         </header>
 
         <PortalBadge

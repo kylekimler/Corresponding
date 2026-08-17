@@ -5,7 +5,8 @@ import {
   type Author,
   type Roster,
 } from '@/schema/author';
-import { identitiesConflict, readValue, setValue } from '../dom';
+import { parseCreditRoles, type CreditRole } from '@/schema/credit';
+import { getInput, identitiesConflict, readValue, setValue } from '../dom';
 import { evaluatePortalRequirements } from '../requirements';
 import { assertSafeMutationTarget, listDangerousControls } from '../safety';
 import type {
@@ -18,14 +19,32 @@ import type {
   ValidateReport,
 } from '../types';
 import {
+  authorsListGuidance,
   findAddAnotherAuthorControl,
   findAuthorFormDocument,
+  findRolesCollapseSave,
+  findSelectRolesControl,
+  isAuthorsListPage,
+  isRolesCollapseSave,
 } from './documents';
 import {
   AUTHOR_FIELD_IDS,
   AUTHOR_SAVE_ID,
+  CONTRIBUTOR_ROLE_PREFIX,
   MANUSCRIPT_FIELD_IDS,
+  ROLES_WARNING_RE,
 } from './ids';
+
+const ROLE_WAIT_MS = 2_000;
+const ROLE_INTERVAL_MS = 40;
+const SAVE_WATCH_MS = 1_200;
+const SAVE_INTERVAL_MS = 40;
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, ms);
+  });
+}
 
 function planAction(
   current: string,
@@ -96,6 +115,11 @@ function buildAuthorPlans(
     },
     { id: AUTHOR_FIELD_IDS.city, label: 'City', value: aff?.city },
     { id: AUTHOR_FIELD_IDS.state, label: 'State', value: aff?.state },
+    {
+      id: AUTHOR_FIELD_IDS.zipcode,
+      label: 'Zip or Postal Code',
+      value: aff?.postalCode,
+    },
     { id: AUTHOR_FIELD_IDS.country, label: 'Country', value: aff?.country },
   ];
 
@@ -127,6 +151,10 @@ function applyTextPlan(
     overwrite: true,
     dryRun: false,
   });
+  // PLOS Genetics Add New Author binds Zipcode (and likely siblings) with
+  // Knockout `valueUpdate: 'blur'`. Without blur the model never sees the text.
+  const el = getInput(form, plan.fieldId);
+  el?.dispatchEvent(new Event('blur', { bubbles: true }));
 }
 
 function applyCorresponding(
@@ -169,8 +197,179 @@ function applyCorresponding(
   return plan;
 }
 
+function checkboxLabelText(input: HTMLInputElement): string {
+  const aria = input.getAttribute('aria-label');
+  if (aria?.trim()) return aria.trim();
+  if (input.id) {
+    const explicit = Array.from(
+      input.ownerDocument.querySelectorAll('label[for]'),
+    ).find((label) => label.getAttribute('for') === input.id);
+    if (explicit?.textContent?.trim()) return explicit.textContent.trim();
+  }
+  const wrapping = input.closest('label');
+  if (wrapping?.textContent?.trim()) return wrapping.textContent.trim();
+  return input.nextElementSibling?.textContent?.trim() ?? '';
+}
+
+export function creditRoleCheckboxes(doc: Document): Array<{
+  input: HTMLInputElement;
+  role: CreditRole;
+}> {
+  const found: Array<{ input: HTMLInputElement; role: CreditRole }> = [];
+  for (const input of Array.from(
+    doc.querySelectorAll<HTMLInputElement>(
+      `input[type="checkbox"][id^="${CONTRIBUTOR_ROLE_PREFIX}"]`,
+    ),
+  )) {
+    const [role] = parseCreditRoles(checkboxLabelText(input));
+    if (role && role !== 'other') found.push({ input, role });
+  }
+  return found;
+}
+
+function planCreditRoles(form: Document, author: Author): FieldPlan[] {
+  if (author.creditRoles.length === 0) {
+    return [
+      {
+        fieldId: `${CONTRIBUTOR_ROLE_PREFIX}*`,
+        label: 'Contributor Roles',
+        authorSequence: author.sequence,
+        action: 'missing_source',
+        reason: 'Roster has no CRediT roles; Editorial Manager will refuse to save',
+      },
+    ];
+  }
+  const boxes = creditRoleCheckboxes(form);
+  if (boxes.length === 0) {
+    return [
+      {
+        fieldId: `${CONTRIBUTOR_ROLE_PREFIX}*`,
+        label: 'Contributor Roles',
+        authorSequence: author.sequence,
+        action: 'unmapped',
+        proposedValue: author.creditRoles.join(', '),
+        reason:
+          'ContributorRole_ checkboxes were not in the open form; open Click here to select roles if the panel is collapsed',
+      },
+    ];
+  }
+  return author.creditRoles
+    .filter((role) => role !== 'other')
+    .map((role) => {
+      const match = boxes.find((box) => box.role === role);
+      return {
+        fieldId: match?.input.id ?? `${CONTRIBUTOR_ROLE_PREFIX}${role}`,
+        label: `Contributor role: ${role}`,
+        authorSequence: author.sequence,
+        action: match ? (match.input.checked ? 'preserve' : 'fill') : 'unmapped',
+        proposedValue: role,
+      };
+    });
+}
+
+function tickCreditRoles(form: Document, author: Author): void {
+  if (author.creditRoles.length === 0) return;
+  for (const { input, role } of creditRoleCheckboxes(form)) {
+    if (!author.creditRoles.includes(role) || input.checked) continue;
+    assertSafeMutationTarget(input);
+    input.checked = true;
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+}
+
+function isVisible(el: Element): boolean {
+  // iframe documents have their own HTMLElement realm, so instanceof fails.
+  let current: Element | null = el;
+  while (current) {
+    if ('hidden' in current && Boolean((current as HTMLElement).hidden)) {
+      return false;
+    }
+    const style = current.ownerDocument.defaultView?.getComputedStyle(current);
+    if (style && (style.display === 'none' || style.visibility === 'hidden')) {
+      return false;
+    }
+    current = current.parentElement;
+  }
+  return true;
+}
+
+function rolesWarningText(root: Document): string {
+  const docs = collectReadableDocuments(root).documents.map((f) => f.doc);
+  if (!docs.includes(root)) docs.unshift(root);
+  for (const doc of docs) {
+    const candidates = [
+      ...Array.from(
+        doc.querySelectorAll(
+          '[role="dialog"], .modal, .ui-dialog, [id*="warning"], [id*="Warning"]',
+        ),
+      ),
+      ...Array.from(doc.querySelectorAll('div, section, aside')).filter((el) =>
+        /warning|contributor role/i.test(
+          `${el.id} ${el.className} ${el.getAttribute('title') ?? ''}`,
+        ),
+      ),
+    ];
+    for (const node of candidates) {
+      if (!isVisible(node)) continue;
+      const text = (node.textContent ?? '').replace(/\s+/g, ' ').trim();
+      if (!ROLES_WARNING_RE.test(text)) continue;
+      const match = text.match(
+        /please select at least one contributor role[^.!]*/i,
+      );
+      return match?.[0]?.trim() ?? 'Please select at least one Contributor Role.';
+    }
+  }
+  return '';
+}
+
+function visibleCreditRoleCount(form: Document): number {
+  return creditRoleCheckboxes(form).filter(({ input }) => isVisible(input))
+    .length;
+}
+
+async function openRolesPanel(form: Document): Promise<void> {
+  // Checkboxes can already be in the DOM and still hidden until EditButton
+  // runs ToggleToEditMode.
+  if (visibleCreditRoleCount(form) > 0) return;
+  const trigger = findSelectRolesControl(form);
+  if (!trigger) return;
+  assertSafeMutationTarget(trigger);
+  trigger.click();
+  const started = Date.now();
+  while (Date.now() - started < ROLE_WAIT_MS) {
+    if (visibleCreditRoleCount(form) > 0) return;
+    await delay(ROLE_INTERVAL_MS);
+  }
+}
+
+function collapseRolesPanel(form: Document): boolean {
+  const save = findRolesCollapseSave(form);
+  if (!save) return false;
+  assertSafeMutationTarget(save);
+  save.click();
+  return true;
+}
+
+async function watchSaveWarning(
+  root: Document,
+  form: Document,
+): Promise<string> {
+  const started = Date.now();
+  while (Date.now() - started < SAVE_WATCH_MS) {
+    const warning = rolesWarningText(root) || rolesWarningText(form);
+    if (warning) return warning;
+    await delay(SAVE_INTERVAL_MS);
+  }
+  return '';
+}
+
 function clickAuthorSave(form: Document): boolean {
-  const save = form.getElementById(AUTHOR_SAVE_ID);
+  // Both the roles floppy and the author save can use id="SaveButton".
+  // Never click "Collapse and Save Changes" here — that only commits roles.
+  const save = Array.from(form.querySelectorAll('input, button, a')).find(
+    (el) => el.id === AUTHOR_SAVE_ID && !isRolesCollapseSave(el),
+  );
   if (!save || typeof (save as HTMLElement).click !== 'function') return false;
   assertSafeMutationTarget(save);
   (save as HTMLElement).click();
@@ -298,7 +497,9 @@ export const editorialManagerAdapter: PlatformAdapter = {
         unmapped: 0,
         warnings,
         errors: [
-          'Editorial Manager author form was not found. Open Manuscript Data → Authors (Add/Edit Author), then retry.',
+          isAuthorsListPage(doc)
+            ? authorsListGuidance()
+            : 'Editorial Manager author form was not found in this window. If Add New Author opened as its own window, click the Corresponding icon while that window is focused. Otherwise open Manuscript Data → Authors (Add/Edit Author) and retry.',
         ],
         requirements,
       };
@@ -311,6 +512,7 @@ export const editorialManagerAdapter: PlatformAdapter = {
         plans.push(
           applyCorresponding(form, first, options, authorFormConflict(form, first)),
         );
+        plans.push(...planCreditRoles(form, first));
       }
       if (authors.length > 1) {
         warnings.push(
@@ -326,10 +528,16 @@ export const editorialManagerAdapter: PlatformAdapter = {
         authorPlans.push(
           applyCorresponding(currentForm, author, options, conflict),
         );
+        authorPlans.push(...planCreditRoles(currentForm, author));
         plans.push(...authorPlans);
         for (const plan of authorPlans) {
           if (plan.fieldId === AUTHOR_FIELD_IDS.corresponding) continue;
+          if (plan.fieldId.startsWith(CONTRIBUTOR_ROLE_PREFIX)) continue;
           applyTextPlan(currentForm, plan, options);
+        }
+        if (!conflict) {
+          tickCreditRoles(currentForm, author);
+          collapseRolesPanel(currentForm);
         }
         if (conflict) {
           warnings.push(
@@ -360,6 +568,111 @@ export const editorialManagerAdapter: PlatformAdapter = {
           assertSafeMutationTarget(add);
           add.click();
         }
+      }
+    }
+
+    if (manuscriptChanged(doc, manuscriptBefore)) {
+      errors.push(
+        'Manuscript title/abstract fields changed during fill; author-only write is required.',
+      );
+    }
+
+    const dangerous = listDangerousControls(doc);
+    if (dangerous.length) {
+      warnings.push(
+        `Detected ${dangerous.length} submit/certify-like controls; none were clicked`,
+      );
+    }
+
+    return {
+      platformId: 'editorial-manager',
+      dryRun: options.dryRun,
+      overwrite: options.overwrite,
+      plans,
+      ...summarize(plans),
+      warnings,
+      errors,
+      requirements,
+    };
+  },
+
+  async fillAsync(
+    doc: Document,
+    roster: Roster,
+    options: FillOptions,
+  ): Promise<FillReport> {
+    if (options.dryRun) return this.fill(doc, roster, options);
+
+    const authors = sortAuthors(roster.authors);
+    const warnings: string[] = [];
+    const errors: string[] = [];
+    const plans: FieldPlan[] = [];
+    const form = findAuthorFormDocument(doc);
+    const manuscriptBefore = snapshotManuscript(doc);
+    const requirements = evaluatePortalRequirements('editorial-manager', roster);
+
+    if (!form) {
+      return {
+        ...this.fill(doc, roster, options),
+      };
+    }
+
+    for (let index = 0; index < authors.length; index += 1) {
+      const author = authors[index]!;
+      const currentForm = findAuthorFormDocument(doc) ?? form;
+      const conflict = authorFormConflict(currentForm, author);
+      const authorPlans = buildAuthorPlans(currentForm, author, options);
+      authorPlans.push(
+        applyCorresponding(currentForm, author, options, conflict),
+      );
+      plans.push(...authorPlans);
+      for (const plan of authorPlans) {
+        if (plan.fieldId === AUTHOR_FIELD_IDS.corresponding) continue;
+        applyTextPlan(currentForm, plan, options);
+      }
+      if (conflict) {
+        warnings.push(
+          `Author ${author.sequence} skipped because the open form already has a conflicting identity.`,
+        );
+        break;
+      }
+
+      await openRolesPanel(currentForm);
+      plans.push(...planCreditRoles(currentForm, author));
+      tickCreditRoles(currentForm, author);
+      collapseRolesPanel(currentForm);
+
+      const saved = clickAuthorSave(currentForm);
+      if (!saved) {
+        warnings.push(
+          'Author Save control was not found. Values were written into the open form only.',
+        );
+        if (index < authors.length - 1) {
+          warnings.push(
+            `${authors.length - index - 1} remaining authors were not opened.`,
+          );
+        }
+        break;
+      }
+
+      const warning = await watchSaveWarning(doc, currentForm);
+      if (warning) {
+        errors.push(
+          `Editorial Manager refused author ${author.sequence}: ${warning}`,
+        );
+        break;
+      }
+
+      if (index < authors.length - 1) {
+        const add = findAddAnotherAuthorControl(doc);
+        if (!add) {
+          warnings.push(
+            `${authors.length - index - 1} remaining authors need Add Another Author — that control was not found after Save.`,
+          );
+          break;
+        }
+        assertSafeMutationTarget(add);
+        add.click();
       }
     }
 

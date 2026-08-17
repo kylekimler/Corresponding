@@ -35,6 +35,20 @@ export function authorCity(index = 1): string {
 export function authorPhone(index = 1): string {
   return `AUTHOR_PHONE_${index}`;
 }
+/**
+ * Institution is a combobox whose id carries a generated number
+ * (`combobox-1014-inputEl`), so only the name attribute is stable.
+ * Observed 2026-08-17.
+ */
+export function authorInstitutionName(index = 1): string {
+  return `AUTHOR_INSTITUTION_${index}`;
+}
+
+/** ScholarOne's own alert dialog, which can refuse a save. Observed 2026-08-17. */
+export const ALERT_BUTTON = 'alertButton';
+
+/** Inline banner offered when an email search finds no existing co-author. */
+export const CREATE_NEW_COAUTHOR_RE = /create\s+a\s+new\s+co-?author/i;
 
 export const UPDATE_AUTHOR_ORDER = 'UpdateAuthorOrderBtn';
 export const ADD_REMOVE_AUTHOR = 'addRemoveAuthor';

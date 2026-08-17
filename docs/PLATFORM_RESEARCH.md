@@ -52,6 +52,96 @@ Research date: 2026-08-12. Based on public documentation and vendor marketing pa
   submission still required before claiming production validation.
 
 
+
+
+## ScholarOne — labels live in attributes (2026-08-17, second probe)
+
+A probe intended for Editorial Manager was run on ScholarOne instead
+(`searchAuthorId`, `emailSearchModal_yes`, Clarivate logos). It still yielded
+useful evidence: many ScholarOne anchors have **no text at all** and carry their
+label only in `title`/`aria-label` — "Add Author Link", "Institution",
+"Quick Fill", "Add Another Institution". Control matching now reads `title` in
+addition to `aria-label` and text.
+
+The same probe confirmed `alertButton` ("Ok"), ScholarOne's own alert dialog. A
+commit can be refused through that dialog rather than by rejecting a field, so
+the commit wait now watches for it and reports the portal's wording verbatim
+instead of timing out. The dialog is left open for the person to dismiss.
+
+The fourteen `AUTHOR_CONTRIBUTOR_ROLE_SELECT_#` checkboxes have no
+`label[for=...]`; their text sits in adjacent markup, which is why the
+label-derivation in the adapter reads surrounding text rather than a label
+element.
+
+Observed but not wired, pending a need: "Create Account", "Add Created Author",
+"Search Again", "Add Another Institution", "Quick Fill", `modal-yes-button`.
+
+## Editorial Manager — still uncaptured
+
+No Editorial Manager probe has been collected yet. The two gaps remain exactly as
+recorded below: the Contributor Roles checkbox panel behind the pencil icon, and
+the unlabelled toolbar icon for Save and Add Another Author. `Zip or Postal Code`
+is required on the form but still has no known id.
+
+## ScholarOne — new-co-author path and institution (2026-08-17)
+
+An email search that finds nothing shows an inline banner, "No co-author found.
+Please search again using another e-mail address or create a new co-author",
+rather than the Yes/No modal. Corresponding now settles on either outcome and
+follows the banner link when it appears.
+
+The same capture exposed the institution field: `name="AUTHOR_INSTITUTION_1"`
+with `id="combobox-1014-inputEl"`. The id carries a generated number, so only
+the name is stable. Corresponding writes the institution text; ScholarOne may
+still require the person to pick a matching institution from its own list.
+
+`AUTHOR_CONTRIBUTOR_DEGREE_OF_CONTRIBUTION_ID_#` (Equal, Lead, Supporting)
+remains untouched — the roster has no canonical degree-of-contribution concept.
+
+## Editorial Manager — Authors list vs Add New Author (2026-08-17)
+
+A probe from `editorialmanager.com/pgenetics/SubManuscriptData.aspx` titled
+Add/Edit/Remove Authors was the **parent Manuscript Data page**, not the Add New
+Author dialog. It is full of CKEditor title-toolbar chrome (`cke_*`,
+`StepIndicator_*`) and has no `FirstName` / `Email` fields. The author form
+still lives in the Add New Author window.
+
+Corresponding now:
+
+- names that page in the error, instead of the generic "author form was not found"
+- skips CKEditor / step-indicator chrome in the built-in console probe, reports
+  `hasOpener` / iframe counts, and prefers author-like fields so the next paste
+  is not 200 lines of Paste-from-Word buttons
+- fills the 14 `ContributorRole_0` … `ContributorRole_13` checkboxes (CRediT
+  has fourteen roles; the ids are 0-based), matching by visible label
+- opens the panel with `EditButton` (`title="Edit Contributor Roles"`,
+  `ToggleToEditMode()`), then commits ticks with the roles floppy
+  (`title="Collapse and Save Changes"`, `SaveHandler()`) before the author save
+- never treats that roles floppy as the author `SaveButton` — both can share
+  the same id
+- reports the portal's "Please select at least one Contributor Role" warning
+  instead of pretending the save worked
+
+`Zipcode` (`name="ctl01$Zipcode"`) is now filled from the roster postal code.
+The field uses Knockout `valueUpdate: 'blur'`, so Corresponding blurs after
+writing. The Save-and-Add-Another-Author toolbar icon is still a title/alt
+hypothesis.
+
+## Editorial Manager — still needed
+
+Filling the open Add New Author form, Zipcode, and CRediT checkboxes is
+capture-backed. One control is still a hypothesis:
+
+1. **Save and Add Another Author.** The dialog's toolbar is four unlabelled
+   icons. Matching now also reads `title` and `alt`, which is how icon buttons
+   normally carry their label, but that is a hypothesis until a capture confirms
+   it.
+
+`Zipcode` is required and is now filled from the roster postal code (PLOS
+Genetics Add New Author, 2026-08-17). The Add New Author dialog can open as its
+own window; the popup only reaches the focused window, and the error text now
+says so.
+
 ## ScholarOne — frames and CRediT
 
 The Bioinformatics capture (`mc.manuscriptcentral.com/bioinformatics`) has the
