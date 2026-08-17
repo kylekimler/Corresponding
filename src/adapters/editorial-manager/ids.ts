@@ -1,6 +1,8 @@
 /**
  * Editorial Manager author-form IDs from the 2026-08-15 PLOS ONE
- * RequiredRegistrationQuestions.aspx capture. Do not invent additional IDs.
+ * RequiredRegistrationQuestions.aspx capture, plus Zipcode and confirmed
+ * ContributorRole_# from the 2026-08-17 PLOS Genetics Add New Author dialog.
+ * Do not invent additional IDs.
  */
 
 export const AUTHOR_FIELD_IDS = {
@@ -13,6 +15,7 @@ export const AUTHOR_FIELD_IDS = {
   department: 'Department',
   city: 'City',
   state: 'State',
+  zipcode: 'Zipcode',
   country: 'CountryCode',
   corresponding: 'CorrespondingAuthorCheckbox',
 } as const;

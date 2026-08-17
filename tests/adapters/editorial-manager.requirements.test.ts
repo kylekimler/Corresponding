@@ -154,6 +154,36 @@ describe('Editorial Manager contributor-role requirement', () => {
     expect(form.getElementById('roles-warning')?.hidden).toBe(false);
   });
 
+  it('writes Zipcode from the roster postal code and blurs so Knockout sees it', () => {
+    const form = mountEditorialManagerFixture({ includeAddAnotherAuthor: false });
+    const zip = form.getElementById('Zipcode') as HTMLInputElement;
+    let blurs = 0;
+    let valueAtBlur = '';
+    zip.addEventListener('blur', () => {
+      blurs += 1;
+      valueAtBlur = zip.value;
+    });
+
+    const report = editorialManagerAdapter.fill(
+      document,
+      makeRoster([author(1, ['methodology'])]),
+      { overwrite: true, dryRun: false },
+    );
+
+    console.log('EM zip fill', {
+      valueAtBlur,
+      afterSave: zip.value,
+      blurs,
+      plan: report.plans.find((p) => p.fieldId === 'Zipcode'),
+    });
+    // Save clears the form; the value that Knockout would have seen is the blur.
+    expect(valueAtBlur).toBe('02115');
+    expect(blurs).toBeGreaterThan(0);
+    expect(report.plans.some((p) => p.fieldId === 'Zipcode' && p.action === 'fill')).toBe(
+      true,
+    );
+  });
+
   it('surfaces the requirement to the popup as an explained notice', () => {
     mountEditorialManagerFixture();
     const roster = makeRoster([author(1), author(2)]);

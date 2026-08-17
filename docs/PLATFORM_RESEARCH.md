@@ -118,27 +118,25 @@ Corresponding now:
 - reports the portal's "Please select at least one Contributor Role" warning
   instead of pretending the save worked
 
-`Zip or Postal Code` is still uncaptured. The Save-and-Add-Another-Author
-toolbar icon is still a title/alt hypothesis.
+`Zipcode` (`name="ctl01$Zipcode"`) is now filled from the roster postal code.
+The field uses Knockout `valueUpdate: 'blur'`, so Corresponding blurs after
+writing. The Save-and-Add-Another-Author toolbar icon is still a title/alt
+hypothesis.
 
 ## Editorial Manager — still needed
 
-Filling the open Add New Author form works. Two things do not, and both need a
-capture rather than a guess:
+Filling the open Add New Author form, Zipcode, and CRediT checkboxes is
+capture-backed. One control is still a hypothesis:
 
-1. **Contributor Roles.** The field reads "Click here to select roles" beside a
-   pencil icon; saving without a role raises "Contributor Roles Save Warnings —
-   Please select at least one Contributor Role." The expanded checkbox panel has
-   never been captured, so no ids are known.
-2. **Save and Add Another Author.** The dialog's toolbar is four unlabelled
+1. **Save and Add Another Author.** The dialog's toolbar is four unlabelled
    icons. Matching now also reads `title` and `alt`, which is how icon buttons
    normally carry their label, but that is a hypothesis until a capture confirms
    it.
 
-Also unresolved: `Zip or Postal Code` is required on the form but absent from the
-captured id list, so it cannot be filled yet. The Add New Author dialog can open
-as its own window; the popup only reaches the focused window, and the error text
-now says so.
+`Zipcode` is required and is now filled from the roster postal code (PLOS
+Genetics Add New Author, 2026-08-17). The Add New Author dialog can open as its
+own window; the popup only reaches the focused window, and the error text now
+says so.
 
 ## ScholarOne — frames and CRediT
 

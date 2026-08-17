@@ -4,6 +4,11 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-17 17:00 UTC
+- PLOS Genetics Add New Author inspection (ids, not the structural probe): `ContributorRole_0` / `ContributorRole_1` with names under `ContributorRolesGridView`, confirming the 2026-08-15 prefix. XPaths were recorded only as location context and are not used as selectors.
+- `id="Zipcode"` / `name="ctl01$Zipcode"` is the required postal field. It is now filled from `affiliation.postalCode`. The input is Knockout-bound with `valueUpdate: 'blur'`, so every EM text write now dispatches blur after input/change; without that the model would keep an empty zip even when the box looked filled.
+- verification: unit tests for Zipcode write + blur, plus the existing EM / probe suites.
+
 ### 2026-08-17 16:50 UTC
 - The latest Editorial Manager probe was `SubManuscriptData.aspx` titled Add/Edit/Remove Authors — the parent Manuscript Data page, not the Add New Author dialog. CKEditor toolbars drowned the output; no author-form ids were in it.
 - The built-in console probe now skips `cke_*` / `StepIndicator_*` chrome, reports `hasOpener` and iframe counts, and prefers author-like fields so a parent-page paste no longer hides the form.

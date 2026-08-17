@@ -6,7 +6,7 @@ import {
   type Roster,
 } from '@/schema/author';
 import { parseCreditRoles, type CreditRole } from '@/schema/credit';
-import { identitiesConflict, readValue, setValue } from '../dom';
+import { getInput, identitiesConflict, readValue, setValue } from '../dom';
 import { evaluatePortalRequirements } from '../requirements';
 import { assertSafeMutationTarget, listDangerousControls } from '../safety';
 import type {
@@ -113,6 +113,11 @@ function buildAuthorPlans(
     },
     { id: AUTHOR_FIELD_IDS.city, label: 'City', value: aff?.city },
     { id: AUTHOR_FIELD_IDS.state, label: 'State', value: aff?.state },
+    {
+      id: AUTHOR_FIELD_IDS.zipcode,
+      label: 'Zip or Postal Code',
+      value: aff?.postalCode,
+    },
     { id: AUTHOR_FIELD_IDS.country, label: 'Country', value: aff?.country },
   ];
 
@@ -144,6 +149,10 @@ function applyTextPlan(
     overwrite: true,
     dryRun: false,
   });
+  // PLOS Genetics Add New Author binds Zipcode (and likely siblings) with
+  // Knockout `valueUpdate: 'blur'`. Without blur the model never sees the text.
+  const el = getInput(form, plan.fieldId);
+  el?.dispatchEvent(new Event('blur', { bubbles: true }));
 }
 
 function applyCorresponding(

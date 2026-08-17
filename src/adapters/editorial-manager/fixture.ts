@@ -82,6 +82,15 @@ function authorFormHtml(options: EditorialManagerFixtureOptions): string {
     <input type="text" id="City" name="ctl00$City" />
     <label for="State">State</label>
     <input type="text" id="State" name="ctl00$State" />
+    <label for="Zipcode">Zip or Postal Code *</label>
+    <input
+      type="text"
+      id="Zipcode"
+      name="ctl01$Zipcode"
+      maxlength="50"
+      class="valueCell required Zipcode"
+      aria-required="true"
+    />
     <label for="CountryCode">Country or Region *</label>
     <select id="CountryCode" name="ctl00$CountryCode">${countryOptions}</select>
     <div>
@@ -147,6 +156,7 @@ function wireAuthorForm(
       'Department',
       'City',
       'State',
+      'Zipcode',
     ]) {
       const el = doc.getElementById(id) as
         | HTMLInputElement
@@ -206,6 +216,7 @@ export function readAuthorForm(doc: Document): {
   lastName: string;
   email: string;
   institution: string;
+  zipcode: string;
   corresponding: boolean;
   authorsCount: number;
   title: string;
@@ -226,6 +237,7 @@ export function readAuthorForm(doc: Document): {
     lastName: valueOf('LastName'),
     email: valueOf('Email'),
     institution: valueOf('Institution'),
+    zipcode: valueOf('Zipcode'),
     corresponding: Boolean(corr?.checked),
     authorsCount: Number.parseInt(valueOf('authorsCount') || '0', 10),
     title: valueOf('txtFullTitle'),
