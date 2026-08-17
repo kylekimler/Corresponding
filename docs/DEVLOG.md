@@ -4,6 +4,12 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-17 18:20 UTC
+- One-author fill on Editorial Manager was succeeding, then stopping, because author save looked for `id=SaveButton` (also the CRediT collapse floppy). The real control is `<button class="fl-tool fl-flToolSave" title="Save This Author" data-toolname="AuthorSave">` in the dialog (`div[11]`). Add Another Author is a parent-page `<button class="fl-add-btn">Add Another Author</button>`, only clickable after that save closes the dialog.
+- Fill now: save via AuthorSave / "Save This Author" → wait until the dialog is hidden or the given name clears → click `.fl-add-btn` → wait for the form to reopen → next author. XPaths were location context only.
+- Fixture mirrors both controls and hides `#author-dialog` on save so the wait/reopen path is tested. Three-author fillAsync clicks Save This Author three times and Add Another Author twice.
+- verification: EM unit tests, then full suite / typecheck / build / e2e.
+
 ### 2026-08-17 17:10 UTC
 - CRediT on Editorial Manager is a two-control sequence, not a checkbox row sitting on the form. The pencil is `input type=image id=EditButton title="Edit Contributor Roles"` (`ToggleToEditMode()`). After ticking, the floppy `title="Collapse and Save Changes"` (`SaveHandler()`) commits the grid. That floppy also uses `id=SaveButton`, so author save now skips any control whose title is the collapse phrase.
 - There are 14 CRediT roles, so the boxes are `ContributorRole_0` through `ContributorRole_13` (0-based, not 13 boxes). Names live under `ContributorRolesGridView`. XPaths were location context only.

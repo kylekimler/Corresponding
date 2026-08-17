@@ -65,11 +65,13 @@ function authorFormHtml(options: EditorialManagerFixtureOptions): string {
   const addAnother =
     options.includeAddAnotherAuthor === false
       ? ''
-      : `<button type="button" id="add-another-author">+ Add Another Author</button>`;
+      : `<button type="button" id="add-another-author" class="fl-add-btn">Add Another Author</button>`;
 
   return `
     ${manuscript}
     <input type="text" id="authorsCount" name="authorsCount" value="0" />
+    ${addAnother}
+    <div id="author-dialog">
     <label for="FirstName">Given/First Name *</label>
     <input type="text" id="FirstName" name="ctl00$FirstName" value="${existing.firstName ?? ''}" />
     <label for="MiddleName">Middle Name</label>
@@ -130,9 +132,18 @@ function authorFormHtml(options: EditorialManagerFixtureOptions): string {
       <input type="checkbox" id="CorrespondingAuthorCheckbox" name="ctl00$CorrespondingAuthorCheckbox" />
       This is the corresponding author
     </label>
+    <button
+      type="button"
+      class="fl-tool fl-flToolSave"
+      title="Save This Author"
+      aria-label="Save This Author"
+      data-toolbasename="Save"
+      data-toolname="AuthorSave"
+      role="button"
+    ></button>
     <input type="button" id="SaveButton" name="ctl00$ctl00$SaveButton" value="Save" />
     <input type="button" id="CancelButton" name="ctl00$ctl00$CancelButton" value="Cancel" />
-    ${addAnother}
+    </div>
   `;
 }
 
@@ -169,8 +180,7 @@ function wireAuthorForm(
     if (panel) panel.hidden = true;
   });
 
-  const save = doc.getElementById('SaveButton');
-  save?.addEventListener('click', (event) => {
+  const commitAuthor = (event: Event) => {
     event.preventDefault();
     if (options.warnIfNoRole) {
       const ticked = Array.from(
@@ -212,13 +222,23 @@ function wireAuthorForm(
       'CorrespondingAuthorCheckbox',
     ) as HTMLInputElement | null;
     if (corr && 'checked' in corr) corr.checked = false;
-  });
+    const dialog = doc.getElementById('author-dialog');
+    if (dialog) dialog.hidden = true;
+  };
+  doc
+    .querySelector('[data-toolname="AuthorSave"]')
+    ?.addEventListener('click', commitAuthor);
+  Array.from(doc.querySelectorAll('#SaveButton'))
+    .filter((el) => el.getAttribute('title') !== 'Collapse and Save Changes')
+    .forEach((el) => el.addEventListener('click', commitAuthor));
 
   const add = [...doc.querySelectorAll('button')].find((el) =>
     /add\s+another\s+author/i.test(el.textContent || ''),
   );
   add?.addEventListener('click', (event) => {
     event.preventDefault();
+    const dialog = doc.getElementById('author-dialog');
+    if (dialog) dialog.hidden = false;
   });
 }
 

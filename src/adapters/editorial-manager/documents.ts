@@ -1,11 +1,15 @@
 import { collectReadableDocuments } from '@/diagnostics/frames';
 import {
+  ADD_ANOTHER_AUTHOR_CLASS,
   ADD_ANOTHER_AUTHOR_RE,
+  AUTHOR_SAVE_ID,
+  AUTHOR_SAVE_TOOL,
   AUTHORS_LIST_TITLE_RE,
   AUTHOR_FIELD_IDS,
   COLLAPSE_SAVE_ROLES_RE,
   EDIT_ROLES_ID,
   EDIT_ROLES_RE,
+  SAVE_THIS_AUTHOR_RE,
   SELECT_ROLES_RE,
 } from './ids';
 
@@ -30,27 +34,48 @@ export function findAddAnotherAuthorControl(
   root: Document,
 ): HTMLElement | null {
   for (const doc of documentsIn(root)) {
-    // Editorial Manager renders this as a toolbar icon, so the label lives in
-    // title/alt rather than in text. Images are candidates too; the click goes
-    // to the nearest actionable ancestor when there is one.
+    const byClass = doc.querySelector<HTMLElement>(
+      `button.${ADD_ANOTHER_AUTHOR_CLASS}, .${ADD_ANOTHER_AUTHOR_CLASS}`,
+    );
+    if (byClass && ADD_ANOTHER_AUTHOR_RE.test(controlBlob(byClass))) {
+      return byClass;
+    }
     const nodes = doc.querySelectorAll(
       'button, a, input[type="button"], input[type="image"], [role="button"], img[title], img[alt], [title]',
     );
     for (const el of nodes) {
-      const blob = [
-        el.textContent,
-        el.getAttribute('aria-label'),
-        el.getAttribute('title'),
-        el.getAttribute('alt'),
-        el instanceof HTMLInputElement ? el.getAttribute('value') : '',
-      ]
-        .filter(Boolean)
-        .join(' ');
-      if (!ADD_ANOTHER_AUTHOR_RE.test(blob)) continue;
+      if (!ADD_ANOTHER_AUTHOR_RE.test(controlBlob(el))) continue;
       const clickable =
         el.closest('button, a, input, [role="button"]') ?? el;
       return clickable as HTMLElement;
     }
+  }
+  return null;
+}
+
+/**
+ * Author-dialog save. Prefer the captured toolbar button over id=SaveButton,
+ * which is also used by the CRediT "Collapse and Save Changes" floppy.
+ */
+export function findAuthorSaveControl(root: Document): HTMLElement | null {
+  for (const doc of documentsIn(root)) {
+    const byTool = doc.querySelector<HTMLElement>(
+      `[data-toolname="${AUTHOR_SAVE_TOOL}"]`,
+    );
+    if (byTool && !isRolesCollapseSave(byTool)) return byTool;
+
+    const nodes = doc.querySelectorAll(
+      'button, input[type="button"], input[type="image"], [role="button"], [title], [aria-label]',
+    );
+    for (const el of nodes) {
+      if (isRolesCollapseSave(el)) continue;
+      if (SAVE_THIS_AUTHOR_RE.test(controlBlob(el))) return el as HTMLElement;
+    }
+
+    const byId = Array.from(doc.querySelectorAll('input, button, a')).find(
+      (el) => el.id === AUTHOR_SAVE_ID && !isRolesCollapseSave(el),
+    );
+    if (byId) return byId as HTMLElement;
   }
   return null;
 }

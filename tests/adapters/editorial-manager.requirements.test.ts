@@ -113,9 +113,9 @@ describe('Editorial Manager contributor-role requirement', () => {
     const rolesFloppy = form.querySelector(
       'input[title="Collapse and Save Changes"]',
     ) as HTMLInputElement;
-    const authorSave = Array.from(form.querySelectorAll('input')).find(
-      (el) => el.id === 'SaveButton' && el.getAttribute('title') !== 'Collapse and Save Changes',
-    ) as HTMLInputElement;
+    const authorSave = form.querySelector(
+      '[data-toolname="AuthorSave"]',
+    ) as HTMLButtonElement;
     let pencilClicks = 0;
     let collapseClicks = 0;
     let authorSaveClicks = 0;
@@ -203,6 +203,48 @@ describe('Editorial Manager contributor-role requirement', () => {
       /Please select at least one Contributor Role/i,
     );
     expect(form.getElementById('roles-warning')?.hidden).toBe(false);
+  });
+
+  it('saves with Save This Author, then Add Another Author reopens the dialog', async () => {
+    const form = mountEditorialManagerFixture();
+    const save = form.querySelector(
+      '[data-toolname="AuthorSave"]',
+    ) as HTMLButtonElement;
+    const add = form.querySelector('button.fl-add-btn') as HTMLButtonElement;
+    let saveClicks = 0;
+    let addClicks = 0;
+    save.addEventListener('click', () => {
+      saveClicks += 1;
+    });
+    add.addEventListener('click', () => {
+      addClicks += 1;
+    });
+
+    const report = await editorialManagerAdapter.fillAsync!(
+      document,
+      makeRoster([
+        author(1, ['methodology']),
+        author(2, ['investigation']),
+        author(3, ['software']),
+      ]),
+      { overwrite: true, dryRun: false },
+    );
+
+    console.log('EM save-and-add', {
+      errors: report.errors,
+      warnings: report.warnings,
+      saveClicks,
+      addClicks,
+      authorsCount: (form.getElementById('authorsCount') as HTMLInputElement)
+        .value,
+      dialogHidden: form.getElementById('author-dialog')?.hidden,
+    });
+    expect(report.errors).toEqual([]);
+    expect(saveClicks).toBe(3);
+    expect(addClicks).toBe(2);
+    expect(
+      (form.getElementById('authorsCount') as HTMLInputElement).value,
+    ).toBe('3');
   });
 
   it('writes Zipcode from the roster postal code and blurs so Knockout sees it', () => {
