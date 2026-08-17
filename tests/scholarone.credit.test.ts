@@ -97,6 +97,23 @@ describe('ScholarOne CRediT contributor roles', () => {
     ).toBe('Analytical Engines Institute');
   });
 
+  it('reports the portal alert text when a save is refused by a dialog', async () => {
+    mountScholarOneFixture({
+      alertOnCommit: 'Please select at least one Contributor Role.',
+      directory: {},
+    });
+
+    // The portal's own wording, not a generic timeout.
+    await expect(
+      scholarOneAdapter.fillAsync!(document, makeRoster([author(['methodology'])]), {
+        overwrite: true,
+        dryRun: false,
+      }),
+    ).rejects.toThrow('Please select at least one Contributor Role.');
+    // The dialog is left open for the person to dismiss.
+    expect(document.getElementById('scholarone-alert')?.hidden).toBe(false);
+  });
+
   it('reports roles as missing source rather than filling nothing silently', () => {
     mountScholarOneFixture({ formOpen: true });
 

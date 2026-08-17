@@ -53,6 +53,36 @@ Research date: 2026-08-12. Based on public documentation and vendor marketing pa
 
 
 
+
+## ScholarOne — labels live in attributes (2026-08-17, second probe)
+
+A probe intended for Editorial Manager was run on ScholarOne instead
+(`searchAuthorId`, `emailSearchModal_yes`, Clarivate logos). It still yielded
+useful evidence: many ScholarOne anchors have **no text at all** and carry their
+label only in `title`/`aria-label` — "Add Author Link", "Institution",
+"Quick Fill", "Add Another Institution". Control matching now reads `title` in
+addition to `aria-label` and text.
+
+The same probe confirmed `alertButton` ("Ok"), ScholarOne's own alert dialog. A
+commit can be refused through that dialog rather than by rejecting a field, so
+the commit wait now watches for it and reports the portal's wording verbatim
+instead of timing out. The dialog is left open for the person to dismiss.
+
+The fourteen `AUTHOR_CONTRIBUTOR_ROLE_SELECT_#` checkboxes have no
+`label[for=...]`; their text sits in adjacent markup, which is why the
+label-derivation in the adapter reads surrounding text rather than a label
+element.
+
+Observed but not wired, pending a need: "Create Account", "Add Created Author",
+"Search Again", "Add Another Institution", "Quick Fill", `modal-yes-button`.
+
+## Editorial Manager — still uncaptured
+
+No Editorial Manager probe has been collected yet. The two gaps remain exactly as
+recorded below: the Contributor Roles checkbox panel behind the pencil icon, and
+the unlabelled toolbar icon for Save and Add Another Author. `Zip or Postal Code`
+is required on the form but still has no known id.
+
 ## ScholarOne — new-co-author path and institution (2026-08-17)
 
 An email search that finds nothing shows an inline banner, "No co-author found.

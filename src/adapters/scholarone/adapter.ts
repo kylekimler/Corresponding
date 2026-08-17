@@ -43,6 +43,7 @@ import {
   authorDepartment,
   authorPhone,
   authorState,
+  ALERT_BUTTON,
   authorInstitutionName,
   CREATE_NEW_COAUTHOR_RE,
   CREDIT_ROLE_PREFIX,
@@ -51,8 +52,8 @@ import {
 const WAIT_TIMEOUT_MS = 10_000;
 const LOOKUP_TIMEOUT_MS = 6_000;
 const LOOKUP_INTERVAL_MS = 80;
-const SETTLE_TIMEOUT_MS = 2_000;
-const SETTLE_INTERVAL_MS = 40;
+const COMMIT_TIMEOUT_MS = 6_000;
+const COMMIT_INTERVAL_MS = 80;
 const WRITE_VERIFY_DELAY_MS = 80;
 
 const lastFill = new WeakMap<
@@ -269,9 +270,15 @@ function looksLikeAddAuthor(label: string): boolean {
     .some((word) => /^co-?authors?$|^authors?$/.test(word));
 }
 
+/**
+ * ScholarOne's anchors often carry their label only in title or aria-label and
+ * have no text at all (observed 2026-08-17: "Add Author Link", "Institution").
+ */
 function controlLabel(el: HTMLElement): string {
   const aria = el.getAttribute('aria-label');
   if (aria?.trim()) return normalizeText(aria);
+  const title = el.getAttribute('title');
+  if (title?.trim()) return normalizeText(title);
   return normalizeText(el.textContent);
 }
 
@@ -682,11 +689,43 @@ async function commitAuthor(doc: Document, beforeCount: number): Promise<void> {
     );
   }
   assertSafeMutationTarget(commit);
+  const alertBefore = portalAlertText(doc);
   commit.click();
-  await waitFor(
-    () => existingAuthorCount(doc) > beforeCount,
-    'ScholarOne did not add the author to the list after commit',
-  );
+  await waitForAuthorCommit(doc, beforeCount, alertBefore);
+}
+
+/**
+ * ScholarOne refuses some saves through an alert modal (its own "Ok" dialog)
+ * rather than by rejecting the field. Report the portal's wording instead of
+ * waiting out the timeout, and leave the modal for the person to dismiss.
+ */
+function portalAlertText(doc: Document): string {
+  const button = byId<HTMLElement>(doc, ALERT_BUTTON);
+  if (!button || !isVisible(button)) return '';
+  const container =
+    button.closest<HTMLElement>('[role="dialog"], .modal, .ui-dialog') ??
+    button.parentElement;
+  if (!container) return '';
+  // Keep the portal's own casing: this text is shown to the person verbatim.
+  const text = (container.textContent ?? '').replace(/\s+/g, ' ').trim();
+  return text.replace(/\bok\b\s*$/i, '').trim();
+}
+
+async function waitForAuthorCommit(
+  doc: Document,
+  beforeCount: number,
+  alertBefore: string,
+): Promise<void> {
+  const started = Date.now();
+  while (Date.now() - started < COMMIT_TIMEOUT_MS) {
+    if (existingAuthorCount(doc) > beforeCount) return;
+    const alertNow = portalAlertText(doc);
+    if (alertNow && alertNow !== alertBefore) {
+      throw new Error(`ScholarOne reported: ${alertNow}`);
+    }
+    await delay(COMMIT_INTERVAL_MS);
+  }
+  throw new Error('ScholarOne did not add the author to the list after commit');
 }
 
 function assignCorresponding(doc: Document, email: string): boolean {

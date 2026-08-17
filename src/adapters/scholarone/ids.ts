@@ -44,6 +44,9 @@ export function authorInstitutionName(index = 1): string {
   return `AUTHOR_INSTITUTION_${index}`;
 }
 
+/** ScholarOne's own alert dialog, which can refuse a save. Observed 2026-08-17. */
+export const ALERT_BUTTON = 'alertButton';
+
 /** Inline banner offered when an email search finds no existing co-author. */
 export const CREATE_NEW_COAUTHOR_RE = /create\s+a\s+new\s+co-?author/i;
 

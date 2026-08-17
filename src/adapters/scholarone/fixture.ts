@@ -6,6 +6,7 @@
 
 import {
   ADD_REMOVE_AUTHOR,
+  ALERT_BUTTON,
   AUTHOR_EMAIL,
   AUTHOR_FIRST_NAME,
   AUTHOR_LAST_NAME,
@@ -76,6 +77,11 @@ export interface ScholarOneFixtureOptions {
   >;
   /** Countries available in COUNTRY_1. */
   countries?: string[];
+  /**
+   * The portal refuses the commit through its own alert dialog instead of
+   * rejecting a field, and shows this text.
+   */
+  alertOnCommit?: string;
   /**
    * Unknown emails produce the inline "No co-author found … create a new
    * co-author" banner instead of the confirmation modal.
@@ -162,6 +168,11 @@ export function mountScholarOneFixture(
           <a href="#" id="${EMAIL_SEARCH_MODAL_NO}">No</a>
         </div>
 
+        <div id="scholarone-alert" role="dialog" hidden>
+          ${options.alertOnCommit ?? ''}
+          <a href="#" id="${ALERT_BUTTON}">Ok</a>
+        </div>
+
         <div id="no-coauthor-banner" hidden>
           No co-author found. Please search again using another e-mail address or
           <a href="#" id="create-new-coauthor">create a new co-author</a>
@@ -245,6 +256,7 @@ export function mountScholarOneFixture(
   const details = document.getElementById('author-details')!;
   const modal = document.getElementById('email-search-modal')!;
   const banner = document.getElementById('no-coauthor-banner')!;
+  const alertBox = document.getElementById('scholarone-alert')!;
   const createCoauthor = document.getElementById('create-new-coauthor')!;
   const rows = document.getElementById('author-rows')!;
   const findEmail = document.getElementById(FIND_AUTHOR_EMAIL) as HTMLInputElement;
@@ -431,6 +443,10 @@ export function mountScholarOneFixture(
     const firstName = readField(AUTHOR_FIRST_NAME);
     const lastName = readField(AUTHOR_LAST_NAME);
     if (!email || !firstName || !lastName) return;
+    if (options.alertOnCommit) {
+      alertBox.hidden = false;
+      return;
+    }
     saved.push({
       email,
       firstName,

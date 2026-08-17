@@ -4,6 +4,13 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-17 16:00 UTC
+- A probe meant for Editorial Manager was run against ScholarOne, so Editorial Manager's two gaps are still uncaptured. The ScholarOne evidence was used rather than discarded.
+- ScholarOne control matching now reads `title`, not just `aria-label` and text. The probe showed many anchors carry their label only in attributes and have no text ("Add Author Link", "Institution", "Quick Fill"), which would have made the page-level Add Author control unfindable.
+- ScholarOne commit now watches for `alertButton`, the portal's own alert dialog, and reports its text verbatim. Previously a dialog-refused save would have run out the clock and produced a generic "did not add the author" message — the same unhelpful failure shape Editorial Manager's Contributor Roles warning produced. Casing is preserved because the text is shown to the person, and the dialog is left open for them to dismiss.
+- removed two dead timing constants that lint had been failing on.
+- verification: lint (one pre-existing warning), typecheck, 277 Vitest tests, production build, and six Playwright MV3 journeys passed.
+
 ### 2026-08-17 14:00 UTC
 - ScholarOne, from the 2026-08-17 capture: institution is `name="AUTHOR_INSTITUTION_1"` with a generated combobox id, so it is now located by name and filled. It had previously been reported unmapped because the earlier capture lacked the field.
 - ScholarOne new-co-author path: an unknown email produces an inline "create a new co-author" banner rather than the Yes/No modal. Lookup now settles on either outcome and follows the banner link, so an unrecognised email no longer stalls.
