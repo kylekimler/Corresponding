@@ -23,6 +23,11 @@ export interface EditorialManagerFixtureOptions {
   rolesCollapsed?: boolean;
   /** Save without a ticked role shows the portal warning dialog. */
   warnIfNoRole?: boolean;
+  /**
+   * Save shows "Institution could not be identified… Proceed anyway?"
+   * until OK is clicked. Cancel must not commit.
+   */
+  warnUnidentifiedInstitution?: boolean;
 }
 
 const COUNTRIES = ['', 'United States', 'Germany', 'United Kingdom', 'Canada'];
@@ -132,15 +137,32 @@ function authorFormHtml(options: EditorialManagerFixtureOptions): string {
       <input type="checkbox" id="CorrespondingAuthorCheckbox" name="ctl00$CorrespondingAuthorCheckbox" />
       This is the corresponding author
     </label>
-    <button
-      type="button"
-      class="fl-tool fl-flToolSave"
-      title="Save This Author"
-      aria-label="Save This Author"
-      data-toolbasename="Save"
-      data-toolname="AuthorSave"
-      role="button"
-    ></button>
+    <div class="ui-dialog fl-dlg">
+      <div class="fl-toolbox">
+        <button
+          type="button"
+          class="fl-tool fl-flToolSave"
+          title="Save This Author"
+          aria-label="Save This Author"
+          data-toolbasename="Save"
+          data-toolname="AuthorSave"
+          role="button"
+        ></button>
+      </div>
+    </div>
+    <div id="institution-warning" class="ui-dialog" hidden>
+      <div class="ui-dialog-titlebar">Warning</div>
+      The Institution could not be identified by the system. Proceed with this
+      Institution anyway?
+      <div class="ui-dialog-buttonset">
+        <button type="button" class="ui-button" id="institution-warning-ok">
+          <span class="ui-button-text">OK</span>
+        </button>
+        <button type="button" class="ui-button" id="institution-warning-cancel">
+          <span class="ui-button-text">Cancel</span>
+        </button>
+      </div>
+    </div>
     <input type="button" id="SaveButton" name="ctl00$ctl00$SaveButton" value="Save" />
     <input type="button" id="CancelButton" name="ctl00$ctl00$CancelButton" value="Cancel" />
     </div>
@@ -180,8 +202,27 @@ function wireAuthorForm(
     if (panel) panel.hidden = true;
   });
 
+  let institutionProceeded = false;
+  const institutionWarning = doc.getElementById('institution-warning');
+  doc.getElementById('institution-warning-ok')?.addEventListener('click', (event) => {
+    event.preventDefault();
+    institutionProceeded = true;
+    if (institutionWarning) institutionWarning.hidden = true;
+    commitAuthor(event);
+  });
+  doc
+    .getElementById('institution-warning-cancel')
+    ?.addEventListener('click', (event) => {
+      event.preventDefault();
+      if (institutionWarning) institutionWarning.hidden = true;
+    });
+
   const commitAuthor = (event: Event) => {
     event.preventDefault();
+    if (options.warnUnidentifiedInstitution && !institutionProceeded) {
+      if (institutionWarning) institutionWarning.hidden = false;
+      return;
+    }
     if (options.warnIfNoRole) {
       const ticked = Array.from(
         doc.querySelectorAll<HTMLInputElement>(
