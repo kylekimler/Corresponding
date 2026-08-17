@@ -89,6 +89,11 @@ function authorFormHtml(options: EditorialManagerFixtureOptions): string {
     <textarea id="Affiliation" name="ctl00$Affiliation"></textarea>
     <label for="Institution">Institution *</label>
     <input type="text" id="Institution" name="ctl00$Institution" />
+    <ul id="institution-suggestions" role="listbox" hidden></ul>
+    <div id="institution-unverified" hidden>
+      Author Institution is Unverified. Start typing to display potentially
+      matching institutions.
+    </div>
     <label for="Department">Department *</label>
     <input type="text" id="Department" name="ctl00$Department" />
     <label for="City">City</label>
@@ -200,6 +205,38 @@ function wireAuthorForm(
   collapse?.addEventListener('click', (event) => {
     event.preventDefault();
     if (panel) panel.hidden = true;
+  });
+
+  const INSTITUTION_DIRECTORY = ['University of London'];
+  const institutionInput = doc.getElementById('Institution') as HTMLInputElement | null;
+  const suggestionList = doc.getElementById('institution-suggestions');
+  const unverified = doc.getElementById('institution-unverified');
+  let institutionVerified = false;
+  const renderSuggestions = () => {
+    if (!institutionInput || !suggestionList) return;
+    const typed = institutionInput.value.trim().toLowerCase();
+    const matches = INSTITUTION_DIRECTORY.filter((name) =>
+      name.toLowerCase().includes(typed),
+    );
+    suggestionList.innerHTML = matches
+      .map((name) => `<li role="option" class="ui-menu-item">${name}</li>`)
+      .join('');
+    suggestionList.hidden = matches.length === 0 || typed.length < 2;
+    if (unverified) {
+      unverified.hidden = institutionVerified || typed.length === 0;
+    }
+  };
+  institutionInput?.addEventListener('input', () => {
+    institutionVerified = false;
+    renderSuggestions();
+  });
+  suggestionList?.addEventListener('click', (event) => {
+    const item = (event.target as HTMLElement | null)?.closest('li');
+    if (!item || !institutionInput) return;
+    institutionInput.value = item.textContent?.trim() ?? '';
+    institutionVerified = true;
+    suggestionList.hidden = true;
+    if (unverified) unverified.hidden = true;
   });
 
   let institutionProceeded = false;

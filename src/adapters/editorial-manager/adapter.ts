@@ -23,8 +23,11 @@ import {
   findAddAnotherAuthorControl,
   findAuthorFormDocument,
   findAuthorSaveControl,
+  findInstitutionSuggestion,
   findInstitutionWarningOk,
+  institutionTypeaheadOpen,
   findRolesCollapseSave,
+  institutionLooksUnverified,
   findSelectRolesControl,
   isAuthorsListPage,
 } from './documents';
@@ -37,7 +40,8 @@ import {
 
 const ROLE_WAIT_MS = 2_000;
 const ROLE_INTERVAL_MS = 40;
-const SAVE_WATCH_MS = 4_000;
+const TYPEAHEAD_WAIT_MS = 1_200;
+const SAVE_WATCH_MS = 6_000;
 const SAVE_INTERVAL_MS = 40;
 const REOPEN_WAIT_MS = 6_000;
 
@@ -152,10 +156,58 @@ function applyTextPlan(
     overwrite: true,
     dryRun: false,
   });
-  // PLOS Genetics Add New Author binds Zipcode (and likely siblings) with
-  // Knockout `valueUpdate: 'blur'`. Without blur the model never sees the text.
+  // Institution is a typeahead: blur here closes the list before a match can
+  // be chosen. Zipcode (and other Knockout fields) update on blur.
+  if (plan.fieldId === AUTHOR_FIELD_IDS.institution) return;
   const el = getInput(form, plan.fieldId);
   el?.dispatchEvent(new Event('blur', { bubbles: true }));
+}
+
+function typeIntoInstitution(input: HTMLInputElement, value: string): void {
+  input.focus();
+  input.value = '';
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+  input.value = value;
+  input.dispatchEvent(
+    new InputEvent('input', {
+      bubbles: true,
+      data: value,
+      inputType: 'insertText',
+    }),
+  );
+  input.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: value.slice(-1) || 'a' }));
+  input.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true, key: value.slice(-1) || 'a' }));
+}
+
+/**
+ * Institution is Ringgold/typeahead. Type (do not only set+blur), wait for a
+ * suggestion whose text equals the roster name, click only that. If nothing
+ * matches, leave the typed value for the proceed-anyway warning.
+ */
+async function applyInstitutionTypeahead(
+  root: Document,
+  form: Document,
+  institution: string | undefined,
+): Promise<boolean> {
+  const desired = institution?.trim();
+  if (!desired) return false;
+  const input = getInput(form, AUTHOR_FIELD_IDS.institution);
+  if (!input || input.tagName.toLowerCase() !== 'input') return false;
+  typeIntoInstitution(input as HTMLInputElement, desired);
+  const started = Date.now();
+  while (Date.now() - started < TYPEAHEAD_WAIT_MS) {
+    const suggestion = findInstitutionSuggestion(root, desired);
+    if (suggestion) {
+      clickControl(suggestion);
+      return true;
+    }
+    const open = institutionTypeaheadOpen(root);
+    if (!open && Date.now() - started > 600) break;
+    await delay(ROLE_INTERVAL_MS);
+  }
+  input.dispatchEvent(new Event('change', { bubbles: true }));
+  input.dispatchEvent(new Event('blur', { bubbles: true }));
+  return false;
 }
 
 function applyCorresponding(
@@ -579,6 +631,19 @@ export const editorialManagerAdapter: PlatformAdapter = {
           if (plan.fieldId.startsWith(CONTRIBUTOR_ROLE_PREFIX)) continue;
           applyTextPlan(currentForm, plan, options);
         }
+        if (!conflict && !options.dryRun) {
+          const institution = primaryAffiliation(author)?.institution;
+          const input = getInput(currentForm, AUTHOR_FIELD_IDS.institution);
+          if (institution && input && input.tagName.toLowerCase() === 'input') {
+            typeIntoInstitution(input as HTMLInputElement, institution);
+            const suggestion = findInstitutionSuggestion(doc, institution);
+            if (suggestion) clickControl(suggestion);
+            else {
+              input.dispatchEvent(new Event('change', { bubbles: true }));
+              input.dispatchEvent(new Event('blur', { bubbles: true }));
+            }
+          }
+        }
         if (!conflict) {
           tickCreditRoles(currentForm, author);
           collapseRolesPanel(currentForm);
@@ -681,6 +746,11 @@ export const editorialManagerAdapter: PlatformAdapter = {
         break;
       }
 
+      await applyInstitutionTypeahead(
+        doc,
+        currentForm,
+        primaryAffiliation(author)?.institution,
+      );
       await openRolesPanel(currentForm);
       plans.push(...planCreditRoles(currentForm, author));
       tickCreditRoles(currentForm, author);
@@ -710,10 +780,32 @@ export const editorialManagerAdapter: PlatformAdapter = {
         break;
       }
       if (afterSave === 'timeout') {
-        warnings.push(
-          `Save This Author was clicked for author ${author.sequence} but the form is still open.`,
-        );
-        break;
+        // First save often only shakes and shows the unverified-institution
+        // warning. Confirm OK, or click save once more to raise the dialog.
+        if (findInstitutionWarningOk(doc) || institutionLooksUnverified(doc)) {
+          dismissInstitutionWarning(doc);
+          if (authorFormVisible(doc)) clickAuthorSave(doc);
+          const retry = await waitAfterAuthorSave(doc, currentForm, givenBefore);
+          if (retry === 'closed' || retry === 'cleared') {
+            // continue to Add Another Author
+          } else if (retry === 'warning') {
+            const warning = rolesWarningText(doc) || rolesWarningText(currentForm);
+            errors.push(
+              `Editorial Manager refused author ${author.sequence}: ${warning}`,
+            );
+            break;
+          } else {
+            warnings.push(
+              `Author ${author.sequence}: institution is unverified. Editorial Manager needs a matching institution from its list, or OK on “Proceed with this Institution anyway?”`,
+            );
+            break;
+          }
+        } else {
+          warnings.push(
+            `Save This Author was clicked for author ${author.sequence} but the form is still open.`,
+          );
+          break;
+        }
       }
 
       if (index < authors.length - 1) {
