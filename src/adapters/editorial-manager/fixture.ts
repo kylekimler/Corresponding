@@ -3,6 +3,9 @@
  * structural capture. Values are test-only; production never ships them.
  */
 
+import { CREDIT_ROLE_LABELS, CREDIT_ROLES } from '@/schema/credit';
+import { CONTRIBUTOR_ROLE_PREFIX } from './ids';
+
 export interface EditorialManagerFixtureOptions {
   /** When true (default), author fields live in a same-origin iframe. */
   inIframe?: boolean;
@@ -13,9 +16,26 @@ export interface EditorialManagerFixtureOptions {
   };
   includeAddAnotherAuthor?: boolean;
   includeManuscriptFields?: boolean;
+  /**
+   * CRediT panel starts collapsed behind "Click here to select roles",
+   * matching the Add New Author dialog.
+   */
+  rolesCollapsed?: boolean;
+  /** Save without a ticked role shows the portal warning dialog. */
+  warnIfNoRole?: boolean;
 }
 
 const COUNTRIES = ['', 'United States', 'Germany', 'United Kingdom', 'Canada'];
+
+function creditRoleMarkup(): string {
+  return CREDIT_ROLES.map(
+    (role, index) => `
+      <label>
+        <input type="checkbox" id="${CONTRIBUTOR_ROLE_PREFIX}${index}" name="${CONTRIBUTOR_ROLE_PREFIX}${index}" />
+        ${CREDIT_ROLE_LABELS[role]}
+      </label>`,
+  ).join('');
+}
 
 function authorFormHtml(options: EditorialManagerFixtureOptions): string {
   const existing = options.existing ?? {};
@@ -64,6 +84,17 @@ function authorFormHtml(options: EditorialManagerFixtureOptions): string {
     <input type="text" id="State" name="ctl00$State" />
     <label for="CountryCode">Country or Region *</label>
     <select id="CountryCode" name="ctl00$CountryCode">${countryOptions}</select>
+    <div>
+      <a href="#" id="select-roles-trigger">Click here to select roles</a>
+      <div id="contributor-roles-panel" ${options.rolesCollapsed ? 'hidden' : ''}>
+        ${options.rolesCollapsed ? '' : creditRoleMarkup()}
+      </div>
+    </div>
+    <div id="roles-warning" role="dialog" hidden>
+      Contributor Roles Save Warnings
+      Please select at least one Contributor Role.
+      <button type="button" id="roles-warning-ok">OK</button>
+    </div>
     <label>
       <input type="checkbox" id="CorrespondingAuthorCheckbox" name="ctl00$CorrespondingAuthorCheckbox" />
       This is the corresponding author
@@ -74,10 +105,34 @@ function authorFormHtml(options: EditorialManagerFixtureOptions): string {
   `;
 }
 
-function wireAuthorForm(doc: Document): void {
+function wireAuthorForm(
+  doc: Document,
+  options: EditorialManagerFixtureOptions = {},
+): void {
+  const trigger = doc.getElementById('select-roles-trigger');
+  const panel = doc.getElementById('contributor-roles-panel');
+  trigger?.addEventListener('click', (event) => {
+    event.preventDefault();
+    if (!panel) return;
+    if (!panel.querySelector('input')) panel.innerHTML = creditRoleMarkup();
+    panel.hidden = false;
+  });
+
   const save = doc.getElementById('SaveButton');
   save?.addEventListener('click', (event) => {
     event.preventDefault();
+    if (options.warnIfNoRole) {
+      const ticked = Array.from(
+        doc.querySelectorAll<HTMLInputElement>(
+          `input[type="checkbox"][id^="${CONTRIBUTOR_ROLE_PREFIX}"]`,
+        ),
+      ).some((box) => box.checked);
+      if (!ticked) {
+        const warning = doc.getElementById('roles-warning');
+        if (warning) warning.hidden = false;
+        return;
+      }
+    }
     const count = doc.getElementById('authorsCount') as HTMLInputElement | null;
     if (count) {
       count.value = String(Number.parseInt(count.value || '0', 10) + 1);
@@ -128,7 +183,7 @@ export function mountEditorialManagerFixture(
   `;
 
   if (!inIframe) {
-    wireAuthorForm(document);
+    wireAuthorForm(document, options);
     return document;
   }
 
@@ -142,7 +197,7 @@ export function mountEditorialManagerFixture(
     `<!doctype html><html><body>${authorFormHtml(options)}</body></html>`,
   );
   child.close();
-  wireAuthorForm(child);
+  wireAuthorForm(child, options);
   return child;
 }
 

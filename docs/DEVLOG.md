@@ -4,6 +4,13 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-17 16:50 UTC
+- The latest Editorial Manager probe was `SubManuscriptData.aspx` titled Add/Edit/Remove Authors — the parent Manuscript Data page, not the Add New Author dialog. CKEditor toolbars drowned the output; no author-form ids were in it.
+- The built-in console probe now skips `cke_*` / `StepIndicator_*` chrome, reports `hasOpener` and iframe counts, and prefers author-like fields so a parent-page paste no longer hides the form.
+- Preview/Fill on that parent page now says it is the Authors list and that the form lives in the Add New Author window, instead of the generic not-found sentence.
+- CRediT: the 2026-08-15 PLOS ONE capture already had `ContributorRole_#` checkboxes; they are now ticked from roster roles, matching by visible label. If the panel is collapsed, Fill clicks "Click here to select roles" (screenshot text) and waits for the boxes. A save that the portal refuses with "Please select at least one Contributor Role" is reported in those words. Visibility checks are realm-safe — iframe documents have their own `HTMLElement`, so `instanceof` was treating a visible warning dialog as invisible.
+- verification: lint (eval warnings in the probe tests only), typecheck, 281 Vitest tests, production build, and six Playwright MV3 journeys passed.
+
 ### 2026-08-17 16:00 UTC
 - A probe meant for Editorial Manager was run against ScholarOne, so Editorial Manager's two gaps are still uncaptured. The ScholarOne evidence was used rather than discarded.
 - ScholarOne control matching now reads `title`, not just `aria-label` and text. The probe showed many anchors carry their label only in attributes and have no text ("Add Author Link", "Institution", "Quick Fill"), which would have made the page-level Add Author control unfindable.

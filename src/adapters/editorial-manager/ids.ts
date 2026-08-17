@@ -34,3 +34,18 @@ export const MANUSCRIPT_FIELD_IDS = [
 ] as const;
 
 export const ADD_ANOTHER_AUTHOR_RE = /add\s+another\s+author/i;
+
+/**
+ * CRediT checkboxes from the 2026-08-15 PLOS ONE RequiredRegistrationQuestions
+ * capture. Index is not a role mapping — match by the visible label.
+ */
+export const CONTRIBUTOR_ROLE_PREFIX = 'ContributorRole_';
+
+/** Visible trigger next to the pencil icon on Add New Author. */
+export const SELECT_ROLES_RE = /click here to select roles/i;
+
+/** Portal dialog that refuses a save with no role chosen. */
+export const ROLES_WARNING_RE = /please select at least one contributor role/i;
+
+/** Parent Manuscript Data authors list, not the Add New Author form. */
+export const AUTHORS_LIST_TITLE_RE = /add\/edit\/remove authors/i;

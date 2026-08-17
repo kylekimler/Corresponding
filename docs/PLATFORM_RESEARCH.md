@@ -98,6 +98,29 @@ still require the person to pick a matching institution from its own list.
 `AUTHOR_CONTRIBUTOR_DEGREE_OF_CONTRIBUTION_ID_#` (Equal, Lead, Supporting)
 remains untouched — the roster has no canonical degree-of-contribution concept.
 
+## Editorial Manager — Authors list vs Add New Author (2026-08-17)
+
+A probe from `editorialmanager.com/pgenetics/SubManuscriptData.aspx` titled
+Add/Edit/Remove Authors was the **parent Manuscript Data page**, not the Add New
+Author dialog. It is full of CKEditor title-toolbar chrome (`cke_*`,
+`StepIndicator_*`) and has no `FirstName` / `Email` fields. The author form
+still lives in the Add New Author window.
+
+Corresponding now:
+
+- names that page in the error, instead of the generic "author form was not found"
+- skips CKEditor / step-indicator chrome in the built-in console probe, reports
+  `hasOpener` / iframe counts, and prefers author-like fields so the next paste
+  is not 200 lines of Paste-from-Word buttons
+- fills `ContributorRole_#` checkboxes from the 2026-08-15 PLOS ONE capture,
+  matching by visible label, after clicking "Click here to select roles" when
+  the panel is collapsed
+- reports the portal's "Please select at least one Contributor Role" warning
+  instead of pretending the save worked
+
+`Zip or Postal Code` is still uncaptured. The Save-and-Add-Another-Author
+toolbar icon is still a title/alt hypothesis.
+
 ## Editorial Manager — still needed
 
 Filling the open Add New Author form works. Two things do not, and both need a

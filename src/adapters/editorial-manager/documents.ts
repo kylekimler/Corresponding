@@ -1,5 +1,10 @@
 import { collectReadableDocuments } from '@/diagnostics/frames';
-import { ADD_ANOTHER_AUTHOR_RE, AUTHOR_FIELD_IDS } from './ids';
+import {
+  ADD_ANOTHER_AUTHOR_RE,
+  AUTHORS_LIST_TITLE_RE,
+  AUTHOR_FIELD_IDS,
+  SELECT_ROLES_RE,
+} from './ids';
 
 export function documentsIn(root: Document): Document[] {
   return collectReadableDocuments(root).documents.map((frame) => frame.doc);
@@ -41,6 +46,51 @@ export function findAddAnotherAuthorControl(
       if (!ADD_ANOTHER_AUTHOR_RE.test(blob)) continue;
       const clickable =
         el.closest('button, a, input, [role="button"]') ?? el;
+      return clickable as HTMLElement;
+    }
+  }
+  return null;
+}
+
+/**
+ * The Manuscript Data authors list (`SubManuscriptData.aspx`, title
+ * Add/Edit/Remove Authors) is Editorial Manager, but the author form lives in
+ * the Add New Author window. Observed 2026-08-17 on PLOS Genetics.
+ */
+export function isAuthorsListPage(root: Document): boolean {
+  for (const doc of documentsIn(root)) {
+    if (AUTHORS_LIST_TITLE_RE.test(doc.title || '')) return true;
+    const hasStep = Boolean(
+      doc.getElementById('StepIndicator_stepManuscriptDataButton'),
+    );
+    const hasAuthorForm = Boolean(doc.getElementById(AUTHOR_FIELD_IDS.firstName));
+    if (hasStep && !hasAuthorForm) return true;
+  }
+  return false;
+}
+
+export function authorsListGuidance(): string {
+  return 'This is Editorial Manager’s Authors list page. The author form lives in the Add New Author window — click inside that window, then click Corresponding.';
+}
+
+/** Pencil / "Click here to select roles" control that reveals CRediT checkboxes. */
+export function findSelectRolesControl(root: Document): HTMLElement | null {
+  for (const doc of documentsIn(root)) {
+    const nodes = doc.querySelectorAll(
+      'a, button, [role="button"], span, img, [title]',
+    );
+    for (const el of nodes) {
+      const blob = [
+        el.textContent,
+        el.getAttribute('aria-label'),
+        el.getAttribute('title'),
+        el.getAttribute('alt'),
+      ]
+        .filter(Boolean)
+        .join(' ');
+      if (!SELECT_ROLES_RE.test(blob)) continue;
+      const clickable =
+        el.closest('a, button, [role="button"]') ?? el;
       return clickable as HTMLElement;
     }
   }

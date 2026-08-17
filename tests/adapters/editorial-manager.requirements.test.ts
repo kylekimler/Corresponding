@@ -1,9 +1,13 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { editorialManagerAdapter } from '@/adapters/editorial-manager/adapter';
 import { mountEditorialManagerFixture } from '@/adapters/editorial-manager/fixture';
 import { findAddAnotherAuthorControl } from '@/adapters/editorial-manager/documents';
 import { summarizePreview } from '@/popup/previewSummary';
 import { makeAuthor, makeRoster } from '../helpers/roster';
+
+afterEach(() => {
+  document.body.innerHTML = '';
+});
 
 function author(sequence: number, creditRoles: string[] = []) {
   return makeAuthor({
@@ -73,6 +77,81 @@ describe('Editorial Manager contributor-role requirement', () => {
 
     // The click must land on the anchor, not the inner image.
     expect(control?.id).toBe('save-and-add');
+  });
+
+  it('names the Authors list page when the form is in another window', () => {
+    document.body.innerHTML = `
+      <button id="StepIndicator_stepManuscriptDataButton">Manuscript Data</button>
+      <textarea id="txtFullTitle"></textarea>
+    `;
+    Object.defineProperty(document, 'title', {
+      configurable: true,
+      value: 'Add/Edit/Remove Authors',
+    });
+
+    const report = editorialManagerAdapter.fill(
+      document,
+      makeRoster([author(1, ['methodology'])]),
+      { overwrite: true, dryRun: true },
+    );
+
+    expect(report.errors.join(' ')).toMatch(/Authors list page/);
+    expect(report.errors.join(' ')).toMatch(/Add New Author window/);
+  });
+
+  it('opens Click here to select roles and ticks the declared CRediT box', async () => {
+    const form = mountEditorialManagerFixture({
+      rolesCollapsed: true,
+      includeAddAnotherAuthor: false,
+    });
+
+    await editorialManagerAdapter.fillAsync!(
+      document,
+      makeRoster([author(1, ['methodology'])]),
+      { overwrite: true, dryRun: false },
+    );
+
+    const methodology = Array.from(
+      form.querySelectorAll<HTMLInputElement>('input[type="checkbox"]'),
+    ).find((box) => /methodology/i.test(box.closest('label')?.textContent ?? ''));
+    expect(methodology?.checked).toBe(true);
+    expect(form.getElementById('contributor-roles-panel')?.hidden).toBe(false);
+  });
+
+  it('reports the portal warning when a save is refused for missing roles', async () => {
+    const form = mountEditorialManagerFixture({
+      warnIfNoRole: true,
+      includeAddAnotherAuthor: false,
+    });
+
+    const report = await editorialManagerAdapter.fillAsync!(
+      document,
+      makeRoster([author(1)]),
+      { overwrite: true, dryRun: false },
+    );
+
+    const warningEl = form.getElementById('roles-warning');
+    console.log('EM roles warning fill', {
+      errors: report.errors,
+      warnings: report.warnings,
+      authorsCount: (form.getElementById('authorsCount') as HTMLInputElement | null)
+        ?.value,
+      warningHidden: warningEl?.hidden,
+      warningRole: warningEl?.getAttribute('role'),
+      dialogCount: form.querySelectorAll('[role="dialog"]').length,
+      warningQuery: form.querySelectorAll('[id*="warning"]').length,
+      warningText: warningEl?.textContent?.trim(),
+      ticked: Array.from(
+        form.querySelectorAll<HTMLInputElement>(
+          'input[type="checkbox"][id^="ContributorRole_"]',
+        ),
+      ).filter((box) => box.checked).length,
+    });
+
+    expect(report.errors.join(' ')).toMatch(
+      /Please select at least one Contributor Role/i,
+    );
+    expect(form.getElementById('roles-warning')?.hidden).toBe(false);
   });
 
   it('surfaces the requirement to the popup as an explained notice', () => {
