@@ -205,6 +205,47 @@ describe('Editorial Manager contributor-role requirement', () => {
     expect(form.getElementById('roles-warning')?.hidden).toBe(false);
   });
 
+  it('confirms the unidentified-institution warning with OK, never Cancel', async () => {
+    const form = mountEditorialManagerFixture({
+      warnUnidentifiedInstitution: true,
+      includeAddAnotherAuthor: false,
+    });
+    const ok = form.getElementById('institution-warning-ok') as HTMLButtonElement;
+    const cancel = form.getElementById(
+      'institution-warning-cancel',
+    ) as HTMLButtonElement;
+    let okClicks = 0;
+    let cancelClicks = 0;
+    ok.addEventListener('click', () => {
+      okClicks += 1;
+    });
+    cancel.addEventListener('click', () => {
+      cancelClicks += 1;
+    });
+
+    const report = await editorialManagerAdapter.fillAsync!(
+      document,
+      makeRoster([author(1, ['methodology'])]),
+      { overwrite: true, dryRun: false },
+    );
+
+    console.log('EM institution warning', {
+      errors: report.errors,
+      warnings: report.warnings,
+      okClicks,
+      cancelClicks,
+      authorsCount: (form.getElementById('authorsCount') as HTMLInputElement)
+        .value,
+      warningHidden: form.getElementById('institution-warning')?.hidden,
+    });
+    expect(report.errors).toEqual([]);
+    expect(okClicks).toBeGreaterThan(0);
+    expect(cancelClicks).toBe(0);
+    expect(
+      (form.getElementById('authorsCount') as HTMLInputElement).value,
+    ).toBe('1');
+  });
+
   it('saves with Save This Author, then Add Another Author reopens the dialog', async () => {
     const form = mountEditorialManagerFixture();
     const save = form.querySelector(

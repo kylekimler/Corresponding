@@ -129,9 +129,10 @@ hypothesis.
 
 ## Editorial Manager — still needed
 
-Filling, CRediT, Zipcode, Save This Author, and Add Another Author are
-capture-backed. Remaining: whether some journals use a different toolbar
-control instead of `data-toolname="AuthorSave"`.
+Filling, CRediT, Zipcode, Save This Author, the unidentified-institution OK,
+and Add Another Author are capture-backed. Cancel on that warning is never
+clicked. Remaining: whether some journals use a different toolbar control
+instead of `data-toolname="AuthorSave"`.
 
 `Zipcode` is required and is now filled from the roster postal code (PLOS
 Genetics Add New Author, 2026-08-17). The Add New Author dialog can open as its

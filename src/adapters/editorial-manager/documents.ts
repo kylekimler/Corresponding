@@ -2,6 +2,7 @@ import { collectReadableDocuments } from '@/diagnostics/frames';
 import {
   ADD_ANOTHER_AUTHOR_CLASS,
   ADD_ANOTHER_AUTHOR_RE,
+  AUTHOR_SAVE_CLASS,
   AUTHOR_SAVE_ID,
   AUTHOR_SAVE_TOOL,
   AUTHORS_LIST_TITLE_RE,
@@ -9,6 +10,7 @@ import {
   COLLAPSE_SAVE_ROLES_RE,
   EDIT_ROLES_ID,
   EDIT_ROLES_RE,
+  INSTITUTION_WARNING_RE,
   SAVE_THIS_AUTHOR_RE,
   SELECT_ROLES_RE,
 } from './ids';
@@ -53,29 +55,84 @@ export function findAddAnotherAuthorControl(
   return null;
 }
 
+function isShown(el: Element): boolean {
+  let current: Element | null = el;
+  while (current) {
+    if ('hidden' in current && Boolean((current as HTMLElement).hidden)) {
+      return false;
+    }
+    current = current.parentElement;
+  }
+  return true;
+}
+
 /**
- * Author-dialog save. Prefer the captured toolbar button over id=SaveButton,
- * which is also used by the CRediT "Collapse and Save Changes" floppy.
+ * Author-dialog save. Prefer the captured toolbar floppy
+ * (`data-toolname="AuthorSave"` / `.fl-flToolSave` in `.fl-toolbox`) over
+ * id=SaveButton, which is also the CRediT collapse floppy.
  */
 export function findAuthorSaveControl(root: Document): HTMLElement | null {
+  const selectors = [
+    `.fl-toolbox [data-toolname="${AUTHOR_SAVE_TOOL}"]`,
+    `.ui-dialog [data-toolname="${AUTHOR_SAVE_TOOL}"]`,
+    `[data-toolname="${AUTHOR_SAVE_TOOL}"]`,
+    `.fl-toolbox button.${AUTHOR_SAVE_CLASS}`,
+    `button.${AUTHOR_SAVE_CLASS}`,
+    `.${AUTHOR_SAVE_CLASS}`,
+  ];
   for (const doc of documentsIn(root)) {
-    const byTool = doc.querySelector<HTMLElement>(
-      `[data-toolname="${AUTHOR_SAVE_TOOL}"]`,
-    );
-    if (byTool && !isRolesCollapseSave(byTool)) return byTool;
-
+    for (const selector of selectors) {
+      const match = Array.from(doc.querySelectorAll<HTMLElement>(selector)).find(
+        (el) => isShown(el) && !isRolesCollapseSave(el),
+      );
+      if (match) return match;
+    }
     const nodes = doc.querySelectorAll(
       'button, input[type="button"], input[type="image"], [role="button"], [title], [aria-label]',
     );
     for (const el of nodes) {
-      if (isRolesCollapseSave(el)) continue;
+      if (!isShown(el) || isRolesCollapseSave(el)) continue;
       if (SAVE_THIS_AUTHOR_RE.test(controlBlob(el))) return el as HTMLElement;
     }
-
     const byId = Array.from(doc.querySelectorAll('input, button, a')).find(
-      (el) => el.id === AUTHOR_SAVE_ID && !isRolesCollapseSave(el),
+      (el) =>
+        el.id === AUTHOR_SAVE_ID &&
+        isShown(el) &&
+        !isRolesCollapseSave(el),
     );
     if (byId) return byId as HTMLElement;
+  }
+  return null;
+}
+
+/**
+ * OK on the "Institution could not be identified… Proceed anyway?" warning.
+ * Cancel is never returned.
+ */
+export function findInstitutionWarningOk(root: Document): HTMLElement | null {
+  for (const doc of documentsIn(root)) {
+    const dialogs = doc.querySelectorAll(
+      '.ui-dialog, [role="dialog"], .ui-widget-content',
+    );
+    for (const dialog of dialogs) {
+      if (!isShown(dialog)) continue;
+      const text = (dialog.textContent ?? '').replace(/\s+/g, ' ');
+      if (!INSTITUTION_WARNING_RE.test(text)) continue;
+      const labeled = Array.from(
+        dialog.querySelectorAll<HTMLElement>(
+          'button, [role="button"], .ui-button, .ui-button-text',
+        ),
+      ).find((el) => {
+        const label = (el.textContent ?? '').replace(/\s+/g, ' ').trim();
+        return /^ok$/i.test(label);
+      });
+      if (!labeled) continue;
+      const button =
+        labeled.closest('button') ??
+        labeled.closest('[role="button"]') ??
+        labeled;
+      return button as HTMLElement;
+    }
   }
   return null;
 }

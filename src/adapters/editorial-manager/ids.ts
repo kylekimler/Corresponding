@@ -31,6 +31,14 @@ export const AUTHORS_COUNT_ID = 'authorsCount';
  */
 export const SAVE_THIS_AUTHOR_RE = /save this author/i;
 export const AUTHOR_SAVE_TOOL = 'AuthorSave';
+export const AUTHOR_SAVE_CLASS = 'fl-flToolSave';
+
+/**
+ * jQuery UI warning after Save This Author when Ringgold cannot match the
+ * institution. OK proceeds; Cancel must never be clicked.
+ */
+export const INSTITUTION_WARNING_RE =
+  /institution could not be identified|proceed with this institution/i;
 
 /** Parent-page control that opens the next Add New Author dialog. */
 export const ADD_ANOTHER_AUTHOR_CLASS = 'fl-add-btn';

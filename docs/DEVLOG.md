@@ -4,6 +4,11 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-17 18:50 UTC
+- Save This Author on Editorial Manager is followed by a jQuery UI warning: "The Institution could not be identified by the system. Proceed with this Institution anyway?" OK is `<span class="ui-button-text">OK</span>` in a second `ui-dialog` (div[14]); Cancel must never be clicked. Fill now dismisses that warning with OK after the floppy click, then waits for the author dialog to close.
+- Save finding prefers the visible toolbox floppy: `.fl-toolbox [data-toolname=AuthorSave]` / `button.fl-flToolSave`, and the click is a full mouse sequence (pointer/mouse down-up plus click) because the toolbox is a CSS icon button with no text.
+- verification: new fixture path for the institution warning; OK is clicked, Cancel is not, author count becomes 1.
+
 ### 2026-08-17 18:20 UTC
 - One-author fill on Editorial Manager was succeeding, then stopping, because author save looked for `id=SaveButton` (also the CRediT collapse floppy). The real control is `<button class="fl-tool fl-flToolSave" title="Save This Author" data-toolname="AuthorSave">` in the dialog (`div[11]`). Add Another Author is a parent-page `<button class="fl-add-btn">Add Another Author</button>`, only clickable after that save closes the dialog.
 - Fill now: save via AuthorSave / "Save This Author" → wait until the dialog is hidden or the given name clears → click `.fl-add-btn` → wait for the form to reopen → next author. XPaths were location context only.

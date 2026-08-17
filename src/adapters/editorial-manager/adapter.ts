@@ -23,6 +23,7 @@ import {
   findAddAnotherAuthorControl,
   findAuthorFormDocument,
   findAuthorSaveControl,
+  findInstitutionWarningOk,
   findRolesCollapseSave,
   findSelectRolesControl,
   isAuthorsListPage,
@@ -351,11 +352,28 @@ function collapseRolesPanel(form: Document): boolean {
   return true;
 }
 
+function clickControl(el: HTMLElement): void {
+  assertSafeMutationTarget(el);
+  // Editorial Manager's toolbox and jQuery UI dialogs listen for a full
+  // mouse sequence, not only the synthetic click() used by most forms.
+  el.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }));
+  el.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+  el.dispatchEvent(new MouseEvent('pointerup', { bubbles: true }));
+  el.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+  el.click();
+}
+
 function clickAuthorSave(root: Document): boolean {
   const save = findAuthorSaveControl(root);
-  if (!save || typeof save.click !== 'function') return false;
-  assertSafeMutationTarget(save);
-  save.click();
+  if (!save) return false;
+  clickControl(save);
+  return true;
+}
+
+function dismissInstitutionWarning(root: Document): boolean {
+  const ok = findInstitutionWarningOk(root);
+  if (!ok) return false;
+  clickControl(ok);
   return true;
 }
 
@@ -382,6 +400,7 @@ async function waitAfterAuthorSave(
   const started = Date.now();
   while (Date.now() - started < SAVE_WATCH_MS) {
     if (rolesWarningText(root) || rolesWarningText(form)) return 'warning';
+    dismissInstitutionWarning(root);
     if (!authorFormVisible(root)) return 'closed';
     const given = givenNameValue(root);
     if (givenNameBefore && given !== givenNameBefore) return 'cleared';
