@@ -51,6 +51,22 @@ Research date: 2026-08-12. Based on public documentation and vendor marketing pa
   likely. Prefer false negatives. Live smoke on an authenticated Bioinformatics
   submission still required before claiming production validation.
 
+
+## ScholarOne — frames and CRediT
+
+The Bioinformatics capture (`mc.manuscriptcentral.com/bioinformatics`) has the
+author form in the top document and one additional readable frame with no
+fields. Because `tabs.sendMessage` resolves with whichever frame answers first,
+detection has to poll frames and keep the strongest answer; the empty frame
+would otherwise report an unsupported page.
+
+Contributor roles are plain checkboxes, `AUTHOR_CONTRIBUTOR_ROLE_SELECT_#`, with
+the 14 CRediT labels beside them, plus
+`AUTHOR_CONTRIBUTOR_DEGREE_OF_CONTRIBUTION_ID_#` selects offering Equal, Lead,
+and Supporting. Corresponding ticks roles by matching the visible label, ticks
+only, and never touches the degree-of-contribution selects: the roster has no
+canonical concept for them yet.
+
 ## Editorial Manager — Contributor Roles (CRediT)
 
 Observed 2026-08-17 on the Add New Author dialog. The form marks these required

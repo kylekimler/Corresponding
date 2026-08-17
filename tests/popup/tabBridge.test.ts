@@ -3,6 +3,7 @@ import {
   CONTENT_SCRIPT_FILE,
   isDevelopmentFixtureUrl,
   isInjectableTabUrl,
+  detectAcrossFrames,
   normalizeTabResponse,
   sendToActiveTab,
 } from '@/entrypoints/popup/tabBridge';
@@ -37,6 +38,65 @@ describe('normalizeTabResponse', () => {
     expect(
       normalizeTabResponse({ type: 'ERROR', message: undefined }).type,
     ).toBe('ERROR');
+  });
+});
+
+describe('detectAcrossFrames', () => {
+  it('keeps the frame that recognises the portal, not the first to answer', async () => {
+    // Frame 0 answers "unknown" first, as a consent or analytics frame does.
+    const sendMessage = vi.fn(async (_tabId, message, options) => {
+      if (message.type === 'PING') return { type: 'PONG' };
+      const frameId = (options as { frameId?: number } | undefined)?.frameId;
+      return {
+        type: 'DETECT_RESULT',
+        result:
+          frameId === 2
+            ? {
+                platformId: 'scholarone',
+                confidence: 0.95,
+                label: 'ScholarOne Manuscripts',
+                evidence: ['AUTHOR_FIRST_NAME'],
+              }
+            : { platformId: 'unknown', confidence: 0, label: 'Unknown', evidence: [] },
+      };
+    });
+    vi.stubGlobal('browser', {
+      tabs: { query: vi.fn(), sendMessage },
+      scripting: {
+        executeScript: vi
+          .fn()
+          .mockResolvedValue([{ frameId: 0 }, { frameId: 2 }]),
+      },
+    });
+
+    const detection = await detectAcrossFrames(11);
+
+    expect(detection.frameId).toBe(2);
+    expect(
+      detection.response.type === 'DETECT_RESULT' &&
+        detection.response.result.platformId,
+    ).toBe('scholarone');
+  });
+
+  it('falls back to the single frame when a page has no child frames', async () => {
+    const sendMessage = vi.fn().mockResolvedValue({
+      type: 'DETECT_RESULT',
+      result: {
+        platformId: 'nature-mts',
+        confidence: 1,
+        label: 'Nature',
+        evidence: [],
+      },
+    });
+    vi.stubGlobal('browser', {
+      tabs: { query: vi.fn(), sendMessage },
+      scripting: {
+        executeScript: vi.fn().mockResolvedValue([{ frameId: 0 }]),
+      },
+    });
+
+    const detection = await detectAcrossFrames(12);
+    expect(detection.frameId).toBe(0);
   });
 });
 
@@ -189,7 +249,9 @@ describe('content-script injection', () => {
   });
 
   it('does not reinject when the content script intentionally returns ERROR', async () => {
-    const executeScript = vi.fn();
+    // Frame enumeration also uses executeScript, so assert on injection
+    // specifically: a `files` call is what re-injects the content script.
+    const executeScript = vi.fn().mockResolvedValue([{ frameId: 0 }]);
     vi.stubGlobal('browser', {
       tabs: {
         query: vi.fn().mockResolvedValue([
@@ -210,7 +272,9 @@ describe('content-script injection', () => {
       type: 'ERROR',
       message: 'Unsupported platform',
     });
-    expect(executeScript).not.toHaveBeenCalled();
+    expect(
+      executeScript.mock.calls.filter((call) => 'files' in (call[0] ?? {})),
+    ).toHaveLength(0);
   });
 
   it('refuses to message a different tab than the preview target', async () => {

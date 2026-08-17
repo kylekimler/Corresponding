@@ -78,6 +78,16 @@ const RULES: Partial<Record<PlatformId, RequirementRule[]>> = {
       isSatisfied: (author) => hasText(primaryAffiliation(author)?.institution),
     },
   ],
+  scholarone: [
+    {
+      code: 'credit_roles_recommended',
+      field: 'Contributor Roles',
+      explanation:
+        'ScholarOne shows the CRediT checkboxes per author; Corresponding can tick them only from roster roles.',
+      blocksFill: false,
+      isSatisfied: (author) => author.creditRoles.length > 0,
+    },
+  ],
   biorxiv: [
     {
       code: 'email_required',

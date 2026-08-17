@@ -61,8 +61,9 @@ describe('radically free product', () => {
       expect(surfaces).not.toContain(phrase);
     }
 
+    // The popup must still state plainly that the product costs nothing.
     expect(readRepo('src/entrypoints/popup/App.tsx')).toContain(
-      'Free. No account. No trial.',
+      'This app is free!',
     );
   });
 });
