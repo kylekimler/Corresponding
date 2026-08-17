@@ -143,6 +143,23 @@ export function PreviewResultCard(props: { summary: PreviewSummary }) {
           </ul>
         </div>
       )}
+      {s.requirementNotices.length > 0 && (
+        <div
+          className="requirement-notice"
+          role="status"
+          aria-live="polite"
+        >
+          <p className="danger tight">This portal needs more information</p>
+          <ul className="compact">
+            {s.requirementNotices.map((notice) => (
+              <li key={notice}>{notice}</li>
+            ))}
+          </ul>
+          <p className="muted tight">
+            Corresponding fills what it has. Add the rest before saving.
+          </p>
+        </div>
+      )}
       {s.authorGroups.length > 0 && (
         <details
           className="author-confidence"

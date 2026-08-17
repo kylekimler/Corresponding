@@ -1,3 +1,4 @@
+import { describeRequirementIssue } from '@/adapters/requirements';
 import type {
   DetectResult,
   FieldPlan,
@@ -22,6 +23,8 @@ export interface PreviewSummary {
   conflictLabels: string[];
   unresolvedLabels: string[];
   errors: string[];
+  /** Portal-required fields this roster is missing, already explained. */
+  requirementNotices: string[];
   authorGroups: AuthorPreviewGroup[];
   /** Short human status for the banner. */
   headline: string;
@@ -107,6 +110,7 @@ function summarizeAuthorGroups(
 export function summarizePreview(
   report: FillReport,
   detected?: DetectResult | null,
+  authorCount = 0,
 ): PreviewSummary {
   const exactMappings = report.plans.filter(
     (p) =>
@@ -159,6 +163,9 @@ export function summarizePreview(
     conflictLabels,
     unresolvedLabels,
     errors: report.errors.slice(0, 12),
+    requirementNotices: (report.requirements ?? [])
+      .slice(0, 8)
+      .map((issue) => describeRequirementIssue(issue, authorCount)),
     authorGroups: summarizeAuthorGroups(report.plans, report.platformId),
     headline,
   };

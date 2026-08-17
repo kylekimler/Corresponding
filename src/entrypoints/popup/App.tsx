@@ -165,7 +165,7 @@ export function App({ surface = 'popup' }: { surface?: 'popup' | 'page' } = {}) 
     previewIsCurrent && (previewSession?.report.errors.length ?? 0) === 0;
   const preview = previewIsCurrent ? previewSession?.report ?? null : null;
   const previewSummary = useMemo(
-    () => (preview ? summarizePreview(preview, detected) : null),
+    () => (preview ? summarizePreview(preview, detected, selected?.authors.length ?? 0) : null),
     [preview, detected],
   );
   const sheetsUi = sheetsChooserAvailability(sheetsClient.isConfigured());
@@ -551,7 +551,7 @@ export function App({ surface = 'popup' }: { surface?: 'popup' | 'page' } = {}) 
           report: res.result,
           context: createPreviewContext(selected, overwrite, target),
         });
-        const summary = summarizePreview(res.result, detected);
+        const summary = summarizePreview(res.result, detected, selected.authors.length);
         setActionStatus(summary.headline);
         await recordLocalActivity(res.result, selected.id);
         // Refresh detect if it was stuck/error — preview proves the tab works.
@@ -615,7 +615,7 @@ export function App({ surface = 'popup' }: { surface?: 'popup' | 'page' } = {}) 
         await recordLocalActivity(preflight.result, selected.id);
         if (preflight.result.errors.length > 0) {
           reportActionError(preflight.result.errors[0]!);
-          setActionStatus(summarizePreview(preflight.result, detected).headline);
+          setActionStatus(summarizePreview(preflight.result, detected, selected.authors.length).headline);
           return;
         }
       }

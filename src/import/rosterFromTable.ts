@@ -5,6 +5,7 @@ import {
   type Roster,
   type RosterSource,
 } from '@/schema/author';
+import { parseCreditRoles } from '@/schema/credit';
 import { normalizeOrcid } from '@/schema/orcid';
 import type { CanonicalColumn } from './columnMap';
 
@@ -57,6 +58,7 @@ export function rowsToRoster(input: {
         department: cell(row, input.mapping, 'department') || undefined,
         city: cell(row, input.mapping, 'city') || undefined,
         state: cell(row, input.mapping, 'state') || undefined,
+        postalCode: cell(row, input.mapping, 'postalCode') || undefined,
         country: cell(row, input.mapping, 'country') || undefined,
         isPrimary: true,
       });
@@ -76,6 +78,7 @@ export function rowsToRoster(input: {
       orcid: normalizeOrcid(cell(row, input.mapping, 'orcid')),
       isCorresponding: truthy(cell(row, input.mapping, 'isCorresponding')),
       equalContribution: truthy(cell(row, input.mapping, 'equalContribution')),
+      creditRoles: parseCreditRoles(cell(row, input.mapping, 'creditRoles')),
       affiliations,
       sequence: Number.isFinite(sequence) && sequence > 0 ? sequence : i + 1,
     };

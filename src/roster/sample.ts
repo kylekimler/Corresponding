@@ -12,6 +12,9 @@ const SAMPLE_HEADERS = [
   'Country',
   'Corresponding',
   'Equal contribution',
+  'Department',
+  'Zip or Postal Code',
+  'Contributor Roles',
 ];
 
 /**
@@ -29,6 +32,9 @@ const SAMPLE_ROWS = [
     'United Kingdom',
     '',
     'yes',
+    'Computing Laboratory',
+    'NW1 2BE',
+    'Conceptualization; Methodology',
   ],
   [
     'Alan',
@@ -40,6 +46,9 @@ const SAMPLE_ROWS = [
     'United Kingdom',
     '',
     'yes',
+    'Mathematics',
+    'MK3 6EB',
+    'Conceptualization; Software',
   ],
   [
     'Chien-Shiung',
@@ -51,6 +60,9 @@ const SAMPLE_ROWS = [
     'United States',
     '',
     '',
+    'Physics',
+    '10027',
+    'Investigation; Validation',
   ],
   [
     'Émilie',
@@ -62,6 +74,9 @@ const SAMPLE_ROWS = [
     'France',
     '',
     '',
+    'Th\u00e9orie',
+    '75005',
+    'Formal analysis',
   ],
   [
     'Rosalind',
@@ -73,6 +88,9 @@ const SAMPLE_ROWS = [
     'United Kingdom',
     'yes',
     '',
+    'Structural Biology',
+    'WC1E 6BT',
+    'Supervision; Writing \u2013 review & editing',
   ],
   [
     'Grace',
@@ -84,6 +102,9 @@ const SAMPLE_ROWS = [
     'United States',
     'yes',
     '',
+    'Systems',
+    '22204',
+    'Supervision; Funding acquisition',
   ],
 ];
 
@@ -97,6 +118,9 @@ const SAMPLE_MAPPING = {
   6: 'country',
   7: 'isCorresponding',
   8: 'equalContribution',
+  9: 'department',
+  10: 'postalCode',
+  11: 'creditRoles',
 } as const;
 
 /**

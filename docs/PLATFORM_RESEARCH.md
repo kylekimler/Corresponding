@@ -51,6 +51,29 @@ Research date: 2026-08-12. Based on public documentation and vendor marketing pa
   likely. Prefer false negatives. Live smoke on an authenticated Bioinformatics
   submission still required before claiming production validation.
 
+## Editorial Manager — Contributor Roles (CRediT)
+
+Observed 2026-08-17 on the Add New Author dialog. The form marks these required
+with an asterisk: Given/First Name, Family/Last Name, E-mail Address,
+Institution, Department, Zip or Postal Code, Country or Region, and
+**Contributor Roles**. An author will not save until at least one CRediT role is
+selected.
+
+Contributor Roles is not a plain input. A pencil icon opens a panel of 14
+checkboxes matching the CRediT taxonomy exactly, with its own save and back
+controls.
+
+Corresponding therefore:
+
+- carries `creditRoles` and `postalCode` as canonical author data
+- maps `Contributor Roles`, `CRediT`, and `Zip or Postal Code` columns on import
+- reports missing required fields before Fill, naming the field and the affected
+  authors, and still fills everything the portal does accept
+
+It does **not** select the checkboxes. That needs a redacted capture of the
+expanded Contributor Roles panel; the screenshots show labels but no element
+identifiers, and this repository does not invent selectors.
+
 ## Editorial Manager (Aries / Elsevier ecosystem)
 
 - **Terminology:** Editorial Manager (EM), often branded per journal.

@@ -4,6 +4,16 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-17 12:50 UTC
+- environment note: the workspace came back at a commit from the first session while `origin/main` was 27 commits ahead with capture-backed Editorial Manager and ScholarOne adapters. Resynced to `origin/main` before touching code, so this work builds on the current adapters instead of duplicating them.
+- CRediT: Added `src/schema/credit.ts` with the 14-role taxonomy, display labels, and a parser that folds en dashes, ampersands, and shorthands. Unrecognized text is dropped rather than guessed. Identity v2 now re-uses this vocabulary instead of declaring its own copy.
+- canonical data: `Author.creditRoles` and `Affiliation.postalCode`, both required by Editorial Manager's author form. Import maps `Contributor Roles`, `CRediT`, `Contributions`, and `Zip or Postal Code` columns.
+- requirements model: `src/adapters/requirements.ts` declares per-portal required fields from captured forms only, with a short explanation each. Editorial Manager covers contributor roles, department, postal code, country, email, and institution; bioRxiv covers email and institution.
+- reported, not enforced: unmet requirements travel on `FillReport.requirements` and render as a briefly reddish notice naming the field and affected authors. Filling still proceeds, so a person keeps the values the portal does accept and only completes the rest. An earlier draft blocked the fill outright and broke three existing Editorial Manager tests, which was the right signal that blocking was too aggressive.
+- example roster: gained departments, postal codes, and CRediT roles so the six-author example satisfies Editorial Manager rather than tripping the warning it demonstrates.
+- deliberate limit: the Contributor Roles checkboxes are not selected. That needs a redacted capture of the panel behind the pencil icon; the screenshots show labels but no identifiers.
+- verification: 268 Vitest tests, typecheck, production build, and six Playwright MV3 journeys passed. `npm run lint` reports three pre-existing errors on `main` (unused constants in the bioRxiv adapter, a redundant assignment in `tabBridge`) that predate this change and are untouched here.
+
 ### 2026-08-15 04:55 UTC
 - Merged open PRs onto main in an order that keeps capture-backed IDs and the honest scoreboard: #30 FILL INFO, #26 fill delight, #29 declarative sites (includes #27 radically-free and #28 scoreboard), #31 Editorial Manager iframe adapter, #32 ScholarOne Bioinformatics adapter.
 - Conflicts were only docs / README / registry. Resolution: `sites/*.json` stay detect-only; TypeScript adapters win on id collision; host-family detect remains for `*.editorialmanager.com` and `*.manuscriptcentral.com`.

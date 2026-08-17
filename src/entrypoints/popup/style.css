@@ -379,10 +379,31 @@ input:not([type]) {
   }
 }
 
+/* Missing portal requirements: a brief reddish wash, calm rather than alarming. */
+.requirement-notice {
+  margin-top: var(--c-space-2);
+  padding: 8px 10px;
+  border: 1px solid rgba(145, 55, 48, 0.35);
+  border-radius: var(--c-radius-sm);
+  animation: requirement-flash 900ms ease-out;
+}
+
+@keyframes requirement-flash {
+  0% {
+    background: rgba(145, 55, 48, 0.16);
+    border-color: rgba(145, 55, 48, 0.55);
+  }
+  100% {
+    background: rgba(145, 55, 48, 0.04);
+    border-color: rgba(145, 55, 48, 0.35);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   button,
   .action-button-working,
-  .gentle-issue-pulse {
+  .gentle-issue-pulse,
+  .requirement-notice {
     animation: none;
     transition: none;
   }

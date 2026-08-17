@@ -1,4 +1,5 @@
 import type { Author, Roster } from '@/schema/author';
+import type { RequirementIssue } from './requirements';
 
 /** Stable adapter id. New journals add a `sites/*.json` file; ids are kebab-case. */
 export type PlatformId = string;
@@ -63,6 +64,12 @@ export interface FillReport {
   unmapped: number;
   warnings: string[];
   errors: string[];
+  /**
+   * Portal-specific fields this roster is missing. Reported separately from
+   * errors: the fill still proceeds, but the portal will reject a save until
+   * these are supplied.
+   */
+  requirements?: RequirementIssue[];
 }
 
 export interface ValidationIssue {

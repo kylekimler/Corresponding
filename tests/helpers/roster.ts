@@ -16,6 +16,7 @@ export function makeAuthor(
     orcid: partial.orcid,
     isCorresponding: partial.isCorresponding ?? false,
     equalContribution: partial.equalContribution ?? false,
+    creditRoles: partial.creditRoles ?? [],
     affiliations: partial.affiliations ?? [],
     sequence: partial.sequence,
   };
