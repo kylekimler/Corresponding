@@ -298,7 +298,7 @@ export const editorialManagerAdapter: PlatformAdapter = {
         unmapped: 0,
         warnings,
         errors: [
-          'Editorial Manager author form was not found. Open Manuscript Data → Authors (Add/Edit Author), then retry.',
+          'Editorial Manager author form was not found in this window. If Add New Author opened as its own window, click the Corresponding icon while that window is focused. Otherwise open Manuscript Data → Authors (Add/Edit Author) and retry.',
         ],
         requirements,
       };

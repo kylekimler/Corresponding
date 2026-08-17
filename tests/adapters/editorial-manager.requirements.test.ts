@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { editorialManagerAdapter } from '@/adapters/editorial-manager/adapter';
 import { mountEditorialManagerFixture } from '@/adapters/editorial-manager/fixture';
+import { findAddAnotherAuthorControl } from '@/adapters/editorial-manager/documents';
 import { summarizePreview } from '@/popup/previewSummary';
 import { makeAuthor, makeRoster } from '../helpers/roster';
 
@@ -58,6 +59,20 @@ describe('Editorial Manager contributor-role requirement', () => {
     expect(report.requirements).toEqual([]);
     expect(report.errors).toEqual([]);
     expect(report.plans.length).toBeGreaterThan(0);
+  });
+
+  it('finds Add Another Author when it is an icon with a title', () => {
+    mountEditorialManagerFixture();
+    // Editorial Manager's toolbar uses icons, so the label is in title/alt.
+    const toolbar = document.createElement('div');
+    toolbar.innerHTML =
+      '<a id="save-and-add"><img title="Save and Add Another Author" alt="" /></a>';
+    document.body.append(toolbar);
+
+    const control = findAddAnotherAuthorControl(document);
+
+    // The click must land on the anchor, not the inner image.
+    expect(control?.id).toBe('save-and-add');
   });
 
   it('surfaces the requirement to the popup as an explained notice', () => {

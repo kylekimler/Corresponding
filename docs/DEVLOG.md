@@ -4,6 +4,15 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-17 14:00 UTC
+- ScholarOne, from the 2026-08-17 capture: institution is `name="AUTHOR_INSTITUTION_1"` with a generated combobox id, so it is now located by name and filled. It had previously been reported unmapped because the earlier capture lacked the field.
+- ScholarOne new-co-author path: an unknown email produces an inline "create a new co-author" banner rather than the Yes/No modal. Lookup now settles on either outcome and follows the banner link, so an unrecognised email no longer stalls.
+- Editorial Manager: the reported failure is not a fill failure. The screenshots show the open form correctly filled and the portal refusing only on Contributor Roles. Two gaps remain, both needing capture evidence rather than guessed ids: the roles panel behind the pencil icon, and the unlabelled toolbar icon for Save and Add Another Author. Control matching now also reads `title` and `alt`, which is how icon buttons carry labels, and clicks the nearest actionable ancestor; this is a hypothesis pending a capture.
+- Editorial Manager message: the author-form-not-found error now names the separate-window case, which is what the popup actually hits when Add New Author opens its own window.
+- known gap: `Zip or Postal Code` is required on the Editorial Manager form but absent from the captured ids, so the requirement is reported and cannot yet be filled.
+- copy: "This app is free!" became "Free for scientists forever!", with the `radicallyFree` guard updated to match.
+- verification: 276 Vitest tests, typecheck, production build, and six Playwright MV3 journeys passed.
+
 ### 2026-08-17 13:15 UTC
 - ScholarOne recognition, root cause: `DETECT`, `PREVIEW`, and `FILL` were broadcast to every frame with `tabs.sendMessage`, and Chrome resolves with whichever frame replies first. The `mc.manuscriptcentral.com/bioinformatics` capture shows a second readable frame with zero fields, so that frame could answer "unknown" and win the race even though the top frame scored ~0.95. Diagnostics already walked frames; the fill path did not.
 - fix: detection now asks every injectable frame and keeps the strongest answer, preferring a real platform match over the highest raw confidence. The winning frame id is remembered per tab and reused for Preview, Fill, and Validate through `TabTarget.frameId`, so operations target the frame that recognised the portal. The adapter ids and thresholds were already correct and are unchanged.

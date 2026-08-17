@@ -43,6 +43,8 @@ import {
   authorDepartment,
   authorPhone,
   authorState,
+  authorInstitutionName,
+  CREATE_NEW_COAUTHOR_RE,
   CREDIT_ROLE_PREFIX,
 } from './ids';
 
@@ -343,10 +345,10 @@ function buildPlans(authors: Author[], options: FillOptions): FieldPlan[] {
         fieldId: `scholarone.author.${author.sequence}.institution`,
         label: `Author ${author.sequence} Institution`,
         authorSequence: author.sequence,
-        action: 'unmapped',
+        action: 'fill',
         proposedValue: affiliation.institution,
         reason:
-          'Bioinformatics ScholarOne capture has no institution text input (likely Ringgold/typeahead); left for manual entry',
+          'Typeahead combobox: the text is written, and ScholarOne may still ask for a matching institution',
       });
     }
     plans.push({
@@ -485,6 +487,16 @@ function writeInput(
   input.dispatchEvent(new Event('blur', { bubbles: true }));
 }
 
+/** The "create a new co-author" link shown when no existing account matches. */
+function createNewCoauthorControl(doc: Document): HTMLElement | null {
+  return (
+    Array.from(doc.querySelectorAll<HTMLElement>('a, button')).find(
+      (el) =>
+        isVisible(el) && CREATE_NEW_COAUTHOR_RE.test(normalizeText(el.textContent)),
+    ) ?? null
+  );
+}
+
 function emailSearchModalVisible(doc: Document): boolean {
   const yes = byId<HTMLElement>(doc, EMAIL_SEARCH_MODAL_YES);
   return !!yes && isVisible(yes);
@@ -500,10 +512,17 @@ function authorDetailsReady(doc: Document): boolean {
  * AUTHOR_* details stabilize — never write names while the lookup is in flight.
  */
 async function waitForLookupSettled(doc: Document): Promise<void> {
+  const settled = () =>
+    emailSearchModalVisible(doc) ||
+    authorDetailsReady(doc) ||
+    // An unknown email settles on the inline "create a new co-author" banner.
+    createNewCoauthorControl(doc) !== null;
+
   const snapshot = () =>
     [
       emailSearchModalVisible(doc) ? 'modal' : '',
       authorDetailsReady(doc) ? 'details' : '',
+      createNewCoauthorControl(doc) ? 'banner' : '',
       byId<HTMLInputElement>(doc, AUTHOR_EMAIL)?.value ?? '',
       byId<HTMLInputElement>(doc, AUTHOR_FIRST_NAME)?.value ?? '',
       byId<HTMLInputElement>(doc, AUTHOR_LAST_NAME)?.value ?? '',
@@ -517,9 +536,7 @@ async function waitForLookupSettled(doc: Document): Promise<void> {
     const next = snapshot();
     if (next === previous) {
       stable += 1;
-      if (stable >= 2 && (emailSearchModalVisible(doc) || authorDetailsReady(doc))) {
-        return;
-      }
+      if (stable >= 2 && settled()) return;
     } else {
       stable = 0;
       previous = next;
@@ -573,6 +590,19 @@ async function searchByEmail(doc: Document, email: string): Promise<'created' | 
     return 'created';
   }
 
+  // An unknown email produces an inline banner instead of the modal, offering
+  // "create a new co-author" as a link.
+  const createLink = createNewCoauthorControl(doc);
+  if (createLink) {
+    assertSafeMutationTarget(createLink);
+    createLink.click();
+    await waitFor(
+      () => authorDetailsReady(doc),
+      'ScholarOne did not open author details after choosing to create a new co-author',
+    );
+    return 'created';
+  }
+
   await waitFor(
     () => authorDetailsReady(doc),
     'ScholarOne did not show author details after email search',
@@ -605,7 +635,27 @@ function writeAuthorDetails(
     if (!el || !isVisible(el)) continue;
     writeInput(el, field.value, overwrite);
   }
+  applyInstitution(doc, author, overwrite);
   applyCreditRoles(doc, author);
+}
+
+/**
+ * Institution is a typeahead whose id contains a generated number, so it is
+ * located by name. The text is written; ScholarOne may still require the person
+ * to pick a matching institution from its own list.
+ */
+function applyInstitution(
+  doc: Document,
+  author: Author,
+  overwrite: boolean,
+): void {
+  const institution = primaryAffiliation(author)?.institution?.trim();
+  if (!institution) return;
+  const input = doc.querySelector<HTMLInputElement>(
+    `input[name="${authorInstitutionName(1)}"]`,
+  );
+  if (!input || !isVisible(input)) return;
+  writeInput(input, institution, overwrite);
 }
 
 /**

@@ -76,6 +76,27 @@ describe('ScholarOne CRediT contributor roles', () => {
     expect(checked).toEqual(expect.arrayContaining(['methodology', 'supervision']));
   });
 
+  it('creates a new co-author from the inline banner and fills institution', async () => {
+    const harness = mountScholarOneFixture({ inlineCreateBanner: true });
+
+    await scholarOneAdapter.fillAsync!(
+      document,
+      makeRoster([author(['methodology'])]),
+      { overwrite: true, dryRun: false },
+    );
+
+    // The unknown email shows a banner, not the modal, so the link is the path.
+    expect(harness.createCoauthorClicks()).toBe(1);
+    expect(harness.modalYesClicks()).toBe(0);
+    expect(
+      (
+        document.querySelector(
+          'input[name="AUTHOR_INSTITUTION_1"]',
+        ) as HTMLInputElement | null
+      )?.value,
+    ).toBe('Analytical Engines Institute');
+  });
+
   it('reports roles as missing source rather than filling nothing silently', () => {
     mountScholarOneFixture({ formOpen: true });
 
