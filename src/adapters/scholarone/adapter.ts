@@ -833,21 +833,20 @@ async function commitAuthor(doc: Document, beforeCount: number): Promise<void> {
     );
   }
   assertSafeMutationTarget(commit);
-  let lastError: Error | null = null;
-  for (let attempt = 0; attempt < 2; attempt += 1) {
-    dismissScholarOneProceedDialogs(doc);
-    const alertBefore = portalAlertText(doc);
+  dismissScholarOneProceedDialogs(doc);
+  const alertBefore = portalAlertText(doc);
+  commit.click();
+  try {
+    await waitForAuthorCommit(doc, beforeCount, alertBefore);
+  } catch (error) {
+    // Retry only when Ringgold / generic-error was in the way. A real
+    // alertButton refusal (contributor roles, etc.) is left open.
+    const dismissed = dismissScholarOneProceedDialogs(doc);
+    if (existingAuthorCount(doc) > beforeCount) return;
+    if (!dismissed) throw error;
     commit.click();
-    try {
-      await waitForAuthorCommit(doc, beforeCount, alertBefore);
-      return;
-    } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error));
-      dismissScholarOneProceedDialogs(doc);
-      if (existingAuthorCount(doc) > beforeCount) return;
-    }
+    await waitForAuthorCommit(doc, beforeCount, portalAlertText(doc));
   }
-  throw lastError ?? new Error('ScholarOne did not add the author to the list after commit');
 }
 
 /**
