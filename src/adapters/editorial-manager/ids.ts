@@ -24,6 +24,17 @@ export const AUTHOR_SAVE_ID = 'SaveButton';
 export const AUTHOR_CANCEL_ID = 'CancelButton';
 export const AUTHORS_COUNT_ID = 'authorsCount';
 
+/**
+ * Toolbar floppy on Add New Author. Observed 2026-08-17 on PLOS Genetics:
+ * `<button class="fl-tool fl-flToolSave" title="Save This Author"
+ *   data-toolname="AuthorSave">`.
+ */
+export const SAVE_THIS_AUTHOR_RE = /save this author/i;
+export const AUTHOR_SAVE_TOOL = 'AuthorSave';
+
+/** Parent-page control that opens the next Add New Author dialog. */
+export const ADD_ANOTHER_AUTHOR_CLASS = 'fl-add-btn';
+
 /** Manuscript / legal fields captured on the same page — never write these. */
 export const MANUSCRIPT_FIELD_IDS = [
   'txtFullTitle',

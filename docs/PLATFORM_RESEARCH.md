@@ -80,8 +80,8 @@ Observed but not wired, pending a need: "Create Account", "Add Created Author",
 
 No Editorial Manager probe has been collected yet. The two gaps remain exactly as
 recorded below: the Contributor Roles checkbox panel behind the pencil icon, and
-the unlabelled toolbar icon for Save and Add Another Author. `Zip or Postal Code`
-is required on the form but still has no known id.
+the toolbar save is now `Save This Author` / `data-toolname="AuthorSave"`, and
+the next author is parent-page `button.fl-add-btn`.
 
 ## ScholarOne — new-co-author path and institution (2026-08-17)
 
@@ -129,13 +129,9 @@ hypothesis.
 
 ## Editorial Manager — still needed
 
-Filling the open Add New Author form, Zipcode, and CRediT checkboxes is
-capture-backed. One control is still a hypothesis:
-
-1. **Save and Add Another Author.** The dialog's toolbar is four unlabelled
-   icons. Matching now also reads `title` and `alt`, which is how icon buttons
-   normally carry their label, but that is a hypothesis until a capture confirms
-   it.
+Filling, CRediT, Zipcode, Save This Author, and Add Another Author are
+capture-backed. Remaining: whether some journals use a different toolbar
+control instead of `data-toolname="AuthorSave"`.
 
 `Zipcode` is required and is now filled from the roster postal code (PLOS
 Genetics Add New Author, 2026-08-17). The Add New Author dialog can open as its

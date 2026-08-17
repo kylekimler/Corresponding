@@ -22,14 +22,13 @@ import {
   authorsListGuidance,
   findAddAnotherAuthorControl,
   findAuthorFormDocument,
+  findAuthorSaveControl,
   findRolesCollapseSave,
   findSelectRolesControl,
   isAuthorsListPage,
-  isRolesCollapseSave,
 } from './documents';
 import {
   AUTHOR_FIELD_IDS,
-  AUTHOR_SAVE_ID,
   CONTRIBUTOR_ROLE_PREFIX,
   MANUSCRIPT_FIELD_IDS,
   ROLES_WARNING_RE,
@@ -37,8 +36,9 @@ import {
 
 const ROLE_WAIT_MS = 2_000;
 const ROLE_INTERVAL_MS = 40;
-const SAVE_WATCH_MS = 1_200;
+const SAVE_WATCH_MS = 4_000;
 const SAVE_INTERVAL_MS = 40;
+const REOPEN_WAIT_MS = 6_000;
 
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => {
@@ -351,29 +351,54 @@ function collapseRolesPanel(form: Document): boolean {
   return true;
 }
 
-async function watchSaveWarning(
-  root: Document,
-  form: Document,
-): Promise<string> {
-  const started = Date.now();
-  while (Date.now() - started < SAVE_WATCH_MS) {
-    const warning = rolesWarningText(root) || rolesWarningText(form);
-    if (warning) return warning;
-    await delay(SAVE_INTERVAL_MS);
-  }
-  return '';
+function clickAuthorSave(root: Document): boolean {
+  const save = findAuthorSaveControl(root);
+  if (!save || typeof save.click !== 'function') return false;
+  assertSafeMutationTarget(save);
+  save.click();
+  return true;
 }
 
-function clickAuthorSave(form: Document): boolean {
-  // Both the roles floppy and the author save can use id="SaveButton".
-  // Never click "Collapse and Save Changes" here — that only commits roles.
-  const save = Array.from(form.querySelectorAll('input, button, a')).find(
-    (el) => el.id === AUTHOR_SAVE_ID && !isRolesCollapseSave(el),
-  );
-  if (!save || typeof (save as HTMLElement).click !== 'function') return false;
-  assertSafeMutationTarget(save);
-  (save as HTMLElement).click();
-  return true;
+function givenNameValue(root: Document): string {
+  const form = findAuthorFormDocument(root);
+  return form ? readValue(form, AUTHOR_FIELD_IDS.firstName) : '';
+}
+
+function authorFormVisible(root: Document): boolean {
+  const form = findAuthorFormDocument(root);
+  const first = form?.getElementById(AUTHOR_FIELD_IDS.firstName);
+  return Boolean(first && isVisible(first));
+}
+
+/**
+ * After Save This Author the dialog closes (live) or the fields clear (fixture).
+ * Either means the author was committed and Add Another Author can be clicked.
+ */
+async function waitAfterAuthorSave(
+  root: Document,
+  form: Document,
+  givenNameBefore: string,
+): Promise<'closed' | 'cleared' | 'warning' | 'timeout'> {
+  const started = Date.now();
+  while (Date.now() - started < SAVE_WATCH_MS) {
+    if (rolesWarningText(root) || rolesWarningText(form)) return 'warning';
+    if (!authorFormVisible(root)) return 'closed';
+    const given = givenNameValue(root);
+    if (givenNameBefore && given !== givenNameBefore) return 'cleared';
+    if (!given) return 'cleared';
+    await delay(SAVE_INTERVAL_MS);
+  }
+  return 'timeout';
+}
+
+async function waitForAuthorForm(root: Document): Promise<Document | null> {
+  const started = Date.now();
+  while (Date.now() - started < REOPEN_WAIT_MS) {
+    const form = findAuthorFormDocument(root);
+    if (form && authorFormVisible(root)) return form;
+    await delay(SAVE_INTERVAL_MS);
+  }
+  return null;
 }
 
 function summarize(plans: FieldPlan[]): Omit<
@@ -545,7 +570,7 @@ export const editorialManagerAdapter: PlatformAdapter = {
           );
           break;
         }
-        const saved = clickAuthorSave(currentForm);
+        const saved = clickAuthorSave(doc);
         if (!saved) {
           warnings.push(
             'Author Save control was not found. Values were written into the open form only.',
@@ -642,10 +667,12 @@ export const editorialManagerAdapter: PlatformAdapter = {
       tickCreditRoles(currentForm, author);
       collapseRolesPanel(currentForm);
 
-      const saved = clickAuthorSave(currentForm);
+      const givenBefore =
+        givenNameValue(doc) || author.givenName || `author-${author.sequence}`;
+      const saved = clickAuthorSave(doc);
       if (!saved) {
         warnings.push(
-          'Author Save control was not found. Values were written into the open form only.',
+          'Save This Author was not found. Values were written into the open form only.',
         );
         if (index < authors.length - 1) {
           warnings.push(
@@ -655,10 +682,17 @@ export const editorialManagerAdapter: PlatformAdapter = {
         break;
       }
 
-      const warning = await watchSaveWarning(doc, currentForm);
-      if (warning) {
+      const afterSave = await waitAfterAuthorSave(doc, currentForm, givenBefore);
+      if (afterSave === 'warning') {
+        const warning = rolesWarningText(doc) || rolesWarningText(currentForm);
         errors.push(
           `Editorial Manager refused author ${author.sequence}: ${warning}`,
+        );
+        break;
+      }
+      if (afterSave === 'timeout') {
+        warnings.push(
+          `Save This Author was clicked for author ${author.sequence} but the form is still open.`,
         );
         break;
       }
@@ -673,6 +707,13 @@ export const editorialManagerAdapter: PlatformAdapter = {
         }
         assertSafeMutationTarget(add);
         add.click();
+        const reopened = await waitForAuthorForm(doc);
+        if (!reopened) {
+          warnings.push(
+            'Add Another Author was clicked but a new author form did not open.',
+          );
+          break;
+        }
       }
     }
 
