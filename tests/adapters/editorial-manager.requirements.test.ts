@@ -1,7 +1,12 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { editorialManagerAdapter } from '@/adapters/editorial-manager/adapter';
 import { mountEditorialManagerFixture } from '@/adapters/editorial-manager/fixture';
-import { findAddAnotherAuthorControl } from '@/adapters/editorial-manager/documents';
+import { CREDIT_ROLES } from '@/schema/credit';
+import {
+  findAddAnotherAuthorControl,
+  findRolesCollapseSave,
+  findSelectRolesControl,
+} from '@/adapters/editorial-manager/documents';
 import { summarizePreview } from '@/popup/previewSummary';
 import { makeAuthor, makeRoster } from '../helpers/roster';
 
@@ -99,10 +104,29 @@ describe('Editorial Manager contributor-role requirement', () => {
     expect(report.errors.join(' ')).toMatch(/Add New Author window/);
   });
 
-  it('opens Click here to select roles and ticks the declared CRediT box', async () => {
+  it('opens the Edit Contributor Roles pencil, ticks, then collapses with the roles floppy', async () => {
     const form = mountEditorialManagerFixture({
       rolesCollapsed: true,
       includeAddAnotherAuthor: false,
+    });
+    const pencil = form.getElementById('EditButton') as HTMLInputElement;
+    const rolesFloppy = form.querySelector(
+      'input[title="Collapse and Save Changes"]',
+    ) as HTMLInputElement;
+    const authorSave = Array.from(form.querySelectorAll('input')).find(
+      (el) => el.id === 'SaveButton' && el.getAttribute('title') !== 'Collapse and Save Changes',
+    ) as HTMLInputElement;
+    let pencilClicks = 0;
+    let collapseClicks = 0;
+    let authorSaveClicks = 0;
+    pencil.addEventListener('click', () => {
+      pencilClicks += 1;
+    });
+    rolesFloppy.addEventListener('click', () => {
+      collapseClicks += 1;
+    });
+    authorSave.addEventListener('click', () => {
+      authorSaveClicks += 1;
     });
 
     await editorialManagerAdapter.fillAsync!(
@@ -111,11 +135,38 @@ describe('Editorial Manager contributor-role requirement', () => {
       { overwrite: true, dryRun: false },
     );
 
-    const methodology = Array.from(
-      form.querySelectorAll<HTMLInputElement>('input[type="checkbox"]'),
-    ).find((box) => /methodology/i.test(box.closest('label')?.textContent ?? ''));
+    const boxes = Array.from(
+      form.querySelectorAll<HTMLInputElement>(
+        'input[type="checkbox"][id^="ContributorRole_"]',
+      ),
+    );
+    const methodology = boxes.find((box) =>
+      /methodology/i.test(box.closest('label')?.textContent ?? ''),
+    );
+    console.log('EM credit pencil/floppy', {
+      pencilClicks,
+      collapseClicks,
+      authorSaveClicks,
+      boxCount: boxes.length,
+      ids: boxes.map((box) => box.id),
+      methodology: methodology?.checked,
+      panelHidden: form.getElementById('contributor-roles-panel')?.hidden,
+    });
+    expect(findSelectRolesControl(form)?.id).toBe('EditButton');
+    expect(findRolesCollapseSave(form)?.getAttribute('title')).toBe(
+      'Collapse and Save Changes',
+    );
+    expect(pencilClicks).toBeGreaterThan(0);
+    expect(collapseClicks).toBeGreaterThan(0);
+    expect(authorSaveClicks).toBeGreaterThan(0);
+    expect(CREDIT_ROLES).toHaveLength(14);
+    expect(boxes).toHaveLength(14);
+    expect(boxes.map((box) => box.id)).toEqual(
+      CREDIT_ROLES.map((_, index) => `ContributorRole_${index}`),
+    );
     expect(methodology?.checked).toBe(true);
-    expect(form.getElementById('contributor-roles-panel')?.hidden).toBe(false);
+    // The roles floppy collapses the grid; it is not the author save.
+    expect(form.getElementById('contributor-roles-panel')?.hidden).toBe(true);
   });
 
   it('reports the portal warning when a save is refused for missing roles', async () => {

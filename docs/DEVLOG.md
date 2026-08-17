@@ -4,6 +4,12 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-17 17:10 UTC
+- CRediT on Editorial Manager is a two-control sequence, not a checkbox row sitting on the form. The pencil is `input type=image id=EditButton title="Edit Contributor Roles"` (`ToggleToEditMode()`). After ticking, the floppy `title="Collapse and Save Changes"` (`SaveHandler()`) commits the grid. That floppy also uses `id=SaveButton`, so author save now skips any control whose title is the collapse phrase.
+- There are 14 CRediT roles, so the boxes are `ContributorRole_0` through `ContributorRole_13` (0-based, not 13 boxes). Names live under `ContributorRolesGridView`. XPaths were location context only.
+- Fill now: open EditButton if no visible boxes → tick by label → collapse-and-save roles → author save. The older "Click here to select roles" text remains a fallback.
+- verification: EM fixture mirrors both image inputs; the pencil/floppy test asserts 14 ids, both clicks, and that the grid is collapsed afterwards.
+
 ### 2026-08-17 17:00 UTC
 - PLOS Genetics Add New Author inspection (ids, not the structural probe): `ContributorRole_0` / `ContributorRole_1` with names under `ContributorRolesGridView`, confirming the 2026-08-15 prefix. XPaths were recorded only as location context and are not used as selectors.
 - `id="Zipcode"` / `name="ctl01$Zipcode"` is the required postal field. It is now filled from `affiliation.postalCode`. The input is Knockout-bound with `valueUpdate: 'blur'`, so every EM text write now dispatches blur after input/change; without that the model would keep an empty zip even when the box looked filled.

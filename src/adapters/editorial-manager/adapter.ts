@@ -22,8 +22,10 @@ import {
   authorsListGuidance,
   findAddAnotherAuthorControl,
   findAuthorFormDocument,
+  findRolesCollapseSave,
   findSelectRolesControl,
   isAuthorsListPage,
+  isRolesCollapseSave,
 } from './documents';
 import {
   AUTHOR_FIELD_IDS,
@@ -283,6 +285,10 @@ function isVisible(el: Element): boolean {
     if ('hidden' in current && Boolean((current as HTMLElement).hidden)) {
       return false;
     }
+    const style = current.ownerDocument.defaultView?.getComputedStyle(current);
+    if (style && (style.display === 'none' || style.visibility === 'hidden')) {
+      return false;
+    }
     current = current.parentElement;
   }
   return true;
@@ -317,17 +323,32 @@ function rolesWarningText(root: Document): string {
   return '';
 }
 
+function visibleCreditRoleCount(form: Document): number {
+  return creditRoleCheckboxes(form).filter(({ input }) => isVisible(input))
+    .length;
+}
+
 async function openRolesPanel(form: Document): Promise<void> {
-  if (creditRoleCheckboxes(form).length > 0) return;
+  // Checkboxes can already be in the DOM and still hidden until EditButton
+  // runs ToggleToEditMode.
+  if (visibleCreditRoleCount(form) > 0) return;
   const trigger = findSelectRolesControl(form);
   if (!trigger) return;
   assertSafeMutationTarget(trigger);
   trigger.click();
   const started = Date.now();
   while (Date.now() - started < ROLE_WAIT_MS) {
-    if (creditRoleCheckboxes(form).length > 0) return;
+    if (visibleCreditRoleCount(form) > 0) return;
     await delay(ROLE_INTERVAL_MS);
   }
+}
+
+function collapseRolesPanel(form: Document): boolean {
+  const save = findRolesCollapseSave(form);
+  if (!save) return false;
+  assertSafeMutationTarget(save);
+  save.click();
+  return true;
 }
 
 async function watchSaveWarning(
@@ -344,7 +365,11 @@ async function watchSaveWarning(
 }
 
 function clickAuthorSave(form: Document): boolean {
-  const save = form.getElementById(AUTHOR_SAVE_ID);
+  // Both the roles floppy and the author save can use id="SaveButton".
+  // Never click "Collapse and Save Changes" here — that only commits roles.
+  const save = Array.from(form.querySelectorAll('input, button, a')).find(
+    (el) => el.id === AUTHOR_SAVE_ID && !isRolesCollapseSave(el),
+  );
   if (!save || typeof (save as HTMLElement).click !== 'function') return false;
   assertSafeMutationTarget(save);
   (save as HTMLElement).click();
@@ -510,7 +535,10 @@ export const editorialManagerAdapter: PlatformAdapter = {
           if (plan.fieldId.startsWith(CONTRIBUTOR_ROLE_PREFIX)) continue;
           applyTextPlan(currentForm, plan, options);
         }
-        if (!conflict) tickCreditRoles(currentForm, author);
+        if (!conflict) {
+          tickCreditRoles(currentForm, author);
+          collapseRolesPanel(currentForm);
+        }
         if (conflict) {
           warnings.push(
             `Author ${author.sequence} skipped because the open form already has a conflicting identity.`,
@@ -612,6 +640,7 @@ export const editorialManagerAdapter: PlatformAdapter = {
       await openRolesPanel(currentForm);
       plans.push(...planCreditRoles(currentForm, author));
       tickCreditRoles(currentForm, author);
+      collapseRolesPanel(currentForm);
 
       const saved = clickAuthorSave(currentForm);
       if (!saved) {

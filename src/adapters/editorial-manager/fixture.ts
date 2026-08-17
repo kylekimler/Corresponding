@@ -28,13 +28,19 @@ export interface EditorialManagerFixtureOptions {
 const COUNTRIES = ['', 'United States', 'Germany', 'United Kingdom', 'Canada'];
 
 function creditRoleMarkup(): string {
-  return CREDIT_ROLES.map(
-    (role, index) => `
+  // Live ids are ContributorRole_0 .. ContributorRole_13 (14 CRediT roles).
+  return CREDIT_ROLES.map((role, index) => {
+    const row = String(index + 2).padStart(2, '0');
+    return `
       <label>
-        <input type="checkbox" id="${CONTRIBUTOR_ROLE_PREFIX}${index}" name="${CONTRIBUTOR_ROLE_PREFIX}${index}" />
+        <input
+          type="checkbox"
+          id="${CONTRIBUTOR_ROLE_PREFIX}${index}"
+          name="ctl01$ctl24$ContributorRolesGridView$ctl${row}$${CONTRIBUTOR_ROLE_PREFIX}${index}"
+        />
         ${CREDIT_ROLE_LABELS[role]}
-      </label>`,
-  ).join('');
+      </label>`;
+  }).join('');
 }
 
 function authorFormHtml(options: EditorialManagerFixtureOptions): string {
@@ -94,9 +100,25 @@ function authorFormHtml(options: EditorialManagerFixtureOptions): string {
     <label for="CountryCode">Country or Region *</label>
     <select id="CountryCode" name="ctl00$CountryCode">${countryOptions}</select>
     <div>
+      <input
+        type="image"
+        id="EditButton"
+        name="ctl01$ctl24$EditButton"
+        title="Edit Contributor Roles"
+        alt="Edit Contributor Roles"
+        src="Edit.gif"
+      />
       <a href="#" id="select-roles-trigger">Click here to select roles</a>
       <div id="contributor-roles-panel" ${options.rolesCollapsed ? 'hidden' : ''}>
         ${options.rolesCollapsed ? '' : creditRoleMarkup()}
+        <input
+          type="image"
+          id="SaveButton"
+          name="ctl01$ctl24$SaveButton"
+          title="Collapse and Save Changes"
+          alt="Collapse and Save Changes"
+          src="Save.gif"
+        />
       </div>
     </div>
     <div id="roles-warning" role="dialog" hidden>
@@ -119,12 +141,32 @@ function wireAuthorForm(
   options: EditorialManagerFixtureOptions = {},
 ): void {
   const trigger = doc.getElementById('select-roles-trigger');
+  const edit = doc.getElementById('EditButton');
   const panel = doc.getElementById('contributor-roles-panel');
-  trigger?.addEventListener('click', (event) => {
+  const openRoles = (event: Event) => {
     event.preventDefault();
     if (!panel) return;
-    if (!panel.querySelector('input')) panel.innerHTML = creditRoleMarkup();
+    if (!panel.querySelector('input[type="checkbox"]')) {
+      const floppy = panel.querySelector('input[title="Collapse and Save Changes"]');
+      panel.insertAdjacentHTML('afterbegin', creditRoleMarkup());
+      if (!floppy) {
+        panel.insertAdjacentHTML(
+          'beforeend',
+          `<input type="image" id="SaveButton" title="Collapse and Save Changes" src="Save.gif" />`,
+        );
+      }
+    }
     panel.hidden = false;
+  };
+  trigger?.addEventListener('click', openRoles);
+  edit?.addEventListener('click', openRoles);
+
+  const collapse = panel?.querySelector(
+    'input[title="Collapse and Save Changes"]',
+  );
+  collapse?.addEventListener('click', (event) => {
+    event.preventDefault();
+    if (panel) panel.hidden = true;
   });
 
   const save = doc.getElementById('SaveButton');

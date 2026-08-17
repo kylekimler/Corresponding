@@ -112,9 +112,13 @@ Corresponding now:
 - skips CKEditor / step-indicator chrome in the built-in console probe, reports
   `hasOpener` / iframe counts, and prefers author-like fields so the next paste
   is not 200 lines of Paste-from-Word buttons
-- fills `ContributorRole_#` checkboxes from the 2026-08-15 PLOS ONE capture,
-  matching by visible label, after clicking "Click here to select roles" when
-  the panel is collapsed
+- fills the 14 `ContributorRole_0` … `ContributorRole_13` checkboxes (CRediT
+  has fourteen roles; the ids are 0-based), matching by visible label
+- opens the panel with `EditButton` (`title="Edit Contributor Roles"`,
+  `ToggleToEditMode()`), then commits ticks with the roles floppy
+  (`title="Collapse and Save Changes"`, `SaveHandler()`) before the author save
+- never treats that roles floppy as the author `SaveButton` — both can share
+  the same id
 - reports the portal's "Please select at least one Contributor Role" warning
   instead of pretending the save worked
 

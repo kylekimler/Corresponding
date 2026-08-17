@@ -44,8 +44,22 @@ export const ADD_ANOTHER_AUTHOR_RE = /add\s+another\s+author/i;
  */
 export const CONTRIBUTOR_ROLE_PREFIX = 'ContributorRole_';
 
-/** Visible trigger next to the pencil icon on Add New Author. */
+/**
+ * Pencil that runs ToggleToEditMode. Observed 2026-08-17 on PLOS Genetics:
+ * `<input type="image" id="EditButton" title="Edit Contributor Roles">`.
+ */
+export const EDIT_ROLES_ID = 'EditButton';
+export const EDIT_ROLES_RE = /edit contributor roles/i;
+
+/** Fallback text next to the pencil when the title is missing. */
 export const SELECT_ROLES_RE = /click here to select roles/i;
+
+/**
+ * Floppy that commits the ticked roles and collapses the grid.
+ * Same id as the author SaveButton (`SaveButton`), distinguished by title:
+ * "Collapse and Save Changes" / onclick SaveHandler().
+ */
+export const COLLAPSE_SAVE_ROLES_RE = /collapse and save changes/i;
 
 /** Portal dialog that refuses a save with no role chosen. */
 export const ROLES_WARNING_RE = /please select at least one contributor role/i;

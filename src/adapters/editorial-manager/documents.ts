@@ -3,6 +3,9 @@ import {
   ADD_ANOTHER_AUTHOR_RE,
   AUTHORS_LIST_TITLE_RE,
   AUTHOR_FIELD_IDS,
+  COLLAPSE_SAVE_ROLES_RE,
+  EDIT_ROLES_ID,
+  EDIT_ROLES_RE,
   SELECT_ROLES_RE,
 } from './ids';
 
@@ -73,26 +76,55 @@ export function authorsListGuidance(): string {
   return 'This is Editorial Manager’s Authors list page. The author form lives in the Add New Author window — click inside that window, then click Corresponding.';
 }
 
-/** Pencil / "Click here to select roles" control that reveals CRediT checkboxes. */
+function controlBlob(el: Element): string {
+  return [
+    el.textContent,
+    el.getAttribute('aria-label'),
+    el.getAttribute('title'),
+    el.getAttribute('alt'),
+    el.tagName.toLowerCase() === 'input' ? el.getAttribute('value') : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+}
+
+/** Pencil / EditButton that reveals the 14 CRediT checkboxes. */
 export function findSelectRolesControl(root: Document): HTMLElement | null {
   for (const doc of documentsIn(root)) {
+    const byId = doc.getElementById(EDIT_ROLES_ID);
+    if (byId) return byId as HTMLElement;
     const nodes = doc.querySelectorAll(
-      'a, button, [role="button"], span, img, [title]',
+      'input[type="image"], a, button, [role="button"], span, img, [title]',
     );
     for (const el of nodes) {
-      const blob = [
-        el.textContent,
-        el.getAttribute('aria-label'),
-        el.getAttribute('title'),
-        el.getAttribute('alt'),
-      ]
-        .filter(Boolean)
-        .join(' ');
-      if (!SELECT_ROLES_RE.test(blob)) continue;
+      const blob = controlBlob(el);
+      if (!EDIT_ROLES_RE.test(blob) && !SELECT_ROLES_RE.test(blob)) continue;
       const clickable =
-        el.closest('a, button, [role="button"]') ?? el;
+        el.closest('a, button, input, [role="button"]') ?? el;
       return clickable as HTMLElement;
     }
   }
   return null;
+}
+
+/**
+ * Floppy that saves the ticked roles and collapses the grid. Distinguished
+ * from the author SaveButton by title, because both can use id="SaveButton".
+ */
+export function findRolesCollapseSave(root: Document): HTMLElement | null {
+  for (const doc of documentsIn(root)) {
+    const nodes = doc.querySelectorAll(
+      'input[type="image"], input[type="button"], button, a',
+    );
+    for (const el of nodes) {
+      if (COLLAPSE_SAVE_ROLES_RE.test(controlBlob(el))) {
+        return el as HTMLElement;
+      }
+    }
+  }
+  return null;
+}
+
+export function isRolesCollapseSave(el: Element): boolean {
+  return COLLAPSE_SAVE_ROLES_RE.test(controlBlob(el));
 }
