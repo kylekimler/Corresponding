@@ -8,12 +8,18 @@
  */
 
 import type { Author, Roster } from '@/schema/author';
+import {
+  creditRoleLabel,
+  parseCreditRoles,
+  type CreditRole,
+} from '@/schema/credit';
 import { identitiesConflict, matchSelectOption } from '../dom';
 import {
   assertSafeMutationTarget,
   isForbiddenControl,
   listDangerousControls,
 } from '../safety';
+import { evaluatePortalRequirements } from '../requirements';
 import type {
   DetectResult,
   FieldAction,
@@ -37,6 +43,7 @@ import {
   authorDepartment,
   authorPhone,
   authorState,
+  CREDIT_ROLE_PREFIX,
 } from './ids';
 
 const WAIT_TIMEOUT_MS = 10_000;
@@ -92,6 +99,45 @@ function isVisible(el: Element): boolean {
 function byId<T extends Element>(doc: Document, id: string): T | null {
   const el = doc.getElementById(id);
   return el as T | null;
+}
+
+/** Visible label text beside a checkbox, used to identify CRediT roles. */
+function checkboxLabelText(input: HTMLInputElement): string {
+  const aria = input.getAttribute('aria-label');
+  if (aria?.trim()) return aria.trim();
+  if (input.id) {
+    const explicit = Array.from(
+      input.ownerDocument.querySelectorAll('label[for]'),
+    ).find((label) => label.getAttribute('for') === input.id);
+    if (explicit?.textContent?.trim()) return explicit.textContent.trim();
+  }
+  const wrapping = input.closest('label');
+  if (wrapping?.textContent?.trim()) return wrapping.textContent.trim();
+  const sibling = input.nextElementSibling;
+  return sibling?.textContent?.trim() ?? '';
+}
+
+export interface CreditCheckbox {
+  input: HTMLInputElement;
+  role: CreditRole;
+}
+
+/**
+ * CRediT checkboxes on the open author form, matched by their visible label.
+ * A label that does not resolve to a taxonomy role is skipped rather than
+ * guessed, so a role is never ticked on the strength of a near match.
+ */
+export function creditRoleCheckboxes(doc: Document): CreditCheckbox[] {
+  const found: CreditCheckbox[] = [];
+  for (const input of Array.from(
+    doc.querySelectorAll<HTMLInputElement>(
+      `input[type="checkbox"][id^="${CREDIT_ROLE_PREFIX}"]`,
+    ),
+  )) {
+    const [role] = parseCreditRoles(checkboxLabelText(input));
+    if (role && role !== 'other') found.push({ input, role });
+  }
+  return found;
 }
 
 function sortedAuthors(roster: Roster): Author[] {
@@ -317,9 +363,15 @@ function buildPlans(authors: Author[], options: FillOptions): FieldPlan[] {
       fieldId: `scholarone.author.${author.sequence}.creditRoles`,
       label: `Author ${author.sequence} CRediT roles`,
       authorSequence: author.sequence,
-      action: 'unmapped',
+      action: author.creditRoles.length > 0 ? 'fill' : 'missing_source',
+      proposedValue:
+        author.creditRoles.length > 0
+          ? author.creditRoles.map(creditRoleLabel).join(', ')
+          : undefined,
       reason:
-        'CRediT checkboxes are present but roster v1 has no per-author credit roles to fill',
+        author.creditRoles.length > 0
+          ? undefined
+          : 'No contributor roles in the roster; ScholarOne shows the CRediT checkboxes for manual selection',
     });
   }
   return plans;
@@ -368,6 +420,7 @@ function report(
     ...summarize(plans),
     warnings,
     errors,
+    requirements: evaluatePortalRequirements('scholarone', roster),
   };
 }
 
@@ -551,6 +604,23 @@ function writeAuthorDetails(
     >(doc, field.id);
     if (!el || !isVisible(el)) continue;
     writeInput(el, field.value, overwrite);
+  }
+  applyCreditRoles(doc, author);
+}
+
+/**
+ * Tick the CRediT boxes this author declared. Only ticks: a role a person
+ * already selected is never cleared, and unmatched labels are left alone.
+ */
+function applyCreditRoles(doc: Document, author: Author): void {
+  if (author.creditRoles.length === 0) return;
+  for (const { input, role } of creditRoleCheckboxes(doc)) {
+    if (!isVisible(input) || input.disabled) continue;
+    if (!author.creditRoles.includes(role) || input.checked) continue;
+    assertSafeMutationTarget(input);
+    input.checked = true;
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
   }
 }
 

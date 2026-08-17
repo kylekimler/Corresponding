@@ -52,7 +52,11 @@ export async function isActiveDevelopmentFixtureTab(): Promise<boolean> {
 export async function getActiveTabTarget(): Promise<TabTarget | null> {
   const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
   if (!tab?.id || !isInjectableTabUrl(tab.url)) return null;
-  return { tabId: tab.id, url: tab.url! };
+  return {
+    tabId: tab.id,
+    url: tab.url!,
+    frameId: detectedFrameId(tab.id),
+  };
 }
 
 /** Normalize chrome.runtime messaging replies into a typed ExtensionResponse. */
@@ -110,6 +114,15 @@ async function injectContentScript(tabId: number): Promise<void> {
     // a leading slash, so narrow the known build artifact at this boundary.
     files: [CONTENT_SCRIPT_FILE as ScriptFile],
   });
+}
+
+/** Frame ids, or an empty list when the tab cannot be enumerated. */
+async function safeListInjectableFrameIds(tabId: number): Promise<number[]> {
+  try {
+    return await listInjectableFrameIds(tabId);
+  } catch {
+    return [];
+  }
 }
 
 async function listInjectableFrameIds(tabId: number): Promise<number[]> {
@@ -226,19 +239,68 @@ export async function sendToActiveTab(
   if (message.type === 'DIAGNOSTIC') {
     return collectDiagnosticFromAllFrames(tab.id, message);
   }
-  return sendOnce(tab.id, message);
+  if (message.type === 'DETECT') {
+    return detectBestFrame(tab.id);
+  }
+  // Reuse the frame that recognised the portal; a broadcast can otherwise be
+  // answered by an unrelated frame that has no author form.
+  return sendOnce(tab.id, message, expectedTarget?.frameId);
+}
+
+export interface FrameDetection {
+  response: ExtensionResponse;
+  frameId?: number;
+}
+
+/**
+ * Ask every injectable frame to detect, and keep the strongest answer. Portal
+ * pages carry consent and analytics frames whose content script would otherwise
+ * win the race with "unknown".
+ */
+export async function detectAcrossFrames(
+  tabId: number,
+): Promise<FrameDetection> {
+  const frameIds = await safeListInjectableFrameIds(tabId);
+  if (frameIds.length <= 1) {
+    return { response: await sendOnce(tabId, { type: 'DETECT' }), frameId: frameIds[0] };
+  }
+
+  let best: FrameDetection | undefined;
+  let bestConfidence = -1;
+  for (const frameId of frameIds) {
+    const response = await sendOnce(tabId, { type: 'DETECT' }, frameId);
+    if (response.type !== 'DETECT_RESULT') continue;
+    const { confidence, platformId } = response.result;
+    // Prefer a real match; fall back to the highest confidence seen.
+    const score = platformId === 'unknown' ? confidence - 1 : confidence;
+    if (score > bestConfidence) {
+      bestConfidence = score;
+      best = { response, frameId };
+    }
+  }
+  return best ?? { response: await sendOnce(tabId, { type: 'DETECT' }) };
+}
+
+async function detectBestFrame(tabId: number): Promise<ExtensionResponse> {
+  const { response, frameId } = await detectAcrossFrames(tabId);
+  if (response.type === 'DETECT_RESULT') {
+    lastDetectedFrameId.set(tabId, frameId);
+  }
+  return response;
+}
+
+/** Frame that most recently recognised the portal, per tab. */
+const lastDetectedFrameId = new Map<number, number | undefined>();
+
+export function detectedFrameId(tabId: number): number | undefined {
+  return lastDetectedFrameId.get(tabId);
 }
 
 async function collectDiagnosticFromAllFrames(
   tabId: number,
   message: ExtensionRequest,
 ): Promise<ExtensionResponse> {
-  let frameIds: number[] = [];
-  try {
-    frameIds = await listInjectableFrameIds(tabId);
-  } catch {
-    frameIds = [];
-  }
+  const frameIds = await safeListInjectableFrameIds(tabId);
   if (frameIds.length === 0) {
     return sendOnce(tabId, message);
   }

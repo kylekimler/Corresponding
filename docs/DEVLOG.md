@@ -4,6 +4,16 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-17 13:15 UTC
+- ScholarOne recognition, root cause: `DETECT`, `PREVIEW`, and `FILL` were broadcast to every frame with `tabs.sendMessage`, and Chrome resolves with whichever frame replies first. The `mc.manuscriptcentral.com/bioinformatics` capture shows a second readable frame with zero fields, so that frame could answer "unknown" and win the race even though the top frame scored ~0.95. Diagnostics already walked frames; the fill path did not.
+- fix: detection now asks every injectable frame and keeps the strongest answer, preferring a real platform match over the highest raw confidence. The winning frame id is remembered per tab and reused for Preview, Fill, and Validate through `TabTarget.frameId`, so operations target the frame that recognised the portal. The adapter ids and thresholds were already correct and are unchanged.
+- ScholarOne CRediT roles: the capture supplies `AUTHOR_CONTRIBUTOR_ROLE_SELECT_#` checkboxes with all 14 labels, so roles are now filled from the roster. Matching is by visible label through the shared CRediT parser, which folds the capture's hyphen and ampersand spellings. Ticking only: a role a person already selected is never cleared, and an unrecognised label is skipped rather than guessed. Rosters without roles report `missing_source` and leave the boxes for manual selection.
+- requirements: ScholarOne contributes a non-blocking contributor-roles notice; Editorial Manager's remains blocking-flagged but still reported rather than enforced.
+- copy: "Free. No account. No trial." became "This app is free!", and the unsupported-journal line now points at GitHub or the capture route. The `radicallyFree` guard was updated to assert the new sentence rather than dropped.
+- Advanced gained a GitHub section at the top with a button opening the repository.
+- cleanup: removed the duplicated frame-listing try/catch in `tabBridge`, which also cleared a pre-existing `no-useless-assignment` error in that file.
+- verification: 274 Vitest tests, typecheck, production build, and six Playwright MV3 journeys passed. `npm run lint` still reports two pre-existing unused-constant errors in the bioRxiv adapter, untouched here.
+
 ### 2026-08-17 12:50 UTC
 - environment note: the workspace came back at a commit from the first session while `origin/main` was 27 commits ahead with capture-backed Editorial Manager and ScholarOne adapters. Resynced to `origin/main` before touching code, so this work builds on the current adapters instead of duplicating them.
 - CRediT: Added `src/schema/credit.ts` with the 14-role taxonomy, display labels, and a parser that folds en dashes, ampersands, and shorthands. Unrecognized text is dropped rather than guessed. Identity v2 now re-uses this vocabulary instead of declaring its own copy.

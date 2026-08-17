@@ -67,6 +67,8 @@ import {
   downloadText,
 } from './components';
 
+const PROJECT_GITHUB_URL = 'https://github.com/kylekimler/Corresponding';
+
 const store = createRosterStore();
 const sheetsClient = createChromeGoogleSheetsClient();
 const auditLog = createChromeAuditLog();
@@ -758,7 +760,7 @@ export function App({ surface = 'popup' }: { surface?: 'popup' | 'page' } = {}) 
         <header className="app-header">
           <h1>Corresponding</h1>
           <p className="brand-line">Giving scientists more time to do science.</p>
-          <p className="free-line">Free. No account. No trial.</p>
+          <p className="free-line">This app is free!</p>
         </header>
 
         <PortalBadge
@@ -774,8 +776,8 @@ export function App({ surface = 'popup' }: { surface?: 'popup' | 'page' } = {}) 
         {(detectStatus === 'unknown' || detectStatus === 'error') && (
           <>
             <p className="muted tight">
-              Your journal isn&apos;t on the board yet. Capture a redacted
-              author-form screenshot — that is how the next platform unlocks.
+              Your journal isn&apos;t supported yet. Send us a note on our
+              GitHub, or use the Capture method to vibe code a PR.
             </p>
             <button
               type="button"
@@ -1414,6 +1416,20 @@ export function App({ surface = 'popup' }: { surface?: 'popup' | 'page' } = {}) 
         </button>
         <h1>Advanced</h1>
       </header>
+      <section className="panel">
+        <h2>GitHub</h2>
+        <p className="muted">
+          Ask for a journal, report a problem, or open a pull request.
+        </p>
+        <button
+          type="button"
+          onClick={() => {
+            void browser.tabs.create({ url: PROJECT_GITHUB_URL });
+          }}
+        >
+          Open the Corresponding repository
+        </button>
+      </section>
       <section className="panel">
         <h2>Compatibility capture</h2>
         <p className="muted">

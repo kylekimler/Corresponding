@@ -2,6 +2,12 @@ import type { FillReport } from '@/adapters/types';
 import type { Roster } from '@/schema/author';
 
 export interface TabTarget {
+  /**
+   * Frame that recognised the portal. Pages like ScholarOne carry extra frames
+   * with no author fields, and a broadcast message can be answered by one of
+   * those first, so operations are pinned to the frame that matched.
+   */
+  frameId?: number;
   tabId: number;
   url: string;
 }
