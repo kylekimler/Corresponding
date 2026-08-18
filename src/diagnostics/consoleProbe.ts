@@ -102,6 +102,57 @@ export const STRUCTURAL_FRAME_PROBE = String.raw`(() => {
           .filter(Boolean)
           .join(' | ');
       });
+    const SAVE_ADD =
+      /(save this author|add.?author|add.?another|add.?new.?author|author.?save|fl-add-btn|fl-fltoolsave|collapse and save)/i;
+    const saveAdd = Array.from(
+      doc.querySelectorAll(
+        'button, [role="button"], input[type="button"], input[type="image"], a, [data-toolname], [title], [aria-label]',
+      ),
+    )
+      .filter((el) => {
+        if (CHROME_ID.test(el.id || '')) return false;
+        const blob = [
+          el.id,
+          el.className,
+          el.getAttribute('data-toolname'),
+          el.getAttribute('title'),
+          el.getAttribute('aria-label'),
+          el.getAttribute('alt'),
+          el.textContent,
+        ].join(' ');
+        return SAVE_ADD.test(blob);
+      })
+      .slice(0, 20)
+      .map((el) =>
+        [
+          el.tagName.toLowerCase(),
+          el.id ? 'id=' + norm(el.id) : null,
+          el.getAttribute('data-toolname')
+            ? 'tool=' + el.getAttribute('data-toolname')
+            : null,
+          el.className
+            ? 'class=' +
+              String(el.className)
+                .split(/\s+/)
+                .filter((c) => /fl-|tool|save|add/i.test(c))
+                .slice(0, 4)
+                .join('.')
+            : null,
+          (() => {
+            const raw = (
+              el.getAttribute('title') ||
+              el.getAttribute('aria-label') ||
+              el.textContent ||
+              ''
+            )
+              .trim()
+              .slice(0, 60);
+            return raw ? 'label=' + JSON.stringify(redact(raw)) : null;
+          })(),
+        ]
+          .filter(Boolean)
+          .join(' | '),
+      );
     return {
       where: redact(where),
       title: redact(doc.title || ''),
@@ -109,6 +160,7 @@ export const STRUCTURAL_FRAME_PROBE = String.raw`(() => {
       authorFieldCount: authorFields.length,
       fields: authorFields.length ? authorFields : fields.slice(0, 20),
       buttons: buttons,
+      saveAdd: saveAdd,
     };
   };
   const frames = [];
@@ -169,6 +221,8 @@ export const STRUCTURAL_FRAME_PROBE = String.raw`(() => {
     lines.push((frame.fields || []).join('\n') || '(no fields)');
     lines.push('-- controls --');
     lines.push((frame.buttons || []).join('\n') || '(no author-like controls)');
+    lines.push('-- save-add --');
+    lines.push((frame.saveAdd || []).join('\n') || '(no save/add candidates)');
     lines.push('');
   });
   const text = lines.join('\n');

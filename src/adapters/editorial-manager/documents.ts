@@ -2,6 +2,7 @@ import { collectReadableDocuments } from '@/diagnostics/frames';
 import {
   ADD_ANOTHER_AUTHOR_CLASS,
   ADD_ANOTHER_AUTHOR_RE,
+  ADD_AUTHOR_RE,
   AUTHOR_SAVE_CLASS,
   AUTHOR_SAVE_ID,
   AUTHOR_SAVE_TOOL,
@@ -34,21 +35,46 @@ export function findAuthorFormDocument(root: Document): Document | null {
   return null;
 }
 
+function openerDocument(root: Document): Document | null {
+  try {
+    const opener = root.defaultView?.opener;
+    if (!opener || opener.closed) return null;
+    return opener.document ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function documentsForAddAuthor(root: Document): Document[] {
+  const docs = documentsIn(root);
+  const opener = openerDocument(root);
+  if (opener && !docs.includes(opener)) docs.push(opener);
+  return docs;
+}
+
 export function findAddAnotherAuthorControl(
   root: Document,
 ): HTMLElement | null {
-  for (const doc of documentsIn(root)) {
-    const byClass = doc.querySelector<HTMLElement>(
-      `button.${ADD_ANOTHER_AUTHOR_CLASS}, .${ADD_ANOTHER_AUTHOR_CLASS}`,
-    );
-    if (byClass && ADD_ANOTHER_AUTHOR_RE.test(controlBlob(byClass))) {
-      return byClass;
-    }
+  for (const doc of documentsForAddAuthor(root)) {
+    const byClass = Array.from(
+      doc.querySelectorAll<HTMLElement>(
+        `button.${ADD_ANOTHER_AUTHOR_CLASS}, .${ADD_ANOTHER_AUTHOR_CLASS}`,
+      ),
+    ).find((el) => {
+      if (!isShown(el)) return false;
+      const blob = controlBlob(el);
+      return !blob.trim() || ADD_AUTHOR_RE.test(blob);
+    });
+    if (byClass) return byClass;
     const nodes = doc.querySelectorAll(
       'button, a, input[type="button"], input[type="image"], [role="button"], img[title], img[alt], [title]',
     );
     for (const el of nodes) {
-      if (!ADD_ANOTHER_AUTHOR_RE.test(controlBlob(el))) continue;
+      if (!isShown(el)) continue;
+      const blob = controlBlob(el);
+      if (!ADD_AUTHOR_RE.test(blob) && !ADD_ANOTHER_AUTHOR_RE.test(blob)) {
+        continue;
+      }
       const clickable =
         el.closest('button, a, input, [role="button"]') ?? el;
       return clickable as HTMLElement;
@@ -252,7 +278,7 @@ export function isAuthorsListPage(root: Document): boolean {
 }
 
 export function authorsListGuidance(): string {
-  return 'This is Editorial Manager’s Authors list page. The author form lives in the Add New Author window — click inside that window, then click Corresponding.';
+  return 'This is Editorial Manager’s Authors list. Fill clicks Add Author on this page, then Save This Author in the form, then Add Author again. If Add New Author opened as its own window and the form never appears here, click Corresponding in that window after it opens.';
 }
 
 function controlBlob(el: Element): string {

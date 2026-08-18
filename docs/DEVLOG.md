@@ -4,6 +4,22 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-18 20:50 UTC
+- Editorial Manager multi-author save was starting inside the Add New Author
+  dialog and then failing to reopen the next author, because Add Author lives
+  on the Manuscript Data list. Fill now starts from that list: click Add
+  Author / Add New Author / `.fl-add-btn` → fill → Save This Author → wait
+  for the dialog to close → click Add Author again. The same Add control is
+  sought on `window.opener` when Fill ran in the popup window.
+- Detect treats the authors list (title Add/Edit/Remove Authors, or a visible
+  `fl-add-btn`) as Editorial Manager even when FirstName is not on screen yet,
+  so host-family + list-page Fill actually runs instead of refusing.
+- Console probe gained a `-- save-add --` section listing floppy / Add Author
+  candidates (`data-toolname`, `fl-add-btn`, titles) so a live paste shows
+  whether those controls are in the focused document.
+- verification: fixture starts with the dialog hidden and label “Add New
+  Author”; two-author fillAsync clicks Add twice and Save twice.
+
 ### 2026-08-17 22:05 UTC
 - PLOS / Editorial Manager: after Fill, Save This Author can succeed with an
   unverified institution and no typeahead pick. The adapter was treating the

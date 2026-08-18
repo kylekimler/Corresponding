@@ -34,6 +34,13 @@ export interface EditorialManagerFixtureOptions {
    * warning is used when that option is also on.
    */
   warnValidationIssues?: boolean;
+  /**
+   * Manuscript Data authors list: the Add New Author dialog starts closed.
+   * Fill must click Add Author before the form is reachable.
+   */
+  startOnAuthorsList?: boolean;
+  /** Visible label on `.fl-add-btn`. Defaults to Add Another Author. */
+  addAuthorLabel?: string;
 }
 
 const COUNTRIES = ['', 'United States', 'Germany', 'United Kingdom', 'Canada'];
@@ -76,13 +83,13 @@ function authorFormHtml(options: EditorialManagerFixtureOptions): string {
   const addAnother =
     options.includeAddAnotherAuthor === false
       ? ''
-      : `<button type="button" id="add-another-author" class="fl-add-btn">Add Another Author</button>`;
+      : `<button type="button" id="add-another-author" class="fl-add-btn">${options.addAuthorLabel ?? 'Add Another Author'}</button>`;
 
   return `
     ${manuscript}
     <input type="text" id="authorsCount" name="authorsCount" value="0" />
     ${addAnother}
-    <div id="author-dialog">
+    <div id="author-dialog"${options.startOnAuthorsList ? ' hidden' : ''}>
     <label for="FirstName">Given/First Name *</label>
     <input type="text" id="FirstName" name="ctl00$FirstName" value="${existing.firstName ?? ''}" />
     <label for="MiddleName">Middle Name</label>
@@ -338,7 +345,7 @@ function wireAuthorForm(
     .forEach((el) => el.addEventListener('click', commitAuthor));
 
   const add = [...doc.querySelectorAll('button')].find((el) =>
-    /add\s+another\s+author/i.test(el.textContent || ''),
+    /add\s+(?:another\s+|new\s+)?authors?\b/i.test(el.textContent || ''),
   );
   add?.addEventListener('click', (event) => {
     event.preventDefault();

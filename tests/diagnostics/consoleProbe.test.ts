@@ -61,4 +61,17 @@ describe('structural frame probe', () => {
     expect(text).toContain('authorFieldCount:');
     expect(text).toContain('hasOpener:');
   });
+
+  it('lists save/add candidates separately from generic controls', () => {
+    document.body.innerHTML = `
+      <button class="fl-add-btn" title="Add New Author">Add New Author</button>
+      <button class="fl-tool fl-flToolSave" data-toolname="AuthorSave" title="Save This Author"></button>
+    `;
+    const text = eval(STRUCTURAL_FRAME_PROBE) as string;
+    console.log('console probe save-add', text);
+    expect(text).toContain('-- save-add --');
+    expect(text).toContain('tool=AuthorSave');
+    expect(text).toContain('fl-add-btn');
+    expect(text).toContain('fl-flToolSave');
+  });
 });

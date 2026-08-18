@@ -112,7 +112,10 @@ still lives in the Add New Author window.
 
 Corresponding now:
 
-- names that page in the error, instead of the generic "author form was not found"
+- treats that Authors list as the place to start Fill: click Add Author, then
+  Save This Author in the dialog, then Add Author again. If the dialog is a
+  separate window, Add Author is also sought on `window.opener`
+- names that page in Preview when the form is not in this document, instead of the generic "author form was not found"
 - skips CKEditor / step-indicator chrome in the built-in console probe, reports
   `hasOpener` / iframe counts, and prefers author-like fields so the next paste
   is not 200 lines of Paste-from-Word buttons

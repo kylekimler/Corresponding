@@ -100,8 +100,74 @@ describe('Editorial Manager contributor-role requirement', () => {
       { overwrite: true, dryRun: true },
     );
 
-    expect(report.errors.join(' ')).toMatch(/Authors list page/);
-    expect(report.errors.join(' ')).toMatch(/Add New Author window/);
+    expect(report.errors.join(' ')).toMatch(/Authors list/);
+    expect(report.errors.join(' ')).toMatch(/Add New Author/);
+  });
+
+  it('detects the Manuscript Data authors list without an open form', () => {
+    document.body.innerHTML = `
+      <button id="StepIndicator_stepManuscriptDataButton">Manuscript Data</button>
+      <button type="button" class="fl-add-btn">Add New Author</button>
+    `;
+    Object.defineProperty(document, 'title', {
+      configurable: true,
+      value: 'Add/Edit/Remove Authors',
+    });
+    const detected = editorialManagerAdapter.detect(document);
+    console.log('EM authors-list detect', detected);
+    expect(detected.platformId).toBe('editorial-manager');
+    expect(detected.evidence).toEqual(
+      expect.arrayContaining(['authors-list', 'fl-add-btn']),
+    );
+    expect(findAddAnotherAuthorControl(document)?.textContent).toMatch(
+      /Add New Author/,
+    );
+  });
+
+  it('starts from the authors list: Add Author, save, Add Author, next author', async () => {
+    const form = mountEditorialManagerFixture({
+      startOnAuthorsList: true,
+      addAuthorLabel: 'Add New Author',
+    });
+    const save = form.querySelector(
+      '[data-toolname="AuthorSave"]',
+    ) as HTMLButtonElement;
+    const add = form.querySelector('button.fl-add-btn') as HTMLButtonElement;
+    let saveClicks = 0;
+    let addClicks = 0;
+    save.addEventListener('click', () => {
+      saveClicks += 1;
+    });
+    add.addEventListener('click', () => {
+      addClicks += 1;
+    });
+
+    expect(form.getElementById('author-dialog')?.hidden).toBe(true);
+
+    const report = await editorialManagerAdapter.fillAsync!(
+      document,
+      makeRoster([
+        author(1, ['methodology']),
+        author(2, ['investigation']),
+      ]),
+      { overwrite: true, dryRun: false },
+    );
+
+    console.log('EM authors-list start', {
+      errors: report.errors,
+      warnings: report.warnings,
+      saveClicks,
+      addClicks,
+      authorsCount: (form.getElementById('authorsCount') as HTMLInputElement)
+        .value,
+      dialogHidden: form.getElementById('author-dialog')?.hidden,
+    });
+    expect(report.errors).toEqual([]);
+    expect(addClicks).toBe(2);
+    expect(saveClicks).toBe(2);
+    expect(
+      (form.getElementById('authorsCount') as HTMLInputElement).value,
+    ).toBe('2');
   });
 
   it('opens the Edit Contributor Roles pencil, ticks, then collapses with the roles floppy', async () => {

@@ -32,6 +32,7 @@ import {
   isAuthorsListPage,
 } from './documents';
 import {
+  ADD_ANOTHER_AUTHOR_CLASS,
   AUTHOR_FIELD_IDS,
   CONTRIBUTOR_ROLE_PREFIX,
   MANUSCRIPT_FIELD_IDS,
@@ -415,11 +416,32 @@ function clickControl(el: HTMLElement): void {
   el.click();
 }
 
+function describeSaveControl(el: HTMLElement): string {
+  return [
+    el.getAttribute('data-toolname'),
+    el.getAttribute('title'),
+    el.className,
+    el.id,
+  ]
+    .filter((part) => part && String(part).trim())
+    .join(' · ');
+}
+
 function clickAuthorSave(root: Document): boolean {
   const save = findAuthorSaveControl(root);
   if (!save) return false;
   clickControl(save);
   return true;
+}
+
+async function openAuthorFormFromList(
+  root: Document,
+): Promise<Document | null> {
+  if (authorFormVisible(root)) return findAuthorFormDocument(root);
+  const add = findAddAnotherAuthorControl(root);
+  if (!add) return null;
+  clickControl(add);
+  return waitForAuthorForm(root);
 }
 
 function dismissInstitutionWarning(root: Document): boolean {
@@ -533,6 +555,18 @@ export const editorialManagerAdapter: PlatformAdapter = {
   detect(doc: Document): DetectResult {
     const form = findAuthorFormDocument(doc);
     if (!form) {
+      const add = findAddAnotherAuthorControl(doc);
+      if (isAuthorsListPage(doc) || add) {
+        return {
+          platformId: 'editorial-manager',
+          confidence: 0.82,
+          label: 'Editorial Manager',
+          evidence: [
+            ...(isAuthorsListPage(doc) ? ['authors-list'] : []),
+            ...(add ? [ADD_ANOTHER_AUTHOR_CLASS] : []),
+          ],
+        };
+      }
       return {
         platformId: 'unknown',
         confidence: 0,
@@ -594,6 +628,14 @@ export const editorialManagerAdapter: PlatformAdapter = {
     const requirements = evaluatePortalRequirements('editorial-manager', roster);
 
     if (!form) {
+      const add = findAddAnotherAuthorControl(doc);
+      if (options.dryRun && (isAuthorsListPage(doc) || add)) {
+        warnings.push(
+          add
+            ? 'Authors list is open. Fill will click Add Author, save each author with Save This Author, then click Add Author again.'
+            : authorsListGuidance(),
+        );
+      }
       return {
         platformId: 'editorial-manager',
         dryRun: options.dryRun,
@@ -606,11 +648,13 @@ export const editorialManagerAdapter: PlatformAdapter = {
         missingSource: 0,
         unmapped: 0,
         warnings,
-        errors: [
-          isAuthorsListPage(doc)
-            ? authorsListGuidance()
-            : 'Editorial Manager author form was not found in this window. If Add New Author opened as its own window, click the Corresponding icon while that window is focused. Otherwise open Manuscript Data → Authors (Add/Edit Author) and retry.',
-        ],
+        errors: add && options.dryRun
+          ? []
+          : [
+              isAuthorsListPage(doc) || add
+                ? authorsListGuidance()
+                : 'Editorial Manager author form was not found in this window. If Add New Author opened as its own window, click the Corresponding icon while that window is focused. Otherwise open Manuscript Data → Authors (Add/Edit Author) and retry.',
+            ],
         requirements,
       };
     }
@@ -730,11 +774,16 @@ export const editorialManagerAdapter: PlatformAdapter = {
     const warnings: string[] = [];
     const errors: string[] = [];
     const plans: FieldPlan[] = [];
-    const form = findAuthorFormDocument(doc);
+    let form = findAuthorFormDocument(doc);
     const manuscriptBefore = snapshotManuscript(doc);
     const requirements = evaluatePortalRequirements('editorial-manager', roster);
 
-    if (!form) {
+    if (!form || !authorFormVisible(doc)) {
+      const opened = await openAuthorFormFromList(doc);
+      if (opened) form = opened;
+    }
+
+    if (!form || !authorFormVisible(doc)) {
       return {
         ...this.fill(doc, roster, options),
       };
@@ -822,8 +871,9 @@ export const editorialManagerAdapter: PlatformAdapter = {
             );
             break;
           } else {
+            const save = findAuthorSaveControl(doc);
             warnings.push(
-              `Save This Author was clicked for author ${author.sequence} but the form is still open. If Editorial Manager is showing “Validation found issues” or “Proceed with this Institution anyway?”, click OK to finish the save.`,
+              `Save This Author was clicked for author ${author.sequence} but the form is still open. Clicked ${save ? describeSaveControl(save) : 'Save This Author'}. If Editorial Manager is showing “Validation found issues” or “Proceed with this Institution anyway?”, click OK to finish the save.`,
             );
             break;
           }
@@ -831,19 +881,13 @@ export const editorialManagerAdapter: PlatformAdapter = {
       }
 
       if (index < authors.length - 1) {
-        const add = findAddAnotherAuthorControl(doc);
-        if (!add) {
-          warnings.push(
-            `${authors.length - index - 1} remaining authors need Add Another Author — that control was not found after Save.`,
-          );
-          break;
-        }
-        assertSafeMutationTarget(add);
-        add.click();
-        const reopened = await waitForAuthorForm(doc);
+        const reopened = await openAuthorFormFromList(doc);
         if (!reopened) {
+          const add = findAddAnotherAuthorControl(doc);
           warnings.push(
-            'Add Another Author was clicked but a new author form did not open.',
+            add
+              ? 'Add Author was clicked but a new author form did not open in this window. If Editorial Manager opened a separate Add New Author window, click Corresponding there.'
+              : `${authors.length - index - 1} remaining authors need Add Author — that control was not found after Save.`,
           );
           break;
         }

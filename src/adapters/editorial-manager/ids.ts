@@ -52,8 +52,13 @@ export const VALIDATION_ISSUES_RE =
 export const INSTITUTION_UNVERIFIED_RE =
   /author institution is unverified|start typing to display potentially matching institutions/i;
 
-/** Parent-page control that opens the next Add New Author dialog. */
+/**
+ * Parent-page control that opens Add New Author. Observed class is
+ * `fl-add-btn`; the visible label may be Add Author, Add New Author, or
+ * Add Another Author.
+ */
 export const ADD_ANOTHER_AUTHOR_CLASS = 'fl-add-btn';
+export const ADD_AUTHOR_RE = /add\s+(?:another\s+|new\s+)?authors?\b/i;
 
 /** Manuscript / legal fields captured on the same page — never write these. */
 export const MANUSCRIPT_FIELD_IDS = [
