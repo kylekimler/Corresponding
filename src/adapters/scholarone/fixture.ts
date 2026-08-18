@@ -102,6 +102,11 @@ export interface ScholarOneFixtureOptions {
    * Institution, and City are filled.
    */
   requireCreateFields?: boolean;
+  /**
+   * Institution/City look like live ExtJS comboboxes: readonly, aria-hidden,
+   * generated city id, City disabled until Country is set.
+   */
+  extJsAffiliationWidgets?: boolean;
 }
 
 export interface ScholarOneFixtureHarness {
@@ -258,6 +263,7 @@ export function mountScholarOneFixture(
             type="text"
             id="combobox-1014-inputEl"
             name="${authorInstitutionName(1)}"
+            ${options.extJsAffiliationWidgets ? 'readonly aria-hidden="true"' : ''}
           />
 
           <label for="${authorDepartment(1)}">Department</label>
@@ -276,8 +282,13 @@ export function mountScholarOneFixture(
           <label for="${authorState(1)}">State / Province</label>
           <input type="text" id="${authorState(1)}" name="${authorState(1)}" />
 
-          <label for="${authorCity(1)}">City</label>
-          <input type="text" id="${authorCity(1)}" name="${authorCity(1)}" />
+          <label for="${options.extJsAffiliationWidgets ? 'combobox-2001-inputEl' : authorCity(1)}">City</label>
+          <input
+            type="text"
+            id="${options.extJsAffiliationWidgets ? 'combobox-2001-inputEl' : authorCity(1)}"
+            name="${authorCity(1)}"
+            ${options.extJsAffiliationWidgets ? 'disabled' : ''}
+          />
 
           <label for="${authorPhone(1)}">Phone</label>
           <input type="text" id="${authorPhone(1)}" name="${authorPhone(1)}" />
@@ -344,13 +355,24 @@ export function mountScholarOneFixture(
       el instanceof HTMLTextAreaElement ||
       el instanceof HTMLSelectElement
     ) {
+      // ExtJS City is disabled until Country is set; the widget ignores
+      // writes in that state, so a leftover DOM value is not a real fill.
+      if (
+        options.extJsAffiliationWidgets &&
+        el instanceof HTMLInputElement &&
+        el.disabled
+      ) {
+        return '';
+      }
       return el.value.trim();
     }
     return '';
   }
 
   function writeField(id: string, value: string): void {
-    const el = document.getElementById(id);
+    const el =
+      document.getElementById(id) ??
+      document.querySelector(`[name="${id}"]`);
     if (
       !(
         el instanceof HTMLInputElement ||
@@ -459,9 +481,9 @@ export function mountScholarOneFixture(
         writeField(AUTHOR_FIRST_NAME, known.firstName);
         writeField(AUTHOR_LAST_NAME, known.lastName);
         writeField(authorDepartment(1), known.department ?? '');
-        writeField(authorCity(1), known.city ?? '');
-        writeField(authorState(1), known.state ?? '');
         writeField(authorCountry(1), known.country ?? '');
+        writeField(authorState(1), known.state ?? '');
+        writeField(authorCity(1), known.city ?? '');
         writeField(authorPhone(1), known.phone ?? '');
         return;
       }
@@ -496,6 +518,22 @@ export function mountScholarOneFixture(
     event.preventDefault();
     modal.hidden = true;
     details.hidden = true;
+  });
+
+  const countrySelect = document.getElementById(
+    authorCountry(1),
+  ) as HTMLSelectElement | null;
+  const cityInput = document.querySelector<HTMLInputElement>(
+    `input[name="${authorCity(1)}"]`,
+  );
+  countrySelect?.addEventListener('change', () => {
+    if (!options.extJsAffiliationWidgets || !cityInput) return;
+    cityInput.disabled = countrySelect.value.trim().length === 0;
+  });
+  cityInput?.addEventListener('input', () => {
+    if (!options.extJsAffiliationWidgets) return;
+    // ExtJS does not keep a City value written while the box is disabled.
+    if (cityInput.disabled) cityInput.value = '';
   });
 
   institutionInput?.addEventListener('input', () => {

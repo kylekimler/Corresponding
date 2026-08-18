@@ -53,6 +53,9 @@ export const STRUCTURAL_FRAME_PROBE = String.raw`(() => {
       el.type ? 'type=' + el.type : null,
       el.id ? 'id=' + norm(el.id) : null,
       el.getAttribute('name') ? 'name=' + norm(el.getAttribute('name')) : null,
+      el.readOnly ? 'readonly' : null,
+      el.disabled ? 'disabled' : null,
+      el.getAttribute('aria-hidden') === 'true' ? 'aria-hidden' : null,
       labelFor(el) ? 'label=' + JSON.stringify(redact(labelFor(el))) : null,
     ]
       .filter(Boolean)

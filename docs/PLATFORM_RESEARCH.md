@@ -92,8 +92,13 @@ follows the banner link when it appears.
 
 The same capture exposed the institution field: `name="AUTHOR_INSTITUTION_1"`
 with `id="combobox-1014-inputEl"`. The id carries a generated number, so only
-the name is stable. Corresponding writes the institution text without blurring
-the ExtJS combobox. A free-text name can raise ScholarOne’s own
+the name is stable. Live ExtJS widgets keep that box **readonly** and
+**aria-hidden**; City is a second generated combobox (`name="CITY_1"`) that
+stays **disabled until Country is set**. Corresponding locates both by name
+or by their Institution/City labels (including inside same-origin frames),
+writes even when the box is readonly, waits for City to become writable after
+Country, and does not blur the combobox (ExtJS can clear a free-text value
+that is not a picker pick). A free-text name can raise ScholarOne’s own
 “Institution not connected to Ringgold” dialog (proceed control labelled
 **OKAY**) or the generic “An error has occurred. Please try again.” dialog
 (**Close**). Those are dismissed so the create-author form can finish;

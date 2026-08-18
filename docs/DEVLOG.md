@@ -4,6 +4,23 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-18 21:10 UTC
+- ScholarOne Create New Author still left Institution and City empty on
+  manuscriptcentral. Prefix/email/names wrote; the affiliation boxes did not.
+  Live ExtJS keeps Institution `readonly` + `aria-hidden` (`name=`
+  `AUTHOR_INSTITUTION_1`, generated `combobox-#-inputEl`) and keeps City
+  disabled until Country is chosen (generated id, stable `name=CITY_1`).
+- `writeInput` skipped readonly boxes; `isVisible` treated aria-hidden as
+  absent; City was written while still disabled. Fill now writes those
+  comboboxes even when readonly, ignores aria-hidden for on-page checks,
+  waits until City is enabled after Country, and does not blur the widget.
+- Fixture `extJsAffiliationWidgets` matches that DOM: a disabled City write
+  is discarded. Console probe reports `readonly` / `disabled` / `aria-hidden`
+  without reading values.
+- verification: Ada + Dr. / London / Analytical Engines Institute saves on
+  the ExtJS fixture; Institution stays readonly+aria-hidden and still holds
+  the roster name; City `combobox-2001-inputEl` is London after Country.
+
 ### 2026-08-18 21:00 UTC
 - ScholarOne Bioinformatics Create New Author was reaching Save with three
   required fields empty: Prefix (never written), Institution (written without
