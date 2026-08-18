@@ -195,6 +195,7 @@ describe('ScholarOne capture-backed adapter (Bioinformatics)', () => {
       makeAuthor({
         givenName: 'New',
         familyName: 'Person',
+        namePrefix: 'Dr.',
         email: 'new@example.org',
         sequence: 1,
         affiliations: [
@@ -233,6 +234,7 @@ describe('ScholarOne capture-backed adapter (Bioinformatics)', () => {
       makeAuthor({
         givenName: 'Ada',
         familyName: 'Lovelace',
+        namePrefix: 'Dr.',
         email: 'ada@example.org',
         sequence: 1,
         affiliations: [
@@ -281,6 +283,7 @@ describe('ScholarOne capture-backed adapter (Bioinformatics)', () => {
       makeAuthor({
         givenName: 'Ada',
         familyName: 'Lovelace',
+        namePrefix: 'Dr.',
         email: 'ada@example.org',
         sequence: 1,
         affiliations: [
@@ -314,5 +317,87 @@ describe('ScholarOne capture-backed adapter (Bioinformatics)', () => {
     expect(harness.errorCloseClicks()).toBeGreaterThan(0);
     expect(harness.savedAuthors()).toHaveLength(1);
     expect(document.getElementById('scholarone-error')?.hidden).toBe(true);
+  });
+
+  it('fills Prefix, Institution, and City so Create New Author can save', async () => {
+    const harness = mountScholarOneFixture({
+      emailLookupMs: 10,
+      requireCreateFields: true,
+    });
+    const roster = makeRoster([
+      makeAuthor({
+        givenName: 'Ada',
+        familyName: 'Lovelace',
+        namePrefix: 'Dr.',
+        email: 'ada@example.org',
+        sequence: 1,
+        affiliations: [
+          {
+            institution: 'Analytical Engines Institute',
+            city: 'London',
+            country: 'United Kingdom',
+            isPrimary: true,
+          },
+        ],
+      }),
+    ]);
+
+    const report = await scholarOneAdapter.fillAsync!(document, roster, {
+      overwrite: true,
+      dryRun: false,
+    });
+
+    const prefix = (
+      document.getElementById('AUTHOR_SALUTATION') as HTMLSelectElement | null
+    )?.value;
+    const institution = (
+      document.querySelector(
+        'input[name="AUTHOR_INSTITUTION_1"]',
+      ) as HTMLInputElement | null
+    )?.value;
+    const city = (document.getElementById('CITY_1') as HTMLInputElement | null)
+      ?.value;
+    console.log('ScholarOne create required fields', {
+      errors: report.errors,
+      prefix,
+      institution,
+      city,
+      saved: harness.savedAuthors(),
+      bannerHidden: document.getElementById('create-validation')?.hidden,
+    });
+    expect(report.errors).toEqual([]);
+    expect(prefix).toBe('Dr.');
+    expect(harness.savedAuthors()).toHaveLength(1);
+    expect(document.getElementById('create-validation')?.hidden).toBe(true);
+  });
+
+  it('refuses to Save when Prefix is still None Selected', async () => {
+    mountScholarOneFixture({
+      emailLookupMs: 10,
+      requireCreateFields: true,
+    });
+    const roster = makeRoster([
+      makeAuthor({
+        givenName: 'Ada',
+        familyName: 'Lovelace',
+        email: 'ada@example.org',
+        sequence: 1,
+        affiliations: [
+          {
+            institution: 'Analytical Engines Institute',
+            city: 'London',
+            country: 'United Kingdom',
+            isPrimary: true,
+          },
+        ],
+      }),
+    ]);
+
+    await expect(
+      scholarOneAdapter.fillAsync!(document, roster, {
+        overwrite: true,
+        dryRun: false,
+      }),
+    ).rejects.toThrow(/Prefix is required/i);
   });
 });

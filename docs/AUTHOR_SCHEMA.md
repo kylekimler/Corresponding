@@ -10,6 +10,7 @@ Platform-independent scholarly author metadata. All imports normalize into this 
 | `givenName` | string | yes | First / given name |
 | `middleName` | string | no | |
 | `familyName` | string | yes | Last / family name |
+| `namePrefix` | string | no | Honorific / Prefix (Dr., Prof., Mx). Required to save on ScholarOne Bioinformatics Create New Author |
 | `email` | string (email) | recommended | Missing email is a validation warning |
 | `orcid` | string | no | ORCID iD, normalized when present |
 | `isCorresponding` | boolean | yes | Multiple shared corresponding authors are allowed |
@@ -60,6 +61,7 @@ attestation.
 
 Recognized headings (non-exhaustive; mapping UI must show final mapping):
 
+- Prefix: `Prefix`, `Salutation`, `Name prefix`, `Honorific`
 - Given name: `First name`, `First Name`, `given_name`, `Given Name`, `first`
 - Family name: `Last name`, `Last Name`, `Family name`, `family_name`, `surname`
 - Email: `Email`, `E-mail`, `email_address`

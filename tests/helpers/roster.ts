@@ -12,6 +12,7 @@ export function makeAuthor(
     givenName: partial.givenName,
     middleName: partial.middleName,
     familyName: partial.familyName,
+    namePrefix: partial.namePrefix,
     email: partial.email,
     orcid: partial.orcid,
     isCorresponding: partial.isCorresponding ?? false,
@@ -44,6 +45,7 @@ export function makeNAuthors(n: number, options?: { correspondingIndex?: number 
     makeAuthor({
       givenName: `Given${i + 1}`,
       familyName: `Family${i + 1}`,
+      namePrefix: 'Dr.',
       email: `author${i + 1}@example.org`,
       sequence: i + 1,
       isCorresponding: i === corr,

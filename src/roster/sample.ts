@@ -3,6 +3,7 @@ import type { Roster, RosterSource } from '@/schema/author';
 import type { RosterStore } from '@/roster/storage';
 
 const SAMPLE_HEADERS = [
+  'Prefix',
   'First Name',
   'Middle Name',
   'Last Name',
@@ -23,6 +24,7 @@ const SAMPLE_HEADERS = [
  */
 const SAMPLE_ROWS = [
   [
+    'Dr.',
     'Ada',
     '',
     'Lovelace',
@@ -37,6 +39,7 @@ const SAMPLE_ROWS = [
     'Conceptualization; Methodology',
   ],
   [
+    'Dr.',
     'Alan',
     'Mathison',
     'Turing',
@@ -51,6 +54,7 @@ const SAMPLE_ROWS = [
     'Conceptualization; Software',
   ],
   [
+    'Prof.',
     'Chien-Shiung',
     '',
     'Wu',
@@ -65,6 +69,7 @@ const SAMPLE_ROWS = [
     'Investigation; Validation',
   ],
   [
+    'Dr.',
     'Émilie',
     '',
     'du Châtelet',
@@ -79,6 +84,7 @@ const SAMPLE_ROWS = [
     'Formal analysis',
   ],
   [
+    'Dr.',
     'Rosalind',
     'Elsie',
     'Franklin',
@@ -93,6 +99,7 @@ const SAMPLE_ROWS = [
     'Supervision; Writing \u2013 review & editing',
   ],
   [
+    'Prof.',
     'Grace',
     'Brewster',
     'Hopper',
@@ -109,18 +116,19 @@ const SAMPLE_ROWS = [
 ];
 
 const SAMPLE_MAPPING = {
-  0: 'givenName',
-  1: 'middleName',
-  2: 'familyName',
-  3: 'email',
-  4: 'institution',
-  5: 'city',
-  6: 'country',
-  7: 'isCorresponding',
-  8: 'equalContribution',
-  9: 'department',
-  10: 'postalCode',
-  11: 'creditRoles',
+  0: 'namePrefix',
+  1: 'givenName',
+  2: 'middleName',
+  3: 'familyName',
+  4: 'email',
+  5: 'institution',
+  6: 'city',
+  7: 'country',
+  8: 'isCorresponding',
+  9: 'equalContribution',
+  10: 'department',
+  11: 'postalCode',
+  12: 'creditRoles',
 } as const;
 
 /**

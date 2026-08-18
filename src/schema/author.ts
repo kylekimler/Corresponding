@@ -17,6 +17,11 @@ export const AuthorSchema = z.object({
   givenName: z.string().min(1),
   middleName: z.string().optional(),
   familyName: z.string().min(1),
+  /**
+   * Honorific / salutation (Dr., Prof., Mx, …). ScholarOne Bioinformatics
+   * marks Prefix required on Create New Author.
+   */
+  namePrefix: z.string().optional(),
   email: z
     .union([z.string().email(), z.literal('')])
     .optional()

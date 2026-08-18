@@ -34,6 +34,7 @@ import {
   AUTHOR_EMAIL,
   AUTHOR_FIRST_NAME,
   AUTHOR_LAST_NAME,
+  AUTHOR_SALUTATION,
   BTN_SUBMIT,
   EMAIL_SEARCH_MODAL_YES,
   FIND_AUTHOR_EMAIL,
@@ -47,6 +48,7 @@ import {
   authorInstitutionName,
   CREATE_NEW_COAUTHOR_RE,
   CREDIT_ROLE_PREFIX,
+  CREATE_VALIDATION_RE,
   GENERIC_ERROR_CLOSE_RE,
   GENERIC_ERROR_RE,
   RINGGOLD_DIALOG_RE,
@@ -68,6 +70,7 @@ const lastFill = new WeakMap<
 
 type FillableKey =
   | 'email'
+  | 'namePrefix'
   | 'givenName'
   | 'familyName'
   | 'department'
@@ -169,6 +172,13 @@ function fillableFields(author: Author): FillableField[] {
       required: true,
     },
     {
+      key: 'namePrefix',
+      label: 'Prefix',
+      id: AUTHOR_SALUTATION,
+      value: author.namePrefix,
+      required: true,
+    },
+    {
       key: 'givenName',
       label: 'First Name',
       id: AUTHOR_FIRST_NAME,
@@ -182,18 +192,12 @@ function fillableFields(author: Author): FillableField[] {
       value: author.familyName,
       required: true,
     },
+    // Country first: City is often disabled until a country is chosen.
     {
-      key: 'department',
-      label: 'Department',
-      id: authorDepartment(1),
-      value: affiliation?.department,
-      required: false,
-    },
-    {
-      key: 'city',
-      label: 'City',
-      id: authorCity(1),
-      value: affiliation?.city,
+      key: 'country',
+      label: 'Country',
+      id: authorCountry(1),
+      value: affiliation?.country,
       required: false,
     },
     {
@@ -204,10 +208,17 @@ function fillableFields(author: Author): FillableField[] {
       required: false,
     },
     {
-      key: 'country',
-      label: 'Country',
-      id: authorCountry(1),
-      value: affiliation?.country,
+      key: 'city',
+      label: 'City',
+      id: authorCity(1),
+      value: affiliation?.city,
+      required: true,
+    },
+    {
+      key: 'department',
+      label: 'Department',
+      id: authorDepartment(1),
+      value: affiliation?.department,
       required: false,
     },
     {
@@ -218,6 +229,21 @@ function fillableFields(author: Author): FillableField[] {
       required: false,
     },
   ];
+}
+
+function findField<T extends Element>(doc: Document, id: string): T | null {
+  return (byId<T>(doc, id) ??
+    doc.querySelector<T>(`[name="${id}"]`)) as T | null;
+}
+
+function controlIsEmpty(
+  el: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement,
+): boolean {
+  if (el instanceof HTMLSelectElement) {
+    const text = el.selectedOptions[0]?.text.trim() ?? '';
+    return !el.value.trim() || /none selected|^-+$|select\.\.\./i.test(text);
+  }
+  return !el.value.trim();
 }
 
 function requiredRosterErrors(authors: Author[]): string[] {
@@ -315,6 +341,14 @@ function addAuthorControl(doc: Document): HTMLElement | null {
   );
 }
 
+function looksLikeAuthorCommit(el: HTMLElement): boolean {
+  const label = controlLabel(el);
+  if (looksLikeAddAuthor(label)) return true;
+  if (label === 'save') return true;
+  if (/add created author/.test(label)) return true;
+  return false;
+}
+
 function commitAuthorControl(doc: Document): HTMLElement | null {
   const form = findAuthorForm(doc);
   const root: ParentNode = form ?? doc;
@@ -324,11 +358,13 @@ function commitAuthorControl(doc: Document): HTMLElement | null {
     (el) =>
       isVisible(el) &&
       !isForbiddenControl(el) &&
-      looksLikeAddAuthor(controlLabel(el)),
+      looksLikeAuthorCommit(el),
   );
   return (
     candidates.find((el) => el.id === 'commit-add-author') ??
+    candidates.find((el) => /add created author/.test(controlLabel(el))) ??
     candidates.find((el) => normalizeText(el.textContent) === 'add author') ??
+    candidates.find((el) => controlLabel(el) === 'save') ??
     null
   );
 }
@@ -522,7 +558,7 @@ function authorDetailsReady(doc: Document): boolean {
 async function waitForCreateFormEmail(doc: Document): Promise<void> {
   const started = Date.now();
   while (Date.now() - started < 1_200) {
-    const email = byId<HTMLInputElement>(doc, AUTHOR_EMAIL);
+    const email = findField<HTMLInputElement>(doc, AUTHOR_EMAIL);
     if (email && isVisible(email)) return;
     await delay(50);
   }
@@ -643,6 +679,55 @@ function readAuthorIdentity(doc: Document): {
   };
 }
 
+function institutionInput(doc: Document): HTMLInputElement | null {
+  return (
+    doc.querySelector<HTMLInputElement>(
+      `input[name="${authorInstitutionName(1)}"]`,
+    ) ?? findField<HTMLInputElement>(doc, authorInstitutionName(1))
+  );
+}
+
+function missingCreateRequirements(
+  doc: Document,
+  author: Author,
+): string[] {
+  const missing: string[] = [];
+  const prefix = findField<HTMLSelectElement>(doc, AUTHOR_SALUTATION);
+  if (prefix && isVisible(prefix) && controlIsEmpty(prefix)) {
+    missing.push(
+      author.namePrefix?.trim()
+        ? 'Prefix is required.'
+        : 'Prefix is required. Add a Prefix/Salutation column to the roster (Dr., Prof., Mx, Ms., Mr., …).',
+    );
+  }
+  const institution = institutionInput(doc);
+  if (institution && isVisible(institution) && controlIsEmpty(institution)) {
+    missing.push('Institution is a required field');
+  }
+  const city = findField<HTMLInputElement>(doc, authorCity(1));
+  if (city && isVisible(city) && controlIsEmpty(city)) {
+    missing.push('City is a required field');
+  }
+  return missing;
+}
+
+function createValidationText(doc: Document): string {
+  const nodes = Array.from(
+    doc.querySelectorAll<HTMLElement>(
+      '#create-validation, [role="alert"], .error, .x-form-invalid, p, li, div',
+    ),
+  );
+  for (const node of nodes) {
+    if (!isVisible(node)) continue;
+    const text = (node.textContent ?? '').replace(/\s+/g, ' ').trim();
+    // Skip the whole form: hidden banner text still appears in ancestor
+    // textContent. The live banner is a short red box.
+    if (text.length > 400 || text.length < 20) continue;
+    if (CREATE_VALIDATION_RE.test(text)) return text;
+  }
+  return '';
+}
+
 async function writeAuthorDetails(
   doc: Document,
   author: Author,
@@ -650,11 +735,12 @@ async function writeAuthorDetails(
 ): Promise<void> {
   for (const field of fillableFields(author)) {
     if (!field.value?.trim()) continue;
-    const el = byId<
+    const el = findField<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
     >(doc, field.id);
     if (!el || !isVisible(el)) continue;
     writeInput(el, field.value, overwrite);
+    if (field.key === 'country') await delay(WRITE_VERIFY_DELAY_MS);
   }
   applyCreditRoles(doc, author);
   applyInstitution(doc, author, overwrite);
@@ -662,10 +748,9 @@ async function writeAuthorDetails(
 }
 
 /**
- * Institution is a typeahead whose id contains a generated number, so it is
- * located by name. The text is written without blur: ScholarOne's ExtJS
- * combobox treats blur as a Ringgold lookup, which can raise the generic
- * “An error has occurred” dialog or “Institution not connected to Ringgold”.
+ * Institution is a typeahead located by name. Write with input/change/blur so
+ * ScholarOne's required-field validator sees a value, then dismiss Ringgold
+ * or the generic error if that lookup fires.
  */
 function applyInstitution(
   doc: Document,
@@ -674,28 +759,9 @@ function applyInstitution(
 ): void {
   const institution = primaryAffiliation(author)?.institution?.trim();
   if (!institution) return;
-  const input = doc.querySelector<HTMLInputElement>(
-    `input[name="${authorInstitutionName(1)}"]`,
-  );
+  const input = institutionInput(doc);
   if (!input || !isVisible(input)) return;
-  if (input.disabled || input.readOnly) return;
-  const current = input.value.trim();
-  if (current && !overwrite) return;
-  assertSafeMutationTarget(input);
-  const win = input.ownerDocument.defaultView;
-  const setter = win
-    ? Object.getOwnPropertyDescriptor(win.HTMLInputElement.prototype, 'value')
-        ?.set
-    : undefined;
-  if (setter) setter.call(input, institution);
-  else input.value = institution;
-  input.dispatchEvent(
-    new InputEvent('input', {
-      bubbles: true,
-      data: institution,
-      inputType: 'insertText',
-    }),
-  );
+  writeInput(input, institution, overwrite);
 }
 
 function dialogLabel(el: HTMLElement): string {
@@ -875,6 +941,10 @@ async function waitForAuthorCommit(
   while (Date.now() - started < COMMIT_TIMEOUT_MS) {
     if (existingAuthorCount(doc) > beforeCount) return;
     dismissScholarOneProceedDialogs(doc);
+    const validation = createValidationText(doc);
+    if (validation) {
+      throw new Error(`ScholarOne reported: ${validation}`);
+    }
     const alertNow = portalAlertText(doc);
     if (
       alertNow &&
@@ -962,6 +1032,7 @@ export const scholarOneAdapter: PlatformAdapter = {
     const ids = [
       FIND_AUTHOR_EMAIL,
       AUTHOR_EMAIL,
+      AUTHOR_SALUTATION,
       AUTHOR_FIRST_NAME,
       AUTHOR_LAST_NAME,
       authorDepartment(1),
@@ -1052,11 +1123,23 @@ export const scholarOneAdapter: PlatformAdapter = {
         await writeAuthorDetails(doc, author, options.overwrite || lookup === 'created');
 
         await delay(WRITE_VERIFY_DELAY_MS);
-        const first = byId<HTMLInputElement>(doc, AUTHOR_FIRST_NAME)?.value.trim();
-        const last = byId<HTMLInputElement>(doc, AUTHOR_LAST_NAME)?.value.trim();
+        const first = findField<HTMLInputElement>(doc, AUTHOR_FIRST_NAME)?.value.trim();
+        const last = findField<HTMLInputElement>(doc, AUTHOR_LAST_NAME)?.value.trim();
         if (first !== author.givenName.trim() || last !== author.familyName.trim()) {
           throw new Error(
             `Author ${author.sequence}: ScholarOne did not accept roster name values after email lookup`,
+          );
+        }
+
+        let gaps = missingCreateRequirements(doc, author);
+        if (gaps.length > 0) {
+          await writeAuthorDetails(doc, author, true);
+          await delay(WRITE_VERIFY_DELAY_MS);
+          gaps = missingCreateRequirements(doc, author);
+        }
+        if (gaps.length > 0) {
+          throw new Error(
+            `ScholarOne will not save author ${author.sequence}: ${gaps.join(' ')} Please fix the following issues then click Save — Corresponding did not click Save & Continue.`,
           );
         }
 

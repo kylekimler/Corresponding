@@ -74,6 +74,7 @@ export function rowsToRoster(input: {
       givenName: cell(row, input.mapping, 'givenName').trim(),
       middleName: cell(row, input.mapping, 'middleName').trim() || undefined,
       familyName: cell(row, input.mapping, 'familyName').trim(),
+      namePrefix: cell(row, input.mapping, 'namePrefix').trim() || undefined,
       email: email || undefined,
       orcid: normalizeOrcid(cell(row, input.mapping, 'orcid')),
       isCorresponding: truthy(cell(row, input.mapping, 'isCorresponding')),

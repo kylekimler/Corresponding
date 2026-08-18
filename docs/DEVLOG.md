@@ -4,6 +4,24 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-18 21:00 UTC
+- ScholarOne Bioinformatics Create New Author was reaching Save with three
+  required fields empty: Prefix (never written), Institution (written without
+  change/blur so the validator saw nothing), City (written before Country, so
+  the box was still disabled). The portal banner is “Please fix the following
+  issues then click Save or Save & Continue.”
+- Fill now writes Prefix from roster `namePrefix` (`AUTHOR_SALUTATION`),
+  Country before City, and Institution with a normal input/change/blur so the
+  required check sees it, then dismisses Ringgold/generic error if that lookup
+  fires. It will not click Save while Prefix/Institution/City are still empty,
+  and it never clicks Save & Continue.
+- Sample roster gained a Prefix column. Import maps Prefix / Salutation /
+  Honorific. A roster without Prefix is told to add that column — the value is
+  not guessed.
+- verification: fixture `requireCreateFields` matches the live banner; Ada
+  with Dr. / London / Analytical Engines Institute saves; missing Prefix throws
+  the portal’s “Prefix is required” wording.
+
 ### 2026-08-18 20:50 UTC
 - Editorial Manager multi-author save was starting inside the Add New Author
   dialog and then failing to reopen the next author, because Add Author lives

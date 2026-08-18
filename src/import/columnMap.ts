@@ -2,6 +2,7 @@ export type CanonicalColumn =
   | 'givenName'
   | 'middleName'
   | 'familyName'
+  | 'namePrefix'
   | 'email'
   | 'orcid'
   | 'institution'
@@ -35,6 +36,13 @@ export interface ColumnMapping {
 }
 
 const ALIASES: Record<Exclude<CanonicalColumn, 'ignore'>, string[]> = {
+  namePrefix: [
+    'prefix',
+    'name prefix',
+    'salutation',
+    'title prefix',
+    'honorific',
+  ],
   givenName: [
     'first name',
     'firstname',

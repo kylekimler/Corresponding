@@ -80,6 +80,29 @@ const RULES: Partial<Record<PlatformId, RequirementRule[]>> = {
   ],
   scholarone: [
     {
+      code: 'prefix_required',
+      field: 'Prefix',
+      explanation:
+        'ScholarOne Create New Author (Bioinformatics) refuses to save when Prefix is None Selected.',
+      blocksFill: true,
+      isSatisfied: (author) => hasText(author.namePrefix),
+    },
+    {
+      code: 'institution_required',
+      field: 'Institution',
+      explanation:
+        'ScholarOne Create New Author marks Institution required.',
+      blocksFill: true,
+      isSatisfied: (author) => hasText(primaryAffiliation(author)?.institution),
+    },
+    {
+      code: 'city_required',
+      field: 'City',
+      explanation: 'ScholarOne Create New Author marks City required.',
+      blocksFill: true,
+      isSatisfied: (author) => hasText(primaryAffiliation(author)?.city),
+    },
+    {
       code: 'credit_roles_recommended',
       field: 'Contributor Roles',
       explanation:

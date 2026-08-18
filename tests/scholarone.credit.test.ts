@@ -10,6 +10,7 @@ function author(creditRoles: string[]) {
   return makeAuthor({
     givenName: 'Ada',
     familyName: 'Lovelace',
+    namePrefix: 'Dr.',
     email: 'ada@example.org',
     sequence: 1,
     creditRoles: creditRoles as never,

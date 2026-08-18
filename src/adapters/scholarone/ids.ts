@@ -12,6 +12,10 @@ export const EMAIL_SEARCH_MODAL_NO = 'emailSearchModal_no';
 
 export const AUTHOR_EMAIL = 'AUTHOR_EMAIL_ADDRESS';
 export const AUTHOR_SALUTATION = 'AUTHOR_SALUTATION';
+
+/** Banner after Save when required Create New Author fields are empty. */
+export const CREATE_VALIDATION_RE =
+  /please fix the following issues then click save/i;
 export const AUTHOR_FIRST_NAME = 'AUTHOR_FIRST_NAME';
 export const AUTHOR_LAST_NAME = 'AUTHOR_LAST_NAME';
 export const AUTHORSHIP_CHANGE = 'AUTHORSHIP_CHANGE_TEXTAREA';

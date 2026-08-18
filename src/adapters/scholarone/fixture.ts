@@ -97,6 +97,11 @@ export interface ScholarOneFixtureOptions {
    * try again.” dialog. Close dismisses it; commit stays blocked until then.
    */
   errorOnInstitution?: boolean;
+  /**
+   * Commit shows the Create New Author required-field banner unless Prefix,
+   * Institution, and City are filled.
+   */
+  requireCreateFields?: boolean;
 }
 
 export interface ScholarOneFixtureHarness {
@@ -193,6 +198,15 @@ export function mountScholarOneFixture(
             institution from the dropdown of institutions provided as you type.
           </p>
           <button type="button" id="ringgold-okay">OKAY</button>
+        </div>
+
+        <div id="create-validation" hidden>
+          Please fix the following issues then click Save or Save &amp; Continue:
+          <ul>
+            <li>Prefix is required.</li>
+            <li>Institution is a required field</li>
+            <li>City is a required field</li>
+          </ul>
         </div>
 
         <div id="scholarone-error" role="dialog" hidden>
@@ -322,7 +336,9 @@ export function mountScholarOneFixture(
   let pendingEmail = '';
 
   function readField(id: string): string {
-    const el = document.getElementById(id);
+    const el =
+      document.getElementById(id) ??
+      document.querySelector(`[name="${id}"]`);
     if (
       el instanceof HTMLInputElement ||
       el instanceof HTMLTextAreaElement ||
@@ -507,6 +523,17 @@ export function mountScholarOneFixture(
     const firstName = readField(AUTHOR_FIRST_NAME);
     const lastName = readField(AUTHOR_LAST_NAME);
     if (!email || !firstName || !lastName) return;
+    if (options.requireCreateFields) {
+      const prefix = readField(AUTHOR_SALUTATION);
+      const institution = readField(authorInstitutionName(1));
+      const city = readField(authorCity(1));
+      const banner = document.getElementById('create-validation');
+      if (!prefix || /none selected/i.test(prefix) || !institution || !city) {
+        if (banner) banner.hidden = false;
+        return;
+      }
+      if (banner) banner.hidden = true;
+    }
     if (options.alertOnCommit) {
       alertBox.hidden = false;
       return;
