@@ -137,12 +137,15 @@ hypothesis.
 ## Editorial Manager — still needed
 
 Institution is a typeahead (“Author Institution is Unverified”). Corresponding
-types the roster name and clicks only an exact-text suggestion; it does not
-pick the first Ringgold hit. An unmatched name is still saveable: PLOS can
-commit after Save This Author with no extra field edits. The portal may show
-“Validation found issues. Review the highlighted counts and form.” and then
-sometimes “Proceed with this Institution anyway?” — both are OK click-throughs,
-not a reason to abandon the save. Cancel is never clicked.
+types the roster name as free text and does **not** click the Ringgold list —
+a neighbour like “Safran Aircraft Engines” is worse than the typed name.
+Escape closes the list (blur is avoided; jQuery UI can select the first item).
+Typing can clear City/Department, so those are written again before Save This
+Author. An unmatched name is still saveable: PLOS can commit after Save This
+Author with no extra field edits. The portal may show “Validation found
+issues. Review the highlighted counts and form.” and then sometimes “Proceed
+with this Institution anyway?” — both are OK click-throughs, not a reason to
+abandon the save. Cancel is never clicked.
 
 The “Institution not connected to Ringgold” / **OKAY** dialog is ScholarOne,
 not Editorial Manager.
