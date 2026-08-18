@@ -22,6 +22,34 @@ export function documentsIn(root: Document): Document[] {
   return collectReadableDocuments(root).documents.map((frame) => frame.doc);
 }
 
+/**
+ * jQuery UI warnings are appended to the top window body. Fill often runs
+ * in the author-form iframe, so dialog search must also look at parent/top.
+ */
+function ancestorDocuments(root: Document): Document[] {
+  const docs: Document[] = [];
+  const add = (doc: Document | null | undefined) => {
+    if (doc && !docs.includes(doc)) docs.push(doc);
+  };
+  try {
+    const win = root.defaultView;
+    add(win?.parent?.document);
+    add(win?.top?.document);
+    if (win?.opener && !win.opener.closed) add(win.opener.document);
+  } catch {
+    // Cross-origin parent/opener; skip.
+  }
+  return docs;
+}
+
+export function documentsWithAncestors(root: Document): Document[] {
+  const docs = documentsIn(root);
+  for (const extra of ancestorDocuments(root)) {
+    if (!docs.includes(extra)) docs.push(extra);
+  }
+  return docs;
+}
+
 export function findAuthorFormDocument(root: Document): Document | null {
   for (const doc of documentsIn(root)) {
     if (
@@ -35,21 +63,8 @@ export function findAuthorFormDocument(root: Document): Document | null {
   return null;
 }
 
-function openerDocument(root: Document): Document | null {
-  try {
-    const opener = root.defaultView?.opener;
-    if (!opener || opener.closed) return null;
-    return opener.document ?? null;
-  } catch {
-    return null;
-  }
-}
-
 function documentsForAddAuthor(root: Document): Document[] {
-  const docs = documentsIn(root);
-  const opener = openerDocument(root);
-  if (opener && !docs.includes(opener)) docs.push(opener);
-  return docs;
+  return documentsWithAncestors(root);
 }
 
 export function findAddAnotherAuthorControl(
@@ -142,7 +157,7 @@ function findDialogButton(
   dialogText: RegExp,
   buttonText: RegExp,
 ): HTMLElement | null {
-  for (const doc of documentsIn(root)) {
+  for (const doc of documentsWithAncestors(root)) {
     const dialogs = doc.querySelectorAll(
       '[role="alertdialog"], .ui-dialog.ui-dialog-buttons, [role="dialog"], .ui-dialog, .modal',
     );
@@ -190,7 +205,7 @@ export function findInstitutionWarningOk(root: Document): HTMLElement | null {
 export function findValidationIssuesOk(root: Document): HTMLElement | null {
   const fromDialog = findDialogButton(root, VALIDATION_ISSUES_RE, /^ok$/i);
   if (fromDialog) return fromDialog;
-  for (const doc of documentsIn(root)) {
+  for (const doc of documentsWithAncestors(root)) {
     const nodes = doc.querySelectorAll('div, section, aside, p, span');
     for (const node of nodes) {
       if (!isShown(node)) continue;

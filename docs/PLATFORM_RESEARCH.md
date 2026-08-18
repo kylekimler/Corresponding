@@ -150,10 +150,13 @@ Escape on the Institution box is not enough: the live list is a body-level
 “Save This Author”). Fill hides that menu, then clicks Save up to three
 times. After Save, PLOS shows `role="alertdialog"` “The Institution could
 not be identified… Proceed with this Institution anyway?” — OK is
-`span.ui-button-text` in `.ui-dialog-buttonset`. That OK is a click-through;
-Cancel and the titlebar Close are never clicked. Typing can clear
-City/Department, so those are written again before Save. “Validation found
-issues. Review the highlighted counts and form.” is the same OK path.
+`span.ui-button-text` in `.ui-dialog-buttonset`. That OK is a click-through on the **parent page** — Fill often runs in the
+author-form iframe, and jQuery UI appends the alertdialog to the top
+window body. Corresponding looks at parent/top/opener for OK, then Add
+Author for the next roster row. Cancel and the titlebar Close are never
+clicked. Typing can clear City/Department, so those are written again
+before Save. “Validation found issues. Review the highlighted counts and
+form.” is the same OK path.
 
 The “Institution not connected to Ringgold” / **OKAY** dialog is ScholarOne,
 not Editorial Manager.
