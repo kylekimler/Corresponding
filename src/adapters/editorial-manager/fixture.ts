@@ -177,7 +177,12 @@ function authorFormHtml(options: EditorialManagerFixtureOptions): string {
         </button>
       </div>
     </div>
-    <div id="institution-warning" class="ui-dialog" hidden>
+    <div
+      id="institution-warning"
+      class="ui-dialog ui-front no-close ui-dialog-buttons"
+      role="alertdialog"
+      hidden
+    >
       <div class="ui-dialog-titlebar">Warning</div>
       The Institution could not be identified by the system. Proceed with this
       Institution anyway?
@@ -268,6 +273,36 @@ function wireAuthorForm(
     if (event.key !== 'Escape' || !suggestionList) return;
     suggestionList.hidden = true;
   });
+  // Live Ringgold is a body-level jQuery UI menu. Escape on the input does
+  // not close it, and it sits over the toolbox floppy.
+  const overlay = doc.createElement('ul');
+  overlay.className =
+    'ui-autocomplete ui-menu ui-widget ui-widget-content ui-front';
+  overlay.setAttribute('role', 'listbox');
+  overlay.hidden = true;
+  overlay.style.display = 'none';
+  doc.body.append(overlay);
+  institutionInput?.addEventListener('input', () => {
+    overlay.innerHTML = suggestionList?.innerHTML ?? '';
+    if ((suggestionList?.querySelectorAll('li').length ?? 0) > 0) {
+      overlay.hidden = false;
+      overlay.style.display = 'block';
+    }
+  });
+  const saveButton = doc.querySelector<HTMLElement>(
+    '[data-toolname="AuthorSave"]',
+  );
+  saveButton?.addEventListener(
+    'click',
+    (event) => {
+      const blocking =
+        !overlay.hidden && overlay.style.display !== 'none';
+      if (!blocking) return;
+      event.stopImmediatePropagation();
+      event.preventDefault();
+    },
+    true,
+  );
   suggestionList?.addEventListener('click', (event) => {
     const item = (event.target as HTMLElement | null)?.closest('li');
     if (!item || !institutionInput) return;

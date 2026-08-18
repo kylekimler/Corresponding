@@ -328,6 +328,65 @@ describe('Editorial Manager contributor-role requirement', () => {
     ).toBe('1');
   });
 
+  it('clicks Save This Author after closing the overlay, then OK on the alertdialog', async () => {
+    const form = mountEditorialManagerFixture({
+      warnUnidentifiedInstitution: true,
+      includeAddAnotherAuthor: false,
+    });
+    const rosterAuthor = author(1, ['methodology']);
+    rosterAuthor.affiliations[0] = {
+      institution: 'Analytical Engines Institute',
+      department: 'Computing Laboratory',
+      city: 'London',
+      postalCode: 'NW1 2BE',
+      country: 'United Kingdom',
+      isPrimary: true,
+    };
+    let saveClicks = 0;
+    let okClicks = 0;
+    let cancelClicks = 0;
+    form
+      .querySelector('[data-toolname="AuthorSave"]')
+      ?.addEventListener('click', () => {
+        saveClicks += 1;
+      });
+    form.getElementById('institution-warning-ok')?.addEventListener('click', () => {
+      okClicks += 1;
+    });
+    form
+      .getElementById('institution-warning-cancel')
+      ?.addEventListener('click', () => {
+        cancelClicks += 1;
+      });
+
+    const report = await editorialManagerAdapter.fillAsync!(
+      document,
+      makeRoster([rosterAuthor]),
+      { overwrite: true, dryRun: false },
+    );
+
+    const warning = form.getElementById('institution-warning');
+    console.log('EM save overlay then alertdialog OK', {
+      errors: report.errors,
+      warnings: report.warnings,
+      saveClicks,
+      okClicks,
+      cancelClicks,
+      warningRole: warning?.getAttribute('role'),
+      warningHidden: warning?.hidden,
+      authorsCount: (form.getElementById('authorsCount') as HTMLInputElement)
+        .value,
+    });
+    expect(report.errors).toEqual([]);
+    expect(saveClicks).toBeGreaterThan(0);
+    expect(okClicks).toBeGreaterThan(0);
+    expect(cancelClicks).toBe(0);
+    expect(warning?.getAttribute('role')).toBe('alertdialog');
+    expect(
+      (form.getElementById('authorsCount') as HTMLInputElement).value,
+    ).toBe('1');
+  });
+
   it('confirms the unidentified-institution warning with OK, never Cancel', async () => {
     const form = mountEditorialManagerFixture({
       warnUnidentifiedInstitution: true,

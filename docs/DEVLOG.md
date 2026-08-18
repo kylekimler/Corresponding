@@ -4,6 +4,22 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-18 21:40 UTC
+- PLOS Add New Author now reaches the form (Add Author works) but Save This
+  Author still missed. The live floppy is
+  `button.fl-tool.fl-flToolSave[data-toolname=AuthorSave]`. The Institution
+  Ringgold list is a body-level `.ui-autocomplete` over that toolbox, so the
+  first click never reaches Save. After a real Save, PLOS shows
+  `role="alertdialog"`: “The Institution could not be identified by the
+  system. Proceed with this Institution anyway?” OK is
+  `span.ui-button-text` inside the first `.ui-dialog-buttonset` button.
+- Fill hides `.ui-autocomplete` before each Save, parks focus on Department,
+  clicks the floppy up to three times, and clicks OK on the alertdialog.
+  Cancel and the titlebar Close are never clicked. `isShown` now honours
+  `display:none` so a hidden template floppy is not the click target.
+- verification: fixture overlay blocks Save until the menu is hidden; Ada
+  still saves; the proceed-anyway alertdialog OK is clicked and Cancel is not.
+
 ### 2026-08-18 21:15 UTC
 - PLOS Editorial Manager Add New Author was stalling on the Institution
   Ringgold dropdown (screenshot: “Analytical Engines Institute” typed,
