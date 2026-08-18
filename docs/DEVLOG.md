@@ -4,6 +4,19 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-18 22:15 UTC
+- PLOS Add New Author now reaches Save This Author and shows “The Institution
+  could not be identified… Proceed with this Institution anyway?” but did not
+  click OK or continue to the next authors. Fill runs in the author-form
+  iframe; jQuery UI appends that `role="alertdialog"` (OK /
+  `span.ui-button-text`) to the **parent** page body.
+- Dialog and Add Author search now include parent / top / opener documents.
+  OK is clicked there; Cancel is not. After the form closes, Add Author on
+  the parent list starts the next roster author.
+- verification: fixture moves the alertdialog to the parent document; Fill
+  is invoked on the iframe document; two-author roster clicks OK and reaches
+  authorsCount 2.
+
 ### 2026-08-18 22:10 UTC
 - Bioinformatics Manuscript Central Create New Author still left Institution
   and City empty. A new capture shows the live boxes are **0-based**:

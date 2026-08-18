@@ -79,7 +79,10 @@ Do not guess selectors for a submission platform when no real DOM fixture exists
 8. Manually review security implications and browser permissions.
 9. Commit with a concise message.
 10. Append an entry to `docs/DEVLOG.md`.
-11. Continue.
+11. Open a PR if the environment requires one, then **merge it into `main`
+    immediately**. This product is pre-release: do not leave ready adapter
+    or reliability PRs sitting open for later human review.
+12. Continue.
 
 Do not stop merely because one milestone is complete.
 

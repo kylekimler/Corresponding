@@ -387,6 +387,49 @@ describe('Editorial Manager contributor-role requirement', () => {
     ).toBe('1');
   });
 
+  it('clicks parent-page Proceed anyway OK when Fill ran in the form iframe', async () => {
+    const form = mountEditorialManagerFixture({
+      warnUnidentifiedInstitution: true,
+      dialogsOnParent: true,
+    });
+    expect(form.getElementById('institution-warning')).toBeNull();
+    const parentWarning = document.getElementById('institution-warning');
+    expect(parentWarning?.getAttribute('role')).toBe('alertdialog');
+
+    let okClicks = 0;
+    let cancelClicks = 0;
+    document.getElementById('institution-warning-ok')?.addEventListener('click', () => {
+      okClicks += 1;
+    });
+    document
+      .getElementById('institution-warning-cancel')
+      ?.addEventListener('click', () => {
+        cancelClicks += 1;
+      });
+
+    const report = await editorialManagerAdapter.fillAsync!(
+      form,
+      makeRoster([author(1, ['methodology']), author(2, ['supervision'])]),
+      { overwrite: true, dryRun: false },
+    );
+
+    console.log('EM parent-page institution OK', {
+      errors: report.errors,
+      warnings: report.warnings,
+      okClicks,
+      cancelClicks,
+      authorsCount: (form.getElementById('authorsCount') as HTMLInputElement)
+        .value,
+      warningHidden: parentWarning?.hidden,
+    });
+    expect(report.errors).toEqual([]);
+    expect(okClicks).toBeGreaterThan(0);
+    expect(cancelClicks).toBe(0);
+    expect(
+      (form.getElementById('authorsCount') as HTMLInputElement).value,
+    ).toBe('2');
+  });
+
   it('confirms the unidentified-institution warning with OK, never Cancel', async () => {
     const form = mountEditorialManagerFixture({
       warnUnidentifiedInstitution: true,

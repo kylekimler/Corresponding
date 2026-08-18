@@ -41,6 +41,11 @@ export interface EditorialManagerFixtureOptions {
   startOnAuthorsList?: boolean;
   /** Visible label on `.fl-add-btn`. Defaults to Add Another Author. */
   addAuthorLabel?: string;
+  /**
+   * Live jQuery UI warnings are appended to the parent page body, not the
+   * author-form iframe. Fill still runs in the iframe.
+   */
+  dialogsOnParent?: boolean;
 }
 
 const COUNTRIES = ['', 'United States', 'Germany', 'United Kingdom', 'Canada'];
@@ -433,6 +438,12 @@ export function mountEditorialManagerFixture(
   );
   child.close();
   wireAuthorForm(child, options);
+  if (options.dialogsOnParent) {
+    for (const id of ['institution-warning', 'validation-issues']) {
+      const node = child.getElementById(id);
+      if (node) document.body.append(node);
+    }
+  }
   return child;
 }
 
