@@ -367,7 +367,72 @@ describe('ScholarOne capture-backed adapter (Bioinformatics)', () => {
     });
     expect(report.errors).toEqual([]);
     expect(prefix).toBe('Dr.');
+    expect(institution).toBe('Analytical Engines Institute');
+    expect(city).toBe('London');
     expect(harness.savedAuthors()).toHaveLength(1);
+    expect(document.getElementById('create-validation')?.hidden).toBe(true);
+  });
+
+  it('fills ExtJS Institution and City that are readonly, aria-hidden, and city-disabled until Country', async () => {
+    const harness = mountScholarOneFixture({
+      emailLookupMs: 10,
+      requireCreateFields: true,
+      extJsAffiliationWidgets: true,
+    });
+    const roster = makeRoster([
+      makeAuthor({
+        givenName: 'Ada',
+        familyName: 'Lovelace',
+        namePrefix: 'Dr.',
+        email: 'ada@example.org',
+        sequence: 1,
+        affiliations: [
+          {
+            institution: 'Analytical Engines Institute',
+            city: 'London',
+            country: 'United Kingdom',
+            isPrimary: true,
+          },
+        ],
+      }),
+    ]);
+
+    const report = await scholarOneAdapter.fillAsync!(document, roster, {
+      overwrite: true,
+      dryRun: false,
+    });
+
+    const institution = document.querySelector(
+      'input[name="AUTHOR_INSTITUTION_1"]',
+    ) as HTMLInputElement | null;
+    const city = document.getElementById(
+      'combobox-2001-inputEl',
+    ) as HTMLInputElement | null;
+    console.log('ScholarOne ExtJS affiliation widgets', {
+      errors: report.errors,
+      institution: institution?.value,
+      institutionReadOnly: institution?.readOnly,
+      institutionAriaHidden: institution?.getAttribute('aria-hidden'),
+      city: city?.value,
+      cityDisabled: city?.disabled,
+      cityId: city?.id,
+      saved: harness.savedAuthors(),
+      bannerHidden: document.getElementById('create-validation')?.hidden,
+    });
+    expect(report.errors).toEqual([]);
+    expect(institution?.readOnly).toBe(true);
+    expect(institution?.getAttribute('aria-hidden')).toBe('true');
+    expect(institution?.value).toBe('Analytical Engines Institute');
+    expect(document.getElementById('CITY_1')).toBeNull();
+    expect(city?.value).toBe('London');
+    expect(city?.disabled).toBe(false);
+    expect(harness.savedAuthors()).toHaveLength(1);
+    expect(harness.savedAuthors()[0]).toEqual(
+      expect.objectContaining({
+        city: 'London',
+        country: 'United Kingdom',
+      }),
+    );
     expect(document.getElementById('create-validation')?.hidden).toBe(true);
   });
 

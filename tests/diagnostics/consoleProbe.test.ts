@@ -74,4 +74,33 @@ describe('structural frame probe', () => {
     expect(text).toContain('fl-add-btn');
     expect(text).toContain('fl-flToolSave');
   });
+
+  it('reports ExtJS widget flags without reading field values', () => {
+    document.body.innerHTML = `
+      <label for="combobox-1014-inputEl">Institution</label>
+      <input
+        id="combobox-1014-inputEl"
+        name="AUTHOR_INSTITUTION_1"
+        readonly
+        aria-hidden="true"
+        value="secret-institution"
+      />
+      <label for="combobox-2001-inputEl">City</label>
+      <input
+        id="combobox-2001-inputEl"
+        name="CITY_1"
+        disabled
+        value="secret-city"
+      />
+    `;
+    const text = eval(STRUCTURAL_FRAME_PROBE) as string;
+    console.log('console probe ExtJS flags', text);
+    expect(text).toContain('name=AUTHOR_INSTITUTION_#');
+    expect(text).toContain('readonly');
+    expect(text).toContain('aria-hidden');
+    expect(text).toContain('name=CITY_#');
+    expect(text).toContain('disabled');
+    expect(text).not.toContain('secret-institution');
+    expect(text).not.toContain('secret-city');
+  });
 });

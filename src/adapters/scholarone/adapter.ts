@@ -107,6 +107,44 @@ function isVisible(el: Element): boolean {
   return true;
 }
 
+/**
+ * ExtJS comboboxes keep a real input that is aria-hidden and often readonly.
+ * Those still hold Institution/City, so write checks must not treat them as
+ * absent the way a hidden dialog is absent.
+ */
+function isOnPage(el: Element): boolean {
+  const view = el.ownerDocument.defaultView;
+  if (!view) return false;
+  for (
+    let node: Element | null = el;
+    node && node !== el.ownerDocument.documentElement.parentElement;
+    node = node.parentElement
+  ) {
+    if (node instanceof view.HTMLElement && node.hidden) return false;
+    const style = view.getComputedStyle(node);
+    if (style.display === 'none' || style.visibility === 'hidden') return false;
+  }
+  return true;
+}
+
+function documentsIn(root: Document): Document[] {
+  const docs: Document[] = [];
+  const visit = (doc: Document) => {
+    if (docs.includes(doc)) return;
+    docs.push(doc);
+    for (const frame of Array.from(doc.querySelectorAll('iframe, frame'))) {
+      try {
+        const child = (frame as HTMLIFrameElement).contentDocument;
+        if (child) visit(child);
+      } catch {
+        // Cross-origin; skip.
+      }
+    }
+  };
+  visit(root);
+  return docs;
+}
+
 function byId<T extends Element>(doc: Document, id: string): T | null {
   const el = doc.getElementById(id);
   return el as T | null;
@@ -232,8 +270,28 @@ function fillableFields(author: Author): FillableField[] {
 }
 
 function findField<T extends Element>(doc: Document, id: string): T | null {
-  return (byId<T>(doc, id) ??
-    doc.querySelector<T>(`[name="${id}"]`)) as T | null;
+  for (const scope of documentsIn(doc)) {
+    const match = (byId<T>(scope, id) ??
+      scope.querySelector<T>(`[name="${id}"]`)) as T | null;
+    if (match) return match;
+  }
+  return null;
+}
+
+function labeledInputs(root: Document, labelRe: RegExp): HTMLInputElement[] {
+  const found: HTMLInputElement[] = [];
+  for (const doc of documentsIn(root)) {
+    for (const label of Array.from(doc.querySelectorAll('label'))) {
+      const text = (label.textContent ?? '').replace(/\s+/g, ' ').trim();
+      if (!labelRe.test(text)) continue;
+      const forId = label.getAttribute('for');
+      const byFor = forId ? doc.getElementById(forId) : null;
+      if (isTextInput(byFor)) found.push(byFor);
+      const nested = label.querySelector('input');
+      if (isTextInput(nested)) found.push(nested);
+    }
+  }
+  return found;
 }
 
 function controlIsEmpty(
@@ -535,6 +593,39 @@ function writeInput(
   input.dispatchEvent(new Event('blur', { bubbles: true }));
 }
 
+/**
+ * ExtJS Institution/City comboboxes are often readonly and aria-hidden.
+ * writeInput would skip them; this types the roster value into the box anyway.
+ * Do not blur: ExtJS can reset a free-text value that is not a picker pick.
+ * Do not write while disabled: City stays disabled until Country is set.
+ */
+function writeCombobox(
+  input: HTMLInputElement,
+  value: string,
+  overwrite: boolean,
+): void {
+  assertSafeMutationTarget(input);
+  if (input.disabled) return;
+  const current = input.value.trim();
+  if (current && !overwrite) return;
+  const wasReadOnly = input.readOnly;
+  input.readOnly = false;
+  input.focus();
+  setNativeValue(input, value);
+  const last = value.slice(-1) || 'a';
+  input.dispatchEvent(
+    new InputEvent('input', {
+      bubbles: true,
+      data: value,
+      inputType: 'insertText',
+    }),
+  );
+  input.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: last }));
+  input.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true, key: last }));
+  input.dispatchEvent(new Event('change', { bubbles: true }));
+  input.readOnly = wasReadOnly;
+}
+
 /** The "create a new co-author" link shown when no existing account matches. */
 function createNewCoauthorControl(doc: Document): HTMLElement | null {
   return (
@@ -679,12 +770,39 @@ function readAuthorIdentity(doc: Document): {
   };
 }
 
-function institutionInput(doc: Document): HTMLInputElement | null {
-  return (
-    doc.querySelector<HTMLInputElement>(
-      `input[name="${authorInstitutionName(1)}"]`,
-    ) ?? findField<HTMLInputElement>(doc, authorInstitutionName(1))
-  );
+function isTextInput(el: Element | null): el is HTMLInputElement {
+  return !!el && el.tagName.toLowerCase() === 'input';
+}
+
+function uniqueInputs(inputs: HTMLInputElement[]): HTMLInputElement[] {
+  return [...new Set(inputs)];
+}
+
+function institutionInputs(root: Document): HTMLInputElement[] {
+  const found: HTMLInputElement[] = [];
+  for (const doc of documentsIn(root)) {
+    for (const el of Array.from(
+      doc.querySelectorAll(`input[name="${authorInstitutionName(1)}"]`),
+    )) {
+      if (isTextInput(el)) found.push(el);
+    }
+  }
+  found.push(...labeledInputs(root, /^\s*institution\b/i));
+  return uniqueInputs(found).filter(isOnPage);
+}
+
+function cityInputs(root: Document): HTMLInputElement[] {
+  const found: HTMLInputElement[] = [];
+  const cityId = authorCity(1);
+  for (const doc of documentsIn(root)) {
+    const byIdOrName = findField<HTMLInputElement>(doc, cityId);
+    if (isTextInput(byIdOrName)) found.push(byIdOrName);
+    for (const el of Array.from(doc.querySelectorAll(`input[name="${cityId}"]`))) {
+      if (isTextInput(el)) found.push(el);
+    }
+  }
+  found.push(...labeledInputs(root, /^\s*city\b/i));
+  return uniqueInputs(found).filter(isOnPage);
 }
 
 function missingCreateRequirements(
@@ -700,12 +818,12 @@ function missingCreateRequirements(
         : 'Prefix is required. Add a Prefix/Salutation column to the roster (Dr., Prof., Mx, Ms., Mr., …).',
     );
   }
-  const institution = institutionInput(doc);
-  if (institution && isVisible(institution) && controlIsEmpty(institution)) {
+  const institution = institutionInputs(doc)[0];
+  if (institution && controlIsEmpty(institution)) {
     missing.push('Institution is a required field');
   }
-  const city = findField<HTMLInputElement>(doc, authorCity(1));
-  if (city && isVisible(city) && controlIsEmpty(city)) {
+  const city = cityInputs(doc)[0];
+  if (city && controlIsEmpty(city)) {
     missing.push('City is a required field');
   }
   return missing;
@@ -733,24 +851,58 @@ async function writeAuthorDetails(
   author: Author,
   overwrite: boolean,
 ): Promise<void> {
+  const affiliation = primaryAffiliation(author);
   for (const field of fillableFields(author)) {
+    if (field.key === 'city') continue;
     if (!field.value?.trim()) continue;
     const el = findField<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
     >(doc, field.id);
-    if (!el || !isVisible(el)) continue;
-    writeInput(el, field.value, overwrite);
-    if (field.key === 'country') await delay(WRITE_VERIFY_DELAY_MS);
+    if (!el || !isOnPage(el)) continue;
+    // Country/state can also be ExtJS inputs (readonly). City is applied
+    // after Country so the box is no longer disabled.
+    if (
+      el instanceof HTMLInputElement &&
+      (field.key === 'country' || field.key === 'state')
+    ) {
+      writeCombobox(el, field.value, overwrite);
+    } else {
+      writeInput(el, field.value, overwrite);
+    }
+    if (field.key === 'country') {
+      await waitForCityWritable(doc);
+    }
   }
+  applyCity(doc, affiliation?.city, overwrite);
   applyCreditRoles(doc, author);
   applyInstitution(doc, author, overwrite);
   await settleInstitutionDialogs(doc);
 }
 
+async function waitForCityWritable(root: Document): Promise<void> {
+  const started = Date.now();
+  while (Date.now() - started < 2_000) {
+    if (cityInputs(root).some((input) => !input.disabled)) return;
+    await delay(LOOKUP_INTERVAL_MS);
+  }
+}
+
+function applyCity(
+  root: Document,
+  city: string | undefined,
+  overwrite: boolean,
+): void {
+  const desired = city?.trim();
+  if (!desired) return;
+  for (const input of cityInputs(root)) {
+    writeCombobox(input, desired, overwrite);
+  }
+}
+
 /**
- * Institution is a typeahead located by name. Write with input/change/blur so
- * ScholarOne's required-field validator sees a value, then dismiss Ringgold
- * or the generic error if that lookup fires.
+ * Institution is a typeahead located by name or by its Institution label.
+ * ExtJS marks the box readonly/aria-hidden; write anyway, then dismiss
+ * Ringgold or the generic error if that lookup fires.
  */
 function applyInstitution(
   doc: Document,
@@ -759,9 +911,9 @@ function applyInstitution(
 ): void {
   const institution = primaryAffiliation(author)?.institution?.trim();
   if (!institution) return;
-  const input = institutionInput(doc);
-  if (!input || !isVisible(input)) return;
-  writeInput(input, institution, overwrite);
+  for (const input of institutionInputs(doc)) {
+    writeCombobox(input, institution, overwrite);
+  }
 }
 
 function dialogLabel(el: HTMLElement): string {
