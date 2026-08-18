@@ -107,6 +107,15 @@ export interface ScholarOneFixtureOptions {
    * generated city id, City disabled until Country is set.
    */
   extJsAffiliationWidgets?: boolean;
+  /**
+   * Bioinformatics Create New Author uses CITY_0 / AUTHOR_INSTITUTION_0
+   * (captured 2026-08-18). Default remains 1 for older fixtures.
+   */
+  affiliationSlot?: 0 | 1;
+  /**
+   * Live City has aria-label="City:" and no label[for] (CITY_0 capture).
+   */
+  cityAriaLabelOnly?: boolean;
 }
 
 export interface ScholarOneFixtureHarness {
@@ -156,6 +165,7 @@ function creditRoleMarkup(): string {
 export function mountScholarOneFixture(
   options: ScholarOneFixtureOptions = {},
 ): ScholarOneFixtureHarness {
+  const slot = options.affiliationSlot ?? 1;
   const countries = options.countries ?? DEFAULT_COUNTRIES;
   const countryOptions = countries
     .map((c) => `<option value="${c}">${c || 'Select country'}</option>`)
@@ -262,36 +272,41 @@ export function mountScholarOneFixture(
           <input
             type="text"
             id="combobox-1014-inputEl"
-            name="${authorInstitutionName(1)}"
+            name="${authorInstitutionName(slot)}"
             ${options.extJsAffiliationWidgets ? 'readonly aria-hidden="true"' : ''}
           />
 
-          <label for="${authorDepartment(1)}">Department</label>
-          <input type="text" id="${authorDepartment(1)}" name="${authorDepartment(1)}" />
+          <label for="${authorDepartment(slot)}">Department</label>
+          <input type="text" id="${authorDepartment(slot)}" name="${authorDepartment(slot)}" />
 
-          <label for="${authorCountry(1)}">Country</label>
-          <select id="${authorCountry(1)}" name="${authorCountry(1)}">${countryOptions}</select>
+          <label for="${authorCountry(slot)}">Country</label>
+          <select id="${authorCountry(slot)}" name="${authorCountry(slot)}">${countryOptions}</select>
 
-          <label for="${authorStateId(1)}">State</label>
-          <select id="${authorStateId(1)}" name="${authorStateId(1)}">
+          <label for="${authorStateId(slot)}">State</label>
+          <select id="${authorStateId(slot)}" name="${authorStateId(slot)}">
             <option value=""></option>
             <option>CA</option>
             <option>MA</option>
             <option>NY</option>
           </select>
-          <label for="${authorState(1)}">State / Province</label>
-          <input type="text" id="${authorState(1)}" name="${authorState(1)}" />
+          <label for="${authorState(slot)}">State / Province</label>
+          <input type="text" id="${authorState(slot)}" name="${authorState(slot)}" />
 
-          <label for="${options.extJsAffiliationWidgets ? 'combobox-2001-inputEl' : authorCity(1)}">City</label>
+          ${
+            options.cityAriaLabelOnly
+              ? ''
+              : `<label for="${options.extJsAffiliationWidgets ? 'combobox-2001-inputEl' : authorCity(slot)}">City</label>`
+          }
           <input
             type="text"
-            id="${options.extJsAffiliationWidgets ? 'combobox-2001-inputEl' : authorCity(1)}"
-            name="${authorCity(1)}"
+            id="${options.extJsAffiliationWidgets ? 'combobox-2001-inputEl' : authorCity(slot)}"
+            name="${authorCity(slot)}"
+            ${options.cityAriaLabelOnly ? 'aria-label="City:"' : ''}
             ${options.extJsAffiliationWidgets ? 'disabled' : ''}
           />
 
-          <label for="${authorPhone(1)}">Phone</label>
-          <input type="text" id="${authorPhone(1)}" name="${authorPhone(1)}" />
+          <label for="${authorPhone(slot)}">Phone</label>
+          <input type="text" id="${authorPhone(slot)}" name="${authorPhone(slot)}" />
 
           <label for="${AUTHORSHIP_CHANGE}">Authorship change</label>
           <textarea id="${AUTHORSHIP_CHANGE}" name="${AUTHORSHIP_CHANGE}"></textarea>
@@ -321,7 +336,7 @@ export function mountScholarOneFixture(
     'scholarone-error-close',
   ) as HTMLButtonElement;
   const institutionInput = document.querySelector<HTMLInputElement>(
-    `input[name="${authorInstitutionName(1)}"]`,
+    `input[name="${authorInstitutionName(slot)}"]`,
   );
   const createCoauthor = document.getElementById('create-new-coauthor')!;
   const rows = document.getElementById('author-rows')!;
@@ -397,11 +412,11 @@ export function mountScholarOneFixture(
     writeField(AUTHOR_EMAIL, '');
     writeField(AUTHOR_FIRST_NAME, '');
     writeField(AUTHOR_LAST_NAME, '');
-    writeField(authorDepartment(1), '');
-    writeField(authorCity(1), '');
-    writeField(authorState(1), '');
-    writeField(authorCountry(1), '');
-    writeField(authorPhone(1), '');
+    writeField(authorDepartment(slot), '');
+    writeField(authorCity(slot), '');
+    writeField(authorState(slot), '');
+    writeField(authorCountry(slot), '');
+    writeField(authorPhone(slot), '');
     writeField(AUTHOR_SALUTATION, '');
   }
 
@@ -480,11 +495,11 @@ export function mountScholarOneFixture(
         writeField(AUTHOR_EMAIL, pendingEmail);
         writeField(AUTHOR_FIRST_NAME, known.firstName);
         writeField(AUTHOR_LAST_NAME, known.lastName);
-        writeField(authorDepartment(1), known.department ?? '');
-        writeField(authorCountry(1), known.country ?? '');
-        writeField(authorState(1), known.state ?? '');
-        writeField(authorCity(1), known.city ?? '');
-        writeField(authorPhone(1), known.phone ?? '');
+        writeField(authorDepartment(slot), known.department ?? '');
+        writeField(authorCountry(slot), known.country ?? '');
+        writeField(authorState(slot), known.state ?? '');
+        writeField(authorCity(slot), known.city ?? '');
+        writeField(authorPhone(slot), known.phone ?? '');
         return;
       }
       if (options.inlineCreateBanner) {
@@ -521,10 +536,10 @@ export function mountScholarOneFixture(
   });
 
   const countrySelect = document.getElementById(
-    authorCountry(1),
+    authorCountry(slot),
   ) as HTMLSelectElement | null;
   const cityInput = document.querySelector<HTMLInputElement>(
-    `input[name="${authorCity(1)}"]`,
+    `input[name="${authorCity(slot)}"]`,
   );
   countrySelect?.addEventListener('change', () => {
     if (!options.extJsAffiliationWidgets || !cityInput) return;
@@ -563,8 +578,8 @@ export function mountScholarOneFixture(
     if (!email || !firstName || !lastName) return;
     if (options.requireCreateFields) {
       const prefix = readField(AUTHOR_SALUTATION);
-      const institution = readField(authorInstitutionName(1));
-      const city = readField(authorCity(1));
+      const institution = readField(authorInstitutionName(slot));
+      const city = readField(authorCity(slot));
       const banner = document.getElementById('create-validation');
       if (!prefix || /none selected/i.test(prefix) || !institution || !city) {
         if (banner) banner.hidden = false;
@@ -580,11 +595,11 @@ export function mountScholarOneFixture(
       email,
       firstName,
       lastName,
-      department: readField(authorDepartment(1)),
-      city: readField(authorCity(1)),
-      state: readField(authorState(1)),
-      country: readField(authorCountry(1)),
-      phone: readField(authorPhone(1)),
+      department: readField(authorDepartment(slot)),
+      city: readField(authorCity(slot)),
+      state: readField(authorState(slot)),
+      country: readField(authorCountry(slot)),
+      phone: readField(authorPhone(slot)),
       corresponding: false,
     });
     renderRows();
