@@ -144,13 +144,16 @@ hypothesis.
 Institution is a typeahead (“Author Institution is Unverified”). Corresponding
 types the roster name as free text and does **not** click the Ringgold list —
 a neighbour like “Safran Aircraft Engines” is worse than the typed name.
-Escape closes the list (blur is avoided; jQuery UI can select the first item).
-Typing can clear City/Department, so those are written again before Save This
-Author. An unmatched name is still saveable: PLOS can commit after Save This
-Author with no extra field edits. The portal may show “Validation found
-issues. Review the highlighted counts and form.” and then sometimes “Proceed
-with this Institution anyway?” — both are OK click-throughs, not a reason to
-abandon the save. Cancel is never clicked.
+Escape on the Institution box is not enough: the live list is a body-level
+`.ui-autocomplete` that sits on the toolbox floppy
+(`button.fl-flToolSave[data-toolname=AuthorSave]` title/aria-label
+“Save This Author”). Fill hides that menu, then clicks Save up to three
+times. After Save, PLOS shows `role="alertdialog"` “The Institution could
+not be identified… Proceed with this Institution anyway?” — OK is
+`span.ui-button-text` in `.ui-dialog-buttonset`. That OK is a click-through;
+Cancel and the titlebar Close are never clicked. Typing can clear
+City/Department, so those are written again before Save. “Validation found
+issues. Review the highlighted counts and form.” is the same OK path.
 
 The “Institution not connected to Ringgold” / **OKAY** dialog is ScholarOne,
 not Editorial Manager.

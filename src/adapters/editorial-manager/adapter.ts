@@ -25,6 +25,7 @@ import {
   findAuthorSaveControl,
   findInstitutionWarningOk,
   findValidationIssuesOk,
+  hideInstitutionTypeahead,
   findRolesCollapseSave,
   findSelectRolesControl,
   isAuthorsListPage,
@@ -41,6 +42,8 @@ const ROLE_WAIT_MS = 2_000;
 const ROLE_INTERVAL_MS = 40;
 const SAVE_WATCH_MS = 6_000;
 const SAVE_INTERVAL_MS = 40;
+const SAVE_ATTEMPTS = 3;
+const SAVE_ATTEMPT_MS = 1_500;
 const REOPEN_WAIT_MS = 6_000;
 
 function delay(ms: number): Promise<void> {
@@ -451,10 +454,44 @@ function describeSaveControl(el: HTMLElement): string {
 }
 
 function clickAuthorSave(root: Document): boolean {
+  hideInstitutionTypeahead(root);
   const save = findAuthorSaveControl(root);
   if (!save) return false;
   clickControl(save);
   return true;
+}
+
+/**
+ * The Institution autocomplete sits over the toolbox floppy. Hide it, click
+ * Save This Author, OK the proceed-anyway alertdialog, and click Save again
+ * if the first click only dismissed the list.
+ */
+async function saveAuthorAndProceed(
+  root: Document,
+  form: Document,
+  givenBefore: string,
+): Promise<'closed' | 'cleared' | 'warning' | 'timeout' | 'missing'> {
+  hideInstitutionTypeahead(root);
+  const park =
+    getInput(form, AUTHOR_FIELD_IDS.department) ??
+    getInput(form, AUTHOR_FIELD_IDS.city) ??
+    getInput(form, AUTHOR_FIELD_IDS.firstName);
+  park?.focus();
+
+  for (let attempt = 1; attempt <= SAVE_ATTEMPTS; attempt += 1) {
+    if (!clickAuthorSave(root)) {
+      return attempt === 1 ? 'missing' : 'timeout';
+    }
+    const outcome = await waitAfterAuthorSave(
+      root,
+      form,
+      givenBefore,
+      SAVE_ATTEMPT_MS,
+    );
+    if (outcome !== 'timeout') return outcome;
+  }
+  dismissSaveDialogs(root);
+  return waitAfterAuthorSave(root, form, givenBefore);
 }
 
 async function openAuthorFormFromList(
@@ -507,9 +544,10 @@ async function waitAfterAuthorSave(
   root: Document,
   form: Document,
   givenNameBefore: string,
+  timeoutMs = SAVE_WATCH_MS,
 ): Promise<'closed' | 'cleared' | 'warning' | 'timeout'> {
   const started = Date.now();
-  while (Date.now() - started < SAVE_WATCH_MS) {
+  while (Date.now() - started < timeoutMs) {
     if (rolesWarningText(root) || rolesWarningText(form)) return 'warning';
     dismissSaveDialogs(root);
     if (!authorFormVisible(root)) return 'closed';
@@ -729,7 +767,11 @@ export const editorialManagerAdapter: PlatformAdapter = {
           );
           break;
         }
+        hideInstitutionTypeahead(doc);
         const saved = clickAuthorSave(doc);
+        dismissSaveDialogs(doc);
+        if (authorFormVisible(doc)) clickAuthorSave(doc);
+        dismissSaveDialogs(doc);
         if (!saved) {
           warnings.push(
             'Author Save control was not found. Values were written into the open form only.',
@@ -838,8 +880,12 @@ export const editorialManagerAdapter: PlatformAdapter = {
 
       const givenBefore =
         givenNameValue(doc) || author.givenName || `author-${author.sequence}`;
-      const saved = clickAuthorSave(doc);
-      if (!saved) {
+      const afterSave = await saveAuthorAndProceed(
+        doc,
+        currentForm,
+        givenBefore,
+      );
+      if (afterSave === 'missing') {
         warnings.push(
           'Save This Author was not found. Values were written into the open form only.',
         );
@@ -850,8 +896,6 @@ export const editorialManagerAdapter: PlatformAdapter = {
         }
         break;
       }
-
-      const afterSave = await waitAfterAuthorSave(doc, currentForm, givenBefore);
       if (afterSave === 'warning') {
         const warning = rolesWarningText(doc) || rolesWarningText(currentForm);
         errors.push(
@@ -860,41 +904,11 @@ export const editorialManagerAdapter: PlatformAdapter = {
         break;
       }
       if (afterSave === 'timeout') {
-        // Unverified institution is not a hard stop. The portal may show
-        // “Validation found issues…” then “Proceed with this Institution
-        // anyway?” — click OK on each and, if the form is still open, save
-        // once more. Do not abandon because the inline unverified text is up.
-        dismissSaveDialogs(doc);
-        if (authorFormVisible(doc)) clickAuthorSave(doc);
-        const retry = await waitAfterAuthorSave(doc, currentForm, givenBefore);
-        if (retry === 'closed' || retry === 'cleared') {
-          // continue to Add Another Author
-        } else if (retry === 'warning') {
-          const warning = rolesWarningText(doc) || rolesWarningText(currentForm);
-          errors.push(
-            `Editorial Manager refused author ${author.sequence}: ${warning}`,
-          );
-          break;
-        } else {
-          dismissSaveDialogs(doc);
-          const third = await waitAfterAuthorSave(doc, currentForm, givenBefore);
-          if (third === 'closed' || third === 'cleared') {
-            // dialogs were the only remaining step
-          } else if (third === 'warning') {
-            const warning =
-              rolesWarningText(doc) || rolesWarningText(currentForm);
-            errors.push(
-              `Editorial Manager refused author ${author.sequence}: ${warning}`,
-            );
-            break;
-          } else {
-            const save = findAuthorSaveControl(doc);
-            warnings.push(
-              `Save This Author was clicked for author ${author.sequence} but the form is still open. Clicked ${save ? describeSaveControl(save) : 'Save This Author'}. If Editorial Manager is showing “Validation found issues” or “Proceed with this Institution anyway?”, click OK to finish the save.`,
-            );
-            break;
-          }
-        }
+        const save = findAuthorSaveControl(doc);
+        warnings.push(
+          `Save This Author was clicked for author ${author.sequence} but the form is still open. Clicked ${save ? describeSaveControl(save) : 'Save This Author'}. If Editorial Manager is showing “Validation found issues” or “Proceed with this Institution anyway?”, click OK to finish the save.`,
+        );
+        break;
       }
 
       if (index < authors.length - 1) {

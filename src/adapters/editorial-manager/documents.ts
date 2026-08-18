@@ -89,6 +89,10 @@ function isShown(el: Element): boolean {
     if ('hidden' in current && Boolean((current as HTMLElement).hidden)) {
       return false;
     }
+    const style = current.ownerDocument.defaultView?.getComputedStyle(current);
+    if (style && (style.display === 'none' || style.visibility === 'hidden')) {
+      return false;
+    }
     current = current.parentElement;
   }
   return true;
@@ -140,7 +144,7 @@ function findDialogButton(
 ): HTMLElement | null {
   for (const doc of documentsIn(root)) {
     const dialogs = doc.querySelectorAll(
-      '.ui-dialog, [role="dialog"], .ui-widget-content, .modal',
+      '[role="alertdialog"], .ui-dialog.ui-dialog-buttons, [role="dialog"], .ui-dialog, .modal',
     );
     for (const dialog of dialogs) {
       if (!isShown(dialog)) continue;
@@ -193,7 +197,9 @@ export function findValidationIssuesOk(root: Document): HTMLElement | null {
       const text = (node.textContent ?? '').replace(/\s+/g, ' ');
       if (text.length > 400 || !VALIDATION_ISSUES_RE.test(text)) continue;
       const scope =
-        node.closest('.ui-dialog, [role="dialog"], .modal') ?? node;
+        node.closest(
+          '.ui-dialog, [role="alertdialog"], [role="dialog"], .modal',
+        ) ?? node;
       const labeled = Array.from(
         scope.querySelectorAll<HTMLElement>(
           'button, [role="button"], .ui-button, a',
@@ -215,6 +221,21 @@ function normalizeInstitution(value: string): string {
  * A visible typeahead suggestion whose text equals the roster institution.
  * Never returns the first unmatched item — a near match is not selected.
  */
+/**
+ * Hide the body-level jQuery UI Institution menu so it cannot eat the
+ * Save This Author click. Observed 2026-08-18 on PLOS Add New Author.
+ */
+export function hideInstitutionTypeahead(root: Document): void {
+  for (const doc of documentsIn(root)) {
+    for (const el of doc.querySelectorAll<HTMLElement>(
+      '.ui-autocomplete, #institution-suggestions',
+    )) {
+      el.hidden = true;
+      el.style.display = 'none';
+    }
+  }
+}
+
 export function institutionTypeaheadOpen(root: Document): boolean {
   for (const doc of documentsIn(root)) {
     const nodes = doc.querySelectorAll<HTMLElement>(
