@@ -436,6 +436,75 @@ describe('ScholarOne capture-backed adapter (Bioinformatics)', () => {
     expect(document.getElementById('create-validation')?.hidden).toBe(true);
   });
 
+  it('fills CITY_0 and AUTHOR_INSTITUTION_0 from the Bioinformatics capture', async () => {
+    const harness = mountScholarOneFixture({
+      emailLookupMs: 10,
+      requireCreateFields: true,
+      affiliationSlot: 0,
+      cityAriaLabelOnly: true,
+    });
+    const roster = makeRoster([
+      makeAuthor({
+        givenName: 'Ada',
+        familyName: 'Lovelace',
+        namePrefix: 'Dr.',
+        email: 'ada@example.org',
+        sequence: 1,
+        affiliations: [
+          {
+            institution: 'Analytical Engines Institute',
+            department: 'Computing Laboratory',
+            city: 'London',
+            country: 'United Kingdom',
+            isPrimary: true,
+          },
+        ],
+      }),
+    ]);
+
+    const report = await scholarOneAdapter.fillAsync!(document, roster, {
+      overwrite: true,
+      dryRun: false,
+    });
+
+    const institution = document.querySelector(
+      'input[name="AUTHOR_INSTITUTION_0"]',
+    ) as HTMLInputElement | null;
+    const city = document.getElementById('CITY_0') as HTMLInputElement | null;
+    const country = document.getElementById(
+      'COUNTRY_0',
+    ) as HTMLSelectElement | null;
+    const department = document.getElementById(
+      'AUTHOR_DEPARTMENT_0',
+    ) as HTMLInputElement | null;
+    console.log('ScholarOne CITY_0 affiliation slot', {
+      errors: report.errors,
+      institution: institution?.value,
+      city: city?.value,
+      cityAria: city?.getAttribute('aria-label'),
+      country: country?.value,
+      department: department?.value,
+      saved: harness.savedAuthors(),
+    });
+    expect(report.errors).toEqual([]);
+    expect(document.getElementById('CITY_1')).toBeNull();
+    expect(document.querySelector('input[name="AUTHOR_INSTITUTION_1"]')).toBeNull();
+    expect(institution?.value).toBe('Analytical Engines Institute');
+    expect(city?.id).toBe('CITY_0');
+    expect(city?.getAttribute('aria-label')).toBe('City:');
+    expect(city?.value).toBe('London');
+    expect(country?.value).toBe('United Kingdom');
+    expect(department?.value).toBe('Computing Laboratory');
+    expect(harness.savedAuthors()).toHaveLength(1);
+    expect(harness.savedAuthors()[0]).toEqual(
+      expect.objectContaining({
+        city: 'London',
+        country: 'United Kingdom',
+        department: 'Computing Laboratory',
+      }),
+    );
+  });
+
   it('refuses to Save when Prefix is still None Selected', async () => {
     mountScholarOneFixture({
       emailLookupMs: 10,

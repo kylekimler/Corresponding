@@ -20,7 +20,13 @@ export const AUTHOR_FIRST_NAME = 'AUTHOR_FIRST_NAME';
 export const AUTHOR_LAST_NAME = 'AUTHOR_LAST_NAME';
 export const AUTHORSHIP_CHANGE = 'AUTHORSHIP_CHANGE_TEXTAREA';
 
-/** Affiliation / contact fields use a 1-based trailing index. */
+/**
+ * Affiliation / contact fields use a trailing index. Bioinformatics
+ * Create New Author uses 0 (`CITY_0`, captured 2026-08-18); older
+ * captures used 1. Finders must accept both.
+ */
+export const AFFILIATION_SLOT_INDEXES = [0, 1, 2, 3] as const;
+
 export function authorDepartment(index = 1): string {
   return `AUTHOR_DEPARTMENT_${index}`;
 }

@@ -99,7 +99,7 @@ Fill into freemium.
 
 Maximize **verified development loops completed**, not lines of code. Prefer vertical slices such as paste → preview → fill → validate over speculative frameworks.
 
-Meaningful features follow: spec → test → implementation → adversarial test → smoke test → merge. Every iteration should leave something a human can try.
+Meaningful features follow: spec → test → implementation → adversarial test → smoke test → merge. Every iteration should leave something a human can try. While pre-release, merge completed work into `main` as soon as tests pass — do not park ready PRs for later review.
 
 For longer runs, separate independent roles:
 

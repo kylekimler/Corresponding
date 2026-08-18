@@ -37,7 +37,8 @@ Research date: 2026-08-12. Based on public documentation and vendor marketing pa
   `mc.manuscriptcentral.com/bioinformatics` confirms email-first author entry:
   `findAuthorEmailId` + `searchAuthorId`, optional `emailSearchModal_yes/no`, then
   `AUTHOR_EMAIL_ADDRESS` / `AUTHOR_FIRST_NAME` / `AUTHOR_LAST_NAME`, affiliation
-  slots (`AUTHOR_DEPARTMENT_#`, `CITY_#`, `COUNTRY_#`, `STATE_#`), CRediT role
+  slots (`AUTHOR_DEPARTMENT_#`, `CITY_#` including live `CITY_0` /
+  `aria-label="City:"`, `COUNTRY_#`, `STATE_#`), CRediT role
   checkboxes, and `AuthAction` including Assign as Corresponding Author.
   Page continuation is `btnSubmit` / `AUTHOR_REVIEWERS` (“Save and Continue”).
 - **Adapter status:** Capture-backed ScholarOne adapter implemented. Fill searches
@@ -90,16 +91,18 @@ Please search again using another e-mail address or create a new co-author",
 rather than the Yes/No modal. Corresponding now settles on either outcome and
 follows the banner link when it appears.
 
-The same capture exposed the institution field: `name="AUTHOR_INSTITUTION_1"`
-with `id="combobox-1014-inputEl"`. The id carries a generated number, so only
-the name is stable. Live ExtJS widgets keep that box **readonly** and
-**aria-hidden**; City is a second generated combobox (`name="CITY_1"`) that
-stays **disabled until Country is set**. Corresponding locates both by name
-or by their Institution/City labels (including inside same-origin frames),
-writes even when the box is readonly, waits for City to become writable after
-Country, and does not blur the combobox (ExtJS can clear a free-text value
-that is not a picker pick). A free-text name can raise ScholarOne’s own
-“Institution not connected to Ringgold” dialog (proceed control labelled
+Institution is `name="AUTHOR_INSTITUTION_#"` with a generated
+`id="combobox-#-inputEl"`. A 2026-08-18 Bioinformatics capture shows the
+Create New Author slot is **0-based**: `id="CITY_0"` / `name="CITY_0"` with
+`aria-label="City:"` (no `label[for]`), plus `COUNTRY_0` /
+`AUTHOR_DEPARTMENT_0`. Older fixtures used `_1`. Corresponding locates both
+indexes, `name^=CITY_` / `AUTHOR_INSTITUTION_`, and aria-labels, including
+inside same-origin frames. Some sites still use a readonly ExtJS Institution
+combobox; City may be a plain `CITY_0` text box or a combobox disabled until
+Country is set. Extra Institution/City boxes already on the page are filled
+from later roster affiliations. Add Another Institution is not clicked —
+no stable control was in the capture. A free-text name can raise ScholarOne’s
+own “Institution not connected to Ringgold” dialog (proceed control labelled
 **OKAY**) or the generic “An error has occurred. Please try again.” dialog
 (**Close**). Those are dismissed so the create-author form can finish;
 unrelated `alertButton` refusals are still reported verbatim and left open.

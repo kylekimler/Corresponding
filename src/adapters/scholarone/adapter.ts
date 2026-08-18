@@ -39,13 +39,13 @@ import {
   EMAIL_SEARCH_MODAL_YES,
   FIND_AUTHOR_EMAIL,
   SEARCH_AUTHOR,
+  AFFILIATION_SLOT_INDEXES,
   authorCity,
   authorCountry,
   authorDepartment,
   authorPhone,
   authorState,
   ALERT_BUTTON,
-  authorInstitutionName,
   CREATE_NEW_COAUTHOR_RE,
   CREDIT_ROLE_PREFIX,
   CREATE_VALIDATION_RE,
@@ -290,8 +290,44 @@ function labeledInputs(root: Document, labelRe: RegExp): HTMLInputElement[] {
       const nested = label.querySelector('input');
       if (isTextInput(nested)) found.push(nested);
     }
+    // Live City is `aria-label="City:"` with no label[for] (CITY_0, 2026-08-18).
+    for (const el of Array.from(doc.querySelectorAll('input'))) {
+      if (!isTextInput(el)) continue;
+      const aria = (el.getAttribute('aria-label') ?? '').replace(/\s+/g, ' ').trim();
+      if (labelRe.test(aria)) found.push(el);
+    }
   }
   return found;
+}
+
+function findIndexedField<T extends Element>(
+  doc: Document,
+  idFor: (index: number) => string,
+): T | null {
+  for (const index of AFFILIATION_SLOT_INDEXES) {
+    const el = findField<T>(doc, idFor(index));
+    if (el && isOnPage(el)) return el;
+  }
+  return null;
+}
+
+function inputsWithIndexedName(
+  root: Document,
+  namePrefix: string,
+): HTMLInputElement[] {
+  const found: HTMLInputElement[] = [];
+  for (const doc of documentsIn(root)) {
+    for (const el of Array.from(
+      doc.querySelectorAll(
+        `input[name^="${namePrefix}"], input[id^="${namePrefix}"]`,
+      ),
+    )) {
+      if (!isTextInput(el)) continue;
+      const token = el.getAttribute('name') || el.id;
+      if (new RegExp(`^${namePrefix}\\d+$`).test(token)) found.push(el);
+    }
+  }
+  return uniqueInputs(found);
 }
 
 function controlIsEmpty(
@@ -779,28 +815,13 @@ function uniqueInputs(inputs: HTMLInputElement[]): HTMLInputElement[] {
 }
 
 function institutionInputs(root: Document): HTMLInputElement[] {
-  const found: HTMLInputElement[] = [];
-  for (const doc of documentsIn(root)) {
-    for (const el of Array.from(
-      doc.querySelectorAll(`input[name="${authorInstitutionName(1)}"]`),
-    )) {
-      if (isTextInput(el)) found.push(el);
-    }
-  }
+  const found = inputsWithIndexedName(root, 'AUTHOR_INSTITUTION_');
   found.push(...labeledInputs(root, /^\s*institution\b/i));
   return uniqueInputs(found).filter(isOnPage);
 }
 
 function cityInputs(root: Document): HTMLInputElement[] {
-  const found: HTMLInputElement[] = [];
-  const cityId = authorCity(1);
-  for (const doc of documentsIn(root)) {
-    const byIdOrName = findField<HTMLInputElement>(doc, cityId);
-    if (isTextInput(byIdOrName)) found.push(byIdOrName);
-    for (const el of Array.from(doc.querySelectorAll(`input[name="${cityId}"]`))) {
-      if (isTextInput(el)) found.push(el);
-    }
-  }
+  const found = inputsWithIndexedName(root, 'CITY_');
   found.push(...labeledInputs(root, /^\s*city\b/i));
   return uniqueInputs(found).filter(isOnPage);
 }
@@ -851,13 +872,25 @@ async function writeAuthorDetails(
   author: Author,
   overwrite: boolean,
 ): Promise<void> {
-  const affiliation = primaryAffiliation(author);
   for (const field of fillableFields(author)) {
     if (field.key === 'city') continue;
     if (!field.value?.trim()) continue;
-    const el = findField<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >(doc, field.id);
+    const el =
+      field.key === 'country'
+        ? findIndexedField<HTMLInputElement | HTMLSelectElement>(
+            doc,
+            authorCountry,
+          )
+        : field.key === 'state'
+          ? findIndexedField<HTMLInputElement | HTMLSelectElement>(
+              doc,
+              authorState,
+            )
+          : field.key === 'department'
+            ? findIndexedField<HTMLInputElement>(doc, authorDepartment)
+            : findField<
+                HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+              >(doc, field.id);
     if (!el || !isOnPage(el)) continue;
     // Country/state can also be ExtJS inputs (readonly). City is applied
     // after Country so the box is no longer disabled.
@@ -873,7 +906,7 @@ async function writeAuthorDetails(
       await waitForCityWritable(doc);
     }
   }
-  applyCity(doc, affiliation?.city, overwrite);
+  applyCity(doc, author, overwrite);
   applyCreditRoles(doc, author);
   applyInstitution(doc, author, overwrite);
   await settleInstitutionDialogs(doc);
@@ -887,33 +920,45 @@ async function waitForCityWritable(root: Document): Promise<void> {
   }
 }
 
+function orderedAffiliations(author: Author) {
+  const primary = primaryAffiliation(author);
+  const rest = author.affiliations.filter((item) => item !== primary);
+  return primary ? [primary, ...rest] : rest;
+}
+
 function applyCity(
   root: Document,
-  city: string | undefined,
+  author: Author,
   overwrite: boolean,
 ): void {
-  const desired = city?.trim();
-  if (!desired) return;
-  for (const input of cityInputs(root)) {
+  const inputs = cityInputs(root);
+  const values = orderedAffiliations(author).map((item) => item.city);
+  inputs.forEach((input, index) => {
+    const desired = (values[index] ?? values[0])?.trim();
+    if (!desired) return;
     writeCombobox(input, desired, overwrite);
-  }
+  });
 }
 
 /**
- * Institution is a typeahead located by name or by its Institution label.
- * ExtJS marks the box readonly/aria-hidden; write anyway, then dismiss
- * Ringgold or the generic error if that lookup fires.
+ * Institution is a typeahead located by name (`AUTHOR_INSTITUTION_0` or `_1`)
+ * or by its Institution / aria-label. ExtJS marks the box readonly/aria-hidden;
+ * write anyway, then dismiss Ringgold or the generic error if that lookup fires.
+ * Extra boxes already on the page (Add Another Institution) get later roster
+ * affiliations; we do not click that control without a captured selector.
  */
 function applyInstitution(
   doc: Document,
   author: Author,
   overwrite: boolean,
 ): void {
-  const institution = primaryAffiliation(author)?.institution?.trim();
-  if (!institution) return;
-  for (const input of institutionInputs(doc)) {
+  const inputs = institutionInputs(doc);
+  const values = orderedAffiliations(author).map((item) => item.institution);
+  inputs.forEach((input, index) => {
+    const institution = (values[index] ?? values[0])?.trim();
+    if (!institution) return;
     writeCombobox(input, institution, overwrite);
-  }
+  });
 }
 
 function dialogLabel(el: HTMLElement): string {
