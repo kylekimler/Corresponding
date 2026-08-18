@@ -23,10 +23,8 @@ import {
   findAddAnotherAuthorControl,
   findAuthorFormDocument,
   findAuthorSaveControl,
-  findInstitutionSuggestion,
   findInstitutionWarningOk,
   findValidationIssuesOk,
-  institutionTypeaheadOpen,
   findRolesCollapseSave,
   findSelectRolesControl,
   isAuthorsListPage,
@@ -41,7 +39,6 @@ import {
 
 const ROLE_WAIT_MS = 2_000;
 const ROLE_INTERVAL_MS = 40;
-const TYPEAHEAD_WAIT_MS = 1_200;
 const SAVE_WATCH_MS = 6_000;
 const SAVE_INTERVAL_MS = 40;
 const REOPEN_WAIT_MS = 6_000;
@@ -157,8 +154,8 @@ function applyTextPlan(
     overwrite: true,
     dryRun: false,
   });
-  // Institution is a typeahead: blur here closes the list before a match can
-  // be chosen. Zipcode (and other Knockout fields) update on blur.
+  // Institution is written separately: a blur here can pick the first
+  // Ringgold hit. Zipcode (and other Knockout fields) update on blur.
   if (plan.fieldId === AUTHOR_FIELD_IDS.institution) return;
   const el = getInput(form, plan.fieldId);
   el?.dispatchEvent(new Event('blur', { bubbles: true }));
@@ -180,35 +177,61 @@ function typeIntoInstitution(input: HTMLInputElement, value: string): void {
   input.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true, key: value.slice(-1) || 'a' }));
 }
 
+/** Close the Ringgold list without selecting a suggestion. */
+function dismissInstitutionTypeahead(input: HTMLInputElement): void {
+  input.dispatchEvent(
+    new KeyboardEvent('keydown', {
+      bubbles: true,
+      key: 'Escape',
+      code: 'Escape',
+    }),
+  );
+  input.dispatchEvent(
+    new KeyboardEvent('keyup', {
+      bubbles: true,
+      key: 'Escape',
+      code: 'Escape',
+    }),
+  );
+}
+
 /**
- * Institution is Ringgold/typeahead. Type (do not only set+blur), wait for a
- * suggestion whose text equals the roster name, click only that. If nothing
- * matches, leave the typed value for the proceed-anyway warning.
+ * Type the roster institution as free text. Do not wait for or click the
+ * Ringgold dropdown — a near match is worse than the typed name. Escape
+ * closes the list; do not blur (jQuery UI can select the first item).
  */
-async function applyInstitutionTypeahead(
-  root: Document,
+function applyInstitutionFreeText(
   form: Document,
   institution: string | undefined,
-): Promise<boolean> {
+): void {
   const desired = institution?.trim();
-  if (!desired) return false;
+  if (!desired) return;
   const input = getInput(form, AUTHOR_FIELD_IDS.institution);
-  if (!input || input.tagName.toLowerCase() !== 'input') return false;
+  if (!input || input.tagName.toLowerCase() !== 'input') return;
   typeIntoInstitution(input as HTMLInputElement, desired);
-  const started = Date.now();
-  while (Date.now() - started < TYPEAHEAD_WAIT_MS) {
-    const suggestion = findInstitutionSuggestion(root, desired);
-    if (suggestion) {
-      clickControl(suggestion);
-      return true;
-    }
-    const open = institutionTypeaheadOpen(root);
-    if (!open && Date.now() - started > 600) break;
-    await delay(ROLE_INTERVAL_MS);
-  }
   input.dispatchEvent(new Event('change', { bubbles: true }));
-  input.dispatchEvent(new Event('blur', { bubbles: true }));
-  return false;
+  dismissInstitutionTypeahead(input as HTMLInputElement);
+}
+
+/**
+ * Ringgold typing can clear City/Department. Write them again after the
+ * institution box is done so Save This Author is not missing required fields.
+ */
+function refillAffiliationDetails(form: Document, author: Author): void {
+  const aff = primaryAffiliation(author);
+  if (!aff) return;
+  const writes: Array<[string, string | undefined]> = [
+    [AUTHOR_FIELD_IDS.department, aff.department],
+    [AUTHOR_FIELD_IDS.city, aff.city],
+    [AUTHOR_FIELD_IDS.state, aff.state],
+    [AUTHOR_FIELD_IDS.zipcode, aff.postalCode],
+    [AUTHOR_FIELD_IDS.country, aff.country],
+  ];
+  for (const [id, value] of writes) {
+    if (!value?.trim()) continue;
+    setValue(form, id, value, { overwrite: true, dryRun: false });
+    getInput(form, id)?.dispatchEvent(new Event('blur', { bubbles: true }));
+  }
 }
 
 function applyCorresponding(
@@ -690,17 +713,11 @@ export const editorialManagerAdapter: PlatformAdapter = {
           applyTextPlan(currentForm, plan, options);
         }
         if (!conflict && !options.dryRun) {
-          const institution = primaryAffiliation(author)?.institution;
-          const input = getInput(currentForm, AUTHOR_FIELD_IDS.institution);
-          if (institution && input && input.tagName.toLowerCase() === 'input') {
-            typeIntoInstitution(input as HTMLInputElement, institution);
-            const suggestion = findInstitutionSuggestion(doc, institution);
-            if (suggestion) clickControl(suggestion);
-            else {
-              input.dispatchEvent(new Event('change', { bubbles: true }));
-              input.dispatchEvent(new Event('blur', { bubbles: true }));
-            }
-          }
+          applyInstitutionFreeText(
+            currentForm,
+            primaryAffiliation(author)?.institution,
+          );
+          refillAffiliationDetails(currentForm, author);
         }
         if (!conflict) {
           tickCreditRoles(currentForm, author);
@@ -809,11 +826,11 @@ export const editorialManagerAdapter: PlatformAdapter = {
         break;
       }
 
-      await applyInstitutionTypeahead(
-        doc,
+      applyInstitutionFreeText(
         currentForm,
         primaryAffiliation(author)?.institution,
       );
+      refillAffiliationDetails(currentForm, author);
       await openRolesPanel(currentForm);
       plans.push(...planCreditRoles(currentForm, author));
       tickCreditRoles(currentForm, author);

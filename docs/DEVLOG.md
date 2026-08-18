@@ -4,6 +4,21 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-18 21:15 UTC
+- PLOS Editorial Manager Add New Author was stalling on the Institution
+  Ringgold dropdown (screenshot: “Analytical Engines Institute” typed,
+  Safran/MTU suggestions open, City and Department empty, Save not clicked).
+  The person does not want a directory pick — type the roster name and click
+  Save This Author.
+- Fill no longer waits for or clicks typeahead suggestions. It types the
+  institution, sends Escape so the list closes without selecting the first
+  hit, writes City/Department/zip/country again (Ringgold typing clears
+  them), then clicks the floppy. Validation / “Proceed with this Institution
+  anyway?” stay OK click-throughs. Cancel is never clicked.
+- verification: fixture list includes Safran/MTU decoys for “Engines”; Ada’s
+  Analytical Engines Institute is not clicked; City=London and
+  Department=Computing Laboratory are present at Save; authorsCount becomes 1.
+
 ### 2026-08-18 21:10 UTC
 - ScholarOne Create New Author still left Institution and City empty on
   manuscriptcentral. Prefix/email/names wrote; the affiliation boxes did not.

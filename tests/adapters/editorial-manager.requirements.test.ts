@@ -271,21 +271,37 @@ describe('Editorial Manager contributor-role requirement', () => {
     expect(form.getElementById('roles-warning')?.hidden).toBe(false);
   });
 
-  it('picks an exact institution typeahead match and does not guess a neighbour', async () => {
+  it('ignores the Institution typeahead, keeps the typed name, refills City, and saves', async () => {
     const form = mountEditorialManagerFixture({ includeAddAnotherAuthor: false });
     const rosterAuthor = author(1, ['methodology']);
     rosterAuthor.affiliations[0] = {
-      ...rosterAuthor.affiliations[0]!,
-      institution: 'University of London',
+      institution: 'Analytical Engines Institute',
+      department: 'Computing Laboratory',
+      city: 'London',
+      postalCode: 'NW1 2BE',
+      country: 'United Kingdom',
       isPrimary: true,
     };
-    let picked = '';
-    let valueWhenPicked = '';
-    form.getElementById('institution-suggestions')?.addEventListener('click', (event) => {
-      picked = (event.target as HTMLElement).textContent?.trim() ?? '';
-      valueWhenPicked =
-        (form.getElementById('Institution') as HTMLInputElement).value;
+    let suggestionClicks = 0;
+    form.getElementById('institution-suggestions')?.addEventListener('click', () => {
+      suggestionClicks += 1;
     });
+    const atSave = { institution: '', city: '', department: '' };
+    form
+      .querySelector('[data-toolname="AuthorSave"]')
+      ?.addEventListener(
+        'click',
+        () => {
+          atSave.institution = (
+            form.getElementById('Institution') as HTMLInputElement
+          ).value;
+          atSave.city = (form.getElementById('City') as HTMLInputElement).value;
+          atSave.department = (
+            form.getElementById('Department') as HTMLInputElement
+          ).value;
+        },
+        true,
+      );
 
     const report = await editorialManagerAdapter.fillAsync!(
       document,
@@ -293,17 +309,20 @@ describe('Editorial Manager contributor-role requirement', () => {
       { overwrite: true, dryRun: false },
     );
 
-    console.log('EM institution typeahead', {
+    console.log('EM institution free text', {
       errors: report.errors,
       warnings: report.warnings,
-      picked,
-      valueWhenPicked,
+      suggestionClicks,
+      atSave,
       authorsCount: (form.getElementById('authorsCount') as HTMLInputElement)
         .value,
+      listHidden: form.getElementById('institution-suggestions')?.hidden,
     });
     expect(report.errors).toEqual([]);
-    expect(picked).toBe('University of London');
-    expect(valueWhenPicked).toBe('University of London');
+    expect(suggestionClicks).toBe(0);
+    expect(atSave.institution).toBe('Analytical Engines Institute');
+    expect(atSave.city).toBe('London');
+    expect(atSave.department).toBe('Computing Laboratory');
     expect(
       (form.getElementById('authorsCount') as HTMLInputElement).value,
     ).toBe('1');

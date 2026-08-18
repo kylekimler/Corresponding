@@ -229,7 +229,11 @@ function wireAuthorForm(
     if (panel) panel.hidden = true;
   });
 
-  const INSTITUTION_DIRECTORY = ['University of London'];
+  const INSTITUTION_DIRECTORY = [
+    'Safran Aircraft Engines',
+    'MTU Aero Engines AG',
+    'University of London',
+  ];
   const institutionInput = doc.getElementById('Institution') as HTMLInputElement | null;
   const suggestionList = doc.getElementById('institution-suggestions');
   const unverified = doc.getElementById('institution-unverified');
@@ -237,9 +241,12 @@ function wireAuthorForm(
   const renderSuggestions = () => {
     if (!institutionInput || !suggestionList) return;
     const typed = institutionInput.value.trim().toLowerCase();
-    const matches = INSTITUTION_DIRECTORY.filter((name) =>
-      name.toLowerCase().includes(typed),
-    );
+    const tokens = typed.split(/\s+/).filter((token) => token.length >= 3);
+    const matches = INSTITUTION_DIRECTORY.filter((name) => {
+      const lower = name.toLowerCase();
+      if (lower.includes(typed) || typed.includes(lower)) return true;
+      return tokens.some((token) => lower.includes(token));
+    });
     suggestionList.innerHTML = matches
       .map((name) => `<li role="option" class="ui-menu-item">${name}</li>`)
       .join('');
@@ -251,6 +258,15 @@ function wireAuthorForm(
   institutionInput?.addEventListener('input', () => {
     institutionVerified = false;
     renderSuggestions();
+    // Live Ringgold clears City/Department until a directory pick.
+    const city = doc.getElementById('City') as HTMLInputElement | null;
+    const department = doc.getElementById('Department') as HTMLInputElement | null;
+    if (city) city.value = '';
+    if (department) department.value = '';
+  });
+  institutionInput?.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape' || !suggestionList) return;
+    suggestionList.hidden = true;
   });
   suggestionList?.addEventListener('click', (event) => {
     const item = (event.target as HTMLElement | null)?.closest('li');
