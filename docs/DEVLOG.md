@@ -4,6 +4,22 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-18 22:10 UTC
+- Bioinformatics Manuscript Central Create New Author still left Institution
+  and City empty. A new capture shows the live boxes are **0-based**:
+  `id="CITY_0"` / `name="CITY_0"` with `aria-label="City:"` (no `label[for]`),
+  and Institution `name="AUTHOR_INSTITUTION_#"`. Fill only looked for
+  `CITY_1` / `AUTHOR_INSTITUTION_1` and `<label>City</label>`, so the writes
+  never landed.
+- Finders now accept slots 0–3, `name^=CITY_` / `AUTHOR_INSTITUTION_`, and
+  aria-labels. Country / Department / State use the same 0-or-1 lookup.
+  Extra Institution/City boxes already on the page get later roster
+  affiliations. Add Another Institution is not clicked — no stable control
+  in this capture.
+- verification: fixture `affiliationSlot: 0` + `cityAriaLabelOnly`; Ada
+  writes AUTHOR_INSTITUTION_0, CITY_0, COUNTRY_0, AUTHOR_DEPARTMENT_0 and
+  saves.
+
 ### 2026-08-18 21:40 UTC
 - PLOS Add New Author now reaches the form (Add Author works) but Save This
   Author still missed. The live floppy is
