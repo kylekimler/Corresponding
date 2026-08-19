@@ -994,7 +994,8 @@ export const editorialManagerAdapter: PlatformAdapter = {
     const warnings: string[] = [];
     const errors: string[] = [];
     const plans: FieldPlan[] = [];
-    let form = findOpenAuthorFormDocument(doc) ?? findAuthorFormDocument(doc);
+    let form: Document | null =
+      findOpenAuthorFormDocument(doc) ?? findAuthorFormDocument(doc);
     const manuscriptBefore = snapshotManuscript(doc);
     const requirements = evaluatePortalRequirements('editorial-manager', roster);
     let openedFreshDialog = false;
@@ -1015,7 +1016,8 @@ export const editorialManagerAdapter: PlatformAdapter = {
 
     for (let index = 0; index < authors.length; index += 1) {
       const author = authors[index]!;
-      const currentForm = findOpenAuthorFormDocument(doc) ?? form;
+      const currentForm: Document =
+        findOpenAuthorFormDocument(doc) ?? form;
       const leftoverPrevious =
         openedFreshDialog &&
         Boolean(authors[index - 1]) &&
