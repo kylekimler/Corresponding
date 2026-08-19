@@ -261,11 +261,15 @@ describe('Editorial Manager contributor-role requirement', () => {
       '[data-toolname="AuthorSave"]',
     ) as HTMLButtonElement;
     const namesAtSave: string[] = [];
-    save.addEventListener('click', () => {
-      namesAtSave.push(
-        (form.getElementById('FirstName') as HTMLInputElement).value,
-      );
-    });
+    save.addEventListener(
+      'click',
+      () => {
+        namesAtSave.push(
+          (form.getElementById('FirstName') as HTMLInputElement).value,
+        );
+      },
+      true,
+    );
 
     const report = await editorialManagerAdapter.fillAsync!(
       form,

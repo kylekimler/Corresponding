@@ -91,8 +91,8 @@ function buildAuthorPlans(
   form: Document,
   author: Author,
   options: FillOptions,
+  conflict = authorFormConflict(form, author),
 ): FieldPlan[] {
-  const conflict = authorFormConflict(form, author);
   const aff = primaryAffiliation(author);
   const specs: Array<{ id: string; label: string; value?: string }> = [
     {
@@ -682,12 +682,14 @@ async function waitForFreshAuthorForm(
   const opened = await waitForAuthorForm(root, timeoutMs);
   if (!opened) return null;
   const started = Date.now();
+  const leftoverDeadline = started + 400;
   while (Date.now() - started < timeoutMs) {
     const form = findOpenAuthorFormDocument(root);
     if (!form) break;
     const portal = formIdentity(form);
     if (!portal.givenName && !portal.familyName && !portal.email) return form;
     if (previous && samePerson(portal, previous)) {
+      if (Date.now() >= leftoverDeadline) return form;
       await delay(SAVE_INTERVAL_MS);
       continue;
     }
@@ -992,7 +994,12 @@ export const editorialManagerAdapter: PlatformAdapter = {
           : options;
       const conflict =
         !openedFreshDialog && authorFormConflict(currentForm, author);
-      const authorPlans = buildAuthorPlans(currentForm, author, writeOptions);
+      const authorPlans = buildAuthorPlans(
+        currentForm,
+        author,
+        writeOptions,
+        conflict,
+      );
       authorPlans.push(
         applyCorresponding(currentForm, author, writeOptions, conflict),
       );
