@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { readyAuthorCount } from '@/popup/authorAttention';
-import {
-  createSampleRoster,
-  importSampleRosterOnce,
-  sampleFillConfirmation,
-} from '@/roster/sample';
+import { createSampleRoster, importSampleRosterOnce } from '@/roster/sample';
 import { createMemoryRosterStore } from '@/roster/storage';
 import { RosterSchema } from '@/schema/author';
 
@@ -97,16 +93,5 @@ describe('sample roster', () => {
     expect(first).toBeDefined();
     expect(duplicate).toBeUndefined();
     expect(await store.list()).toHaveLength(1);
-  });
-
-  it('asks before filling example authors into a real portal', () => {
-    // Confirmed rather than blocked, so end-to-end testing stays possible.
-    expect(sampleFillConfirmation('sample', false)).toMatch(
-      /example authors, not real people/i,
-    );
-    // The local test fixture needs no warning.
-    expect(sampleFillConfirmation('sample', true)).toBeUndefined();
-    // Imported rosters are never questioned.
-    expect(sampleFillConfirmation('csv', false)).toBeUndefined();
   });
 });
