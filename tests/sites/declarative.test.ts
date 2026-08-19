@@ -120,9 +120,8 @@ describe('declarative sites', () => {
     ).toThrow(/element IDs/i);
   });
 
-  it('tells the README that adding a journal is about ten lines', () => {
+  it('shows a small declarative adapter example in the README', () => {
     const readme = readRepo('README.md');
-    expect(readme).toContain('Your journal broken? Add support in ~10 lines.');
     expect(readme).toContain('"id": "example-society"');
     const example = readRepo('sites/_example-society.json').trim().split('\n');
     expect(example.length).toBeLessThanOrEqual(16);

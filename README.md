@@ -14,71 +14,41 @@ No account. No backend. No author data leaves your device.
 
 > If you have ever entered 40, 70, or 100+ coauthors one at a time, this is for you.
 
-MIT license. No account. No trial. No freemium gate.
-
 ## See it work
-
-Demo recordings are incoming. Drop local files in [`docs/media/`](docs/media/) (gitignored) as:
-
-- `docs/media/scholarone-demo.mov`
-- `docs/media/plos-one-demo.mov`
-- `docs/media/medrxiv-demo.mov`
-
-Public GitHub attachment links will replace the placeholders below.
 
 ### Nature Portfolio
 
-<!-- https://github.com/user-attachments/assets/NATURE_DEMO_PLACEHOLDER -->
+https://github.com/user-attachments/assets/NATURE_DEMO_PLACEHOLDER
 
 ### Editorial Manager / PLOS
 
-<!-- https://github.com/user-attachments/assets/PLOS_DEMO_PLACEHOLDER -->
+https://github.com/user-attachments/assets/PLOS_DEMO_PLACEHOLDER
 
 ### ScholarOne / Bioinformatics
 
-<!-- https://github.com/user-attachments/assets/SCHOLARONE_DEMO_PLACEHOLDER -->
+https://github.com/user-attachments/assets/SCHOLARONE_DEMO_PLACEHOLDER
 
 ### bioRxiv / medRxiv
 
-<!-- https://github.com/user-attachments/assets/BIORXIV_DEMO_PLACEHOLDER -->
+https://github.com/user-attachments/assets/BIORXIV_DEMO_PLACEHOLDER
 
 ## Supported platforms
 
-| Platform | Autofill |
+| Platform | Status |
 | --- | --- |
-| Nature Portfolio | ✅ |
-| bioRxiv / medRxiv | ✅ |
-| Editorial Manager | ✅ |
-| ScholarOne | ✅ |
-| Elsevier | ⬜ |
-| Wiley | ⬜ |
-| Frontiers | ⬜ |
-| PLOS | ✅ |
-| eLife | ⬜ |
+| Nature Portfolio | Working |
+| bioRxiv / medRxiv | Working |
+| Editorial Manager | Working |
+| PLOS | Working |
+| ScholarOne / Manuscript Central | Working |
+| Cell Press | In progress |
+| Wiley | In progress |
+| Frontiers | Planned |
+| eLife | Planned |
 
 Support is tested against real author-entry workflows and redacted fixtures. Journal configurations vary, so a supported platform does not guarantee every journal on that platform behaves identically.
 
-**Your journal isn't supported? Open an issue and paste a screenshot.**
-
-[Open an issue — add a journal](https://github.com/kylekimler/Corresponding/issues/new?template=add-journal.yml)
-
-Redact names, emails, and manuscript text. The author-form layout is enough.
-
-A checkmark means a fixture-tested author-form fill. It does not mean every title under that publisher, and it never means the extension submits the paper.
-
-### Every publisher is a release
-
-| Version | Unlock |
-| --- | --- |
-| v0.1 | Nature Portfolio |
-| v0.1 | bioRxiv / medRxiv |
-| v0.2 | Editorial Manager / PLOS author form |
-| v0.2 | ScholarOne / Bioinformatics |
-| v0.7 | Cell Press |
-| v0.8 | Wiley |
-| v0.9 | 100 journals |
-
-See [CHANGELOG.md](CHANGELOG.md). Empty squares move to ✅ only after a redacted fixture and a tested adapter.
+**Found a journal that does not work?** [Open an issue](https://github.com/kylekimler/Corresponding/issues/new?template=add-journal.yml) and include a screenshot of the author form with names, emails, manuscript text, and other identifying information removed.
 
 ## How it works
 
@@ -92,8 +62,6 @@ See [CHANGELOG.md](CHANGELOG.md). Empty squares move to ✅ only after a redacte
 8. Finish the submission yourself.
 
 Corresponding currently accepts CSV rosters and saved local rosters. It can also extract structured author tables from `.docx` manuscripts when given-name and family-name columns are explicit.
-
-Install the extension → import a spreadsheet or ORCIDs → fill the form → submit the paper yourself.
 
 ## What Corresponding fills
 
@@ -173,8 +141,6 @@ A packaged release / Chrome Web Store install will replace this section when ava
 
 Submission systems are messy, but many author forms can be described with a small adapter.
 
-Your journal broken? Add support in ~10 lines.
-
 ```json
 {
   "id": "example-society",
@@ -192,9 +158,9 @@ Your journal broken? Add support in ~10 lines.
 }
 ```
 
-Add the adapter under [`sites/`](sites/). IDs only — no clicks, no guessed selectors.
+Add the adapter under [`sites/`](https://github.com/kylekimler/Corresponding/tree/main/sites).
 
-See [`docs/ADDING_AN_ADAPTER.md`](docs/ADDING_AN_ADAPTER.md) for the fixture and adapter workflow.
+See [`docs/ADDING_AN_ADAPTER.md`](https://github.com/kylekimler/Corresponding/blob/main/docs/ADDING_AN_ADAPTER.md) for the fixture and adapter workflow.
 
 If you do not want to write code, open an issue with a redacted screenshot of the author-entry form. That is enough to start.
 
@@ -217,6 +183,8 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
+Other useful commands:
+
 | Command | Purpose |
 | --- | --- |
 | `npm run test:e2e` | Full Chromium extension flow |
@@ -229,7 +197,7 @@ npm run test:e2e
 | `npm run test:coverage` | Coverage report |
 | `npm run typecheck` | TypeScript checks |
 
-More implementation and testing notes live in [`docs/`](docs/).
+More implementation and testing notes live in [`docs/`](https://github.com/kylekimler/Corresponding/tree/main/docs).
 
 ## Safety boundary
 
@@ -247,6 +215,6 @@ If Corresponding cannot confidently understand an author form, it should fail cl
 
 ## License
 
-[MIT](LICENSE).
+[MIT](https://github.com/kylekimler/Corresponding/blob/main/LICENSE).
 
 Use it. Share it. Fork it. Add your journal.
