@@ -437,8 +437,9 @@ function clickControl(el: HTMLElement): void {
   assertSafeMutationTarget(el);
   // Editorial Manager's toolbox and jQuery UI dialogs listen for a full
   // mouse sequence, not only the synthetic click() used by most forms.
-  const view = el.ownerDocument.defaultView ?? window;
-  const opts = { bubbles: true, cancelable: true, view, button: 0 };
+  // Do not set `view`: the Warning OK lives on the parent page while Fill
+  // runs in the author-form iframe, and that window is the wrong realm.
+  const opts = { bubbles: true, cancelable: true, button: 0 };
   el.dispatchEvent(new MouseEvent('pointerdown', opts));
   el.dispatchEvent(new MouseEvent('mousedown', opts));
   el.dispatchEvent(new MouseEvent('pointerup', opts));
