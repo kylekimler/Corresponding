@@ -70,18 +70,12 @@ describe('Editorial Manager contributor-role requirement', () => {
     expect(report.plans.length).toBeGreaterThan(0);
   });
 
-  it('finds Add Another Author when it is an icon with a title', () => {
-    mountEditorialManagerFixture();
-    // Editorial Manager's toolbar uses icons, so the label is in title/alt.
-    const toolbar = document.createElement('div');
-    toolbar.innerHTML =
-      '<a id="save-and-add"><img title="Save and Add Another Author" alt="" /></a>';
-    document.body.append(toolbar);
-
+  it('prefers list-page Add Another Author over Save and Add Another', () => {
+    mountEditorialManagerFixture({ hideAuthorFrameAfterSave: true });
     const control = findAddAnotherAuthorControl(document);
-
-    // The click must land on the anchor, not the inner image.
-    expect(control?.id).toBe('save-and-add');
+    expect(control?.classList.contains('fl-add-btn')).toBe(true);
+    expect(control?.id).toMatch(/^list-add-/);
+    expect(control?.textContent).toMatch(/add another author/i);
   });
 
   it('names the Authors list page when the form is in another window', () => {
@@ -168,6 +162,50 @@ describe('Editorial Manager contributor-role requirement', () => {
     expect(
       (form.getElementById('authorsCount') as HTMLInputElement).value,
     ).toBe('2');
+  });
+
+  it('clicks parent-list Add Another Author after the form iframe is hidden', async () => {
+    const form = mountEditorialManagerFixture({
+      hideAuthorFrameAfterSave: true,
+    });
+    const frame = document.getElementById('content') as HTMLIFrameElement;
+    const saveAndAdd = form.getElementById('save-and-add');
+    let listAddClicks = 0;
+    let saveAndAddClicks = 0;
+    for (const btn of document.querySelectorAll('#current-author-list button')) {
+      btn.addEventListener('click', () => {
+        listAddClicks += 1;
+      });
+    }
+    saveAndAdd?.addEventListener('click', () => {
+      saveAndAddClicks += 1;
+    });
+
+    const report = await editorialManagerAdapter.fillAsync!(
+      form,
+      makeRoster([
+        author(1, ['methodology']),
+        author(2, ['investigation']),
+        author(3, ['supervision']),
+      ]),
+      { overwrite: true, dryRun: false },
+    );
+
+    console.log('EM list Add Another Author after hidden frame', {
+      errors: report.errors,
+      warnings: report.warnings,
+      listAddClicks,
+      saveAndAddClicks,
+      frameHidden: frame.hidden,
+      authorsCount: (form.getElementById('authorsCount') as HTMLInputElement)
+        .value,
+    });
+    expect(report.errors).toEqual([]);
+    expect(saveAndAddClicks).toBe(0);
+    expect(listAddClicks).toBeGreaterThanOrEqual(2);
+    expect(
+      (form.getElementById('authorsCount') as HTMLInputElement).value,
+    ).toBe('3');
   });
 
   it('opens the Edit Contributor Roles pencil, ticks, then collapses with the roles floppy', async () => {

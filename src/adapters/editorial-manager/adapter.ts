@@ -27,6 +27,7 @@ import {
   findValidationIssuesOk,
   findWrongFormatOk,
   hideInstitutionTypeahead,
+  isAuthorFormOpen,
   findRolesCollapseSave,
   findSelectRolesControl,
   isAuthorsListPage,
@@ -47,6 +48,8 @@ const SAVE_ATTEMPTS = 3;
 const SAVE_ATTEMPT_MS = 1_500;
 const DIALOG_OK_ATTEMPTS = 3;
 const DIALOG_OK_GAP_MS = 80;
+const ADD_ATTEMPTS = 3;
+const ADD_ATTEMPT_MS = 1_500;
 const REOPEN_WAIT_MS = 6_000;
 
 function delay(ms: number): Promise<void> {
@@ -513,12 +516,19 @@ async function saveAuthorAndProceed(
 
 async function openAuthorFormFromList(
   root: Document,
+  afterSave = false,
 ): Promise<Document | null> {
-  if (authorFormVisible(root)) return findAuthorFormDocument(root);
   await dismissSaveDialogsWithRetries(root);
-  const add = findAddAnotherAuthorControl(root);
-  if (!add) return null;
-  clickControl(add);
+  if (!afterSave && authorFormVisible(root)) return findAuthorFormDocument(root);
+  for (let attempt = 1; attempt <= ADD_ATTEMPTS; attempt += 1) {
+    const add = findAddAnotherAuthorControl(root);
+    if (!add) {
+      return authorFormVisible(root) ? findAuthorFormDocument(root) : null;
+    }
+    clickControl(add);
+    const opened = await waitForAuthorForm(root, ADD_ATTEMPT_MS);
+    if (opened) return opened;
+  }
   return waitForAuthorForm(root);
 }
 
@@ -583,9 +593,7 @@ function givenNameValue(root: Document): string {
 }
 
 function authorFormVisible(root: Document): boolean {
-  const form = findAuthorFormDocument(root);
-  const first = form?.getElementById(AUTHOR_FIELD_IDS.firstName);
-  return Boolean(first && isVisible(first));
+  return isAuthorFormOpen(root);
 }
 
 /**
@@ -612,9 +620,12 @@ async function waitAfterAuthorSave(
   return 'timeout';
 }
 
-async function waitForAuthorForm(root: Document): Promise<Document | null> {
+async function waitForAuthorForm(
+  root: Document,
+  timeoutMs = REOPEN_WAIT_MS,
+): Promise<Document | null> {
   const started = Date.now();
-  while (Date.now() - started < REOPEN_WAIT_MS) {
+  while (Date.now() - started < timeoutMs) {
     const form = findAuthorFormDocument(root);
     if (form && authorFormVisible(root)) return form;
     await delay(SAVE_INTERVAL_MS);
@@ -965,7 +976,7 @@ export const editorialManagerAdapter: PlatformAdapter = {
       }
 
       if (index < authors.length - 1) {
-        const reopened = await openAuthorFormFromList(doc);
+        const reopened = await openAuthorFormFromList(doc, true);
         if (!reopened) {
           const add = findAddAnotherAuthorControl(doc);
           warnings.push(

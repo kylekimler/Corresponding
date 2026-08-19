@@ -51,6 +51,12 @@ export interface EditorialManagerFixtureOptions {
    * the author list. OK dismisses it; Add Author is blocked until then.
    */
   warnWrongFormatAfterSave?: boolean;
+  /**
+   * Live PLOS: after Save the Add New Author iframe is hidden on the parent
+   * list, but FirstName remains in that frame. Add Another Author lives on
+   * the list (`button.fl-add-btn`), not in the closed frame.
+   */
+  hideAuthorFrameAfterSave?: boolean;
 }
 
 const COUNTRIES = ['', 'United States', 'Germany', 'United Kingdom', 'Canada'];
@@ -176,6 +182,9 @@ function authorFormHtml(options: EditorialManagerFixtureOptions): string {
           data-toolname="AuthorSave"
           role="button"
         ></button>
+        <a id="save-and-add" href="#">
+          <img title="Save and Add Another Author" alt="Save and Add Another Author" />
+        </a>
       </div>
     </div>
     <div id="validation-issues" class="ui-dialog" hidden>
@@ -444,7 +453,13 @@ function wireAuthorForm(
     ) as HTMLInputElement | null;
     if (corr && 'checked' in corr) corr.checked = false;
     const dialog = doc.getElementById('author-dialog');
-    if (dialog) dialog.hidden = true;
+    const frame = doc.defaultView?.frameElement as HTMLElement | null;
+    if (options.hideAuthorFrameAfterSave && frame) {
+      frame.hidden = true;
+      frame.style.display = 'none';
+    } else if (dialog) {
+      dialog.hidden = true;
+    }
     if (options.warnWrongFormatAfterSave && wrongFormat) {
       wrongFormatDismissed = false;
       wrongFormat.hidden = false;
@@ -469,6 +484,11 @@ function wireAuthorForm(
       !wrongFormat.hidden
     ) {
       return;
+    }
+    const frame = doc.defaultView?.frameElement as HTMLElement | null;
+    if (frame) {
+      frame.hidden = false;
+      frame.style.display = '';
     }
     const dialog = doc.getElementById('author-dialog');
     if (dialog) dialog.hidden = false;
@@ -511,6 +531,25 @@ export function mountEditorialManagerFixture(
     ]) {
       const node = child.getElementById(id);
       if (node) document.body.append(node);
+    }
+  }
+  if (options.hideAuthorFrameAfterSave) {
+    const list = document.createElement('div');
+    list.id = 'current-author-list';
+    list.innerHTML = `
+      <button type="button" class="fl-add-btn" id="list-add-top">+ Add Another Author</button>
+      <button type="button" class="fl-add-btn" id="list-add-bottom">+ Add Another Author</button>
+    `;
+    document.body.append(list);
+    const reopen = (event: Event) => {
+      event.preventDefault();
+      iframe.hidden = false;
+      iframe.style.display = '';
+      const dialog = child.getElementById('author-dialog');
+      if (dialog) dialog.hidden = false;
+    };
+    for (const btn of list.querySelectorAll('button')) {
+      btn.addEventListener('click', reopen);
     }
   }
   return child;
