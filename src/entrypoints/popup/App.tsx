@@ -686,7 +686,9 @@ export function App({ surface = 'popup' }: { surface?: 'popup' | 'page' } = {}) 
         setActionStatus(
           v.result.ok
             ? 'Fill complete. Validation finished; you review and submit.'
-            : 'Fill complete. Validation found issues that need review.',
+            : v.result.platformId === 'editorial-manager'
+              ? 'Fill complete. The journal marked some authors for review — you can fix those fields before submit.'
+              : 'Fill complete. Validation found issues that need review.',
         );
         if (detectStatus !== 'ready') void runDetect();
       }
@@ -1012,8 +1014,16 @@ export function App({ surface = 'popup' }: { surface?: 'popup' | 'page' } = {}) 
                   <li>{validation.summary.conflicts} conflicts</li>
                 </ul>
                 {!validation.ok && (
-                  <p className="danger tight">
-                    Validation found issues. Review the highlighted counts and form.
+                  <p
+                    className={
+                      validation.platformId === 'editorial-manager'
+                        ? 'tight'
+                        : 'danger tight'
+                    }
+                  >
+                    {validation.platformId === 'editorial-manager'
+                      ? 'The journal marked some authors for review. Corresponding filled the roster; you can fix highlighted fields before submit.'
+                      : 'Validation found issues. Review the highlighted counts and form.'}
                   </p>
                 )}
                 <p className="ok tight">Manuscript was not submitted.</p>

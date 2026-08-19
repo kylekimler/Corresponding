@@ -4,6 +4,21 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-19 02:40 UTC
+- PLOS ONE filled through Émilie, then Corresponding showed “Validation
+  found issues. Review the highlighted counts and form.” and stopped before
+  Rosalind and Grace. Chien-Shiung had a red bang (“Required information is
+  missing”). That is a journal-list warning, not a roster stop.
+- Fill no longer aborts the remaining authors after Validation found
+  issues, required-missing, or a save timeout that leaves Add New Author
+  open. The leftover form is overwritten and the next roster row is saved.
+  After fill, Current Author List without an open dialog is not
+  `author_form_missing`. The popup no longer treats that as a blocking
+  Editorial Manager error.
+- verification: Validation OK commits the author but leaves the form
+  populated; Fill with overwrite:false writes Given1/2/3 and authorsCount
+  is 3. Validate on a list page with no FirstName is ok.
+
 ### 2026-08-19 02:00 UTC
 - PLOS ONE filled Ada, saved her, opened Add New Author again, then wrote
   Ada a second time and stuck. The popup Overwrite toggle is off. After

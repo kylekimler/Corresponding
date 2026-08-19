@@ -53,6 +53,14 @@ export const VALIDATION_ISSUES_RE =
   /validation found issues\.?\s*review the highlighted counts and form/i;
 
 /**
+ * Current Author List / save banner when a row is missing a required field.
+ * PLOS still keeps the saved author (red bang). OK, if present, is a
+ * click-through — not a reason to stop the roster.
+ */
+export const REQUIRED_MISSING_RE =
+  /required information is missing|you may proceed for now/i;
+
+/**
  * After a successful Save This Author, PLOS ONE (2026-08-19) can show
  * “Cannot Save Author” / “Some of the information entered is in the wrong
  * format. Please correct the indicated fields before saving.” over the

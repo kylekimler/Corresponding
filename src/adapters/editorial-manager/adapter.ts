@@ -26,6 +26,7 @@ import {
   findAuthorSaveControl,
   findInstitutionWarningOk,
   findValidationIssuesOk,
+  findRequiredMissingOk,
   findWrongFormatOk,
   hideInstitutionTypeahead,
   isAuthorFormOpen,
@@ -36,6 +37,7 @@ import {
 import {
   ADD_ANOTHER_AUTHOR_CLASS,
   AUTHOR_FIELD_IDS,
+  AUTHORS_COUNT_ID,
   CONTRIBUTOR_ROLE_PREFIX,
   MANUSCRIPT_FIELD_IDS,
   ROLES_WARNING_RE,
@@ -480,7 +482,9 @@ async function saveAuthorAndProceed(
   root: Document,
   form: Document,
   givenBefore: string,
-): Promise<'closed' | 'cleared' | 'warning' | 'timeout' | 'missing'> {
+): Promise<
+  'closed' | 'cleared' | 'warning' | 'issues' | 'timeout' | 'missing'
+> {
   hideInstitutionTypeahead(root);
   const park =
     getInput(form, AUTHOR_FIELD_IDS.department) ??
@@ -564,18 +568,28 @@ function dismissWrongFormat(root: Document): boolean {
   return true;
 }
 
+function dismissRequiredMissing(root: Document): boolean {
+  hideInstitutionTypeahead(root);
+  const ok = findRequiredMissingOk(root);
+  if (!ok) return false;
+  clickControl(ok);
+  return true;
+}
+
 /** Click through the save-state dialogs; never Cancel. */
 function dismissSaveDialogs(root: Document): boolean {
   const validation = dismissValidationIssues(root);
+  const required = dismissRequiredMissing(root);
   const institution = dismissInstitutionWarning(root);
   const format = dismissWrongFormat(root);
-  return validation || institution || format;
+  return validation || required || institution || format;
 }
 
 function saveDialogVisible(root: Document): boolean {
   return Boolean(
     findInstitutionWarningOk(root) ||
       findValidationIssuesOk(root) ||
+      findRequiredMissingOk(root) ||
       findWrongFormatOk(root),
   );
 }
@@ -600,6 +614,21 @@ function givenNameValue(root: Document): string {
   return form ? readValue(form, AUTHOR_FIELD_IDS.firstName) : '';
 }
 
+function countCommittedAuthors(root: Document): number {
+  const docs = collectReadableDocuments(root).documents.map((frame) => frame.doc);
+  if (!docs.includes(root)) docs.unshift(root);
+  for (const doc of docs) {
+    const el = doc.getElementById(AUTHORS_COUNT_ID) as
+      | HTMLInputElement
+      | HTMLTextAreaElement
+      | null;
+    if (!el || !('value' in el)) continue;
+    const n = Number.parseInt(el.value || '0', 10);
+    if (Number.isFinite(n) && n > 0) return n;
+  }
+  return 0;
+}
+
 function authorFormVisible(root: Document): boolean {
   return isAuthorFormOpen(root);
 }
@@ -613,16 +642,19 @@ async function waitAfterAuthorSave(
   form: Document,
   givenNameBefore: string,
   timeoutMs = SAVE_WATCH_MS,
-): Promise<'closed' | 'cleared' | 'warning' | 'timeout'> {
+): Promise<'closed' | 'cleared' | 'warning' | 'issues' | 'timeout'> {
   const started = Date.now();
-  await dismissSaveDialogsWithRetries(root);
+  const dismissed = await dismissSaveDialogsWithRetries(root);
   while (Date.now() - started < timeoutMs) {
     if (rolesWarningText(root) || rolesWarningText(form)) return 'warning';
-    dismissSaveDialogs(root);
+    const dismissedAgain = dismissSaveDialogs(root);
     if (!authorFormVisible(root)) return 'closed';
     const given = givenNameValue(root);
     if (givenNameBefore && given !== givenNameBefore) return 'cleared';
     if (!given) return 'cleared';
+    // PLOS can keep Add New Author open after OK on “Validation found
+    // issues” / required-missing. The row is on the list; do not Save again.
+    if (dismissed || dismissedAgain) return 'issues';
     await delay(SAVE_INTERVAL_MS);
   }
   return 'timeout';
@@ -1043,22 +1075,31 @@ export const editorialManagerAdapter: PlatformAdapter = {
         }
         break;
       }
-      if (afterSave === 'warning') {
+      if (afterSave === 'warning' || afterSave === 'issues') {
         const warning = rolesWarningText(doc) || rolesWarningText(currentForm);
-        errors.push(
-          `Editorial Manager refused author ${author.sequence}: ${warning}`,
+        warnings.push(
+          afterSave === 'warning'
+            ? `Editorial Manager warned on author ${author.sequence}: ${warning || 'required information is missing'}. Continuing the roster so you can fix highlighted fields.`
+            : `Author ${author.sequence} saved with journal validation marks. Continuing the roster; you can fix highlighted fields on the list.`,
         );
-        break;
       }
       if (afterSave === 'timeout') {
         const save = findAuthorSaveControl(doc);
         warnings.push(
-          `Save This Author was clicked for author ${author.sequence} but the form is still open. Clicked ${save ? describeSaveControl(save) : 'Save This Author'}. If Editorial Manager is showing “Validation found issues” or “Proceed with this Institution anyway?”, click OK to finish the save.`,
+          `Save This Author was clicked for author ${author.sequence} but the form is still open. Clicked ${save ? describeSaveControl(save) : 'Save This Author'}. Continuing the roster; you can fix “Validation found issues” / required-field marks on the list.`,
         );
-        break;
       }
 
       if (index < authors.length - 1) {
+        await dismissSaveDialogsWithRetries(doc);
+        if (authorFormVisible(doc)) {
+          // PLOS can keep Add New Author open after a save that still has
+          // highlighted issues. The current person is often already on the
+          // list (red bang). Overwrite the leftover and fill the next row.
+          form = findOpenAuthorFormDocument(doc) ?? currentForm;
+          openedFreshDialog = true;
+          continue;
+        }
         const reopened = await openAuthorFormFromList(doc, true, author);
         if (!reopened) {
           const add = findAddAnotherAuthorControl(doc);
@@ -1105,7 +1146,12 @@ export const editorialManagerAdapter: PlatformAdapter = {
     const form = findAuthorFormDocument(doc);
     const authors = sortAuthors(roster.authors);
     const issues: ValidateReport['issues'] = [];
-    if (!form) {
+    const onAuthorsList =
+      isAuthorsListPage(doc) || Boolean(findAddAnotherAuthorControl(doc));
+    // After a multi-author fill the Add New Author dialog is closed. That is
+    // success — PLOS list banners / red bangs are for the scientist, not a
+    // Corresponding hard stop.
+    if (!form && !onAuthorsList) {
       issues.push({
         code: 'author_form_missing',
         severity: 'error',
@@ -1120,12 +1166,14 @@ export const editorialManagerAdapter: PlatformAdapter = {
         message: `${missingEmail} roster author(s) have no email.`,
       });
     }
+    const committed = countCommittedAuthors(doc);
+    const filledLike = committed > 0 ? committed : form ? 1 : 0;
     return {
       platformId: 'editorial-manager',
       ok: issues.every((issue) => issue.severity !== 'error'),
       issues,
       summary: {
-        filledLike: form ? 1 : 0,
+        filledLike,
         missingEmail,
         conflicts: 0,
         mismatchedCount: 0,

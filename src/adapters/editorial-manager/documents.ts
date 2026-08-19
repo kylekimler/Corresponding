@@ -15,6 +15,7 @@ import {
   INSTITUTION_UNVERIFIED_RE,
   INSTITUTION_WARNING_RE,
   VALIDATION_ISSUES_RE,
+  REQUIRED_MISSING_RE,
   WRONG_FORMAT_RE,
   SAVE_THIS_AUTHOR_RE,
   SELECT_ROLES_RE,
@@ -363,6 +364,14 @@ export function findInstitutionWarningOk(root: Document): HTMLElement | null {
  */
 export function findValidationIssuesOk(root: Document): HTMLElement | null {
   return findClickThroughOk(root, VALIDATION_ISSUES_RE);
+}
+
+/**
+ * OK on “Required information is missing” / “You may proceed for now”.
+ * The author is already on the list; the scientist fixes the row later.
+ */
+export function findRequiredMissingOk(root: Document): HTMLElement | null {
+  return findClickThroughOk(root, REQUIRED_MISSING_RE);
 }
 
 /**
