@@ -152,6 +152,39 @@ export function findAuthorSaveControl(root: Document): HTMLElement | null {
   return null;
 }
 
+function controlLabel(el: Element): string {
+  const span = el.querySelector('.ui-button-text');
+  return (
+    span?.textContent ??
+    el.textContent ??
+    el.getAttribute('value') ??
+    ''
+  )
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Live PLOS Warning OK, captured 2026-08-18:
+ * `<button type="button" class="ui-button ui-widget ui-state-default
+ *   ui-corner-all ui-button-text-only" role="button">
+ *   <span class="ui-button-text">OK</span></button>`
+ * Prefer the button, not the inner span — jQuery UI listens on the button.
+ */
+function findJqueryUiOk(scope: ParentNode): HTMLElement | null {
+  const candidates = scope.querySelectorAll<HTMLElement>(
+    'button.ui-button-text-only, button.ui-button, .ui-dialog-buttonset button, button[role="button"], .ui-button, span.ui-button-text',
+  );
+  for (const el of candidates) {
+    if (!isShown(el)) continue;
+    if (!/^ok$/i.test(controlLabel(el))) continue;
+    const button = (el.closest('button.ui-button, button, [role="button"]') ??
+      el) as HTMLElement;
+    if (isShown(button) && /^ok$/i.test(controlLabel(button))) return button;
+  }
+  return null;
+}
+
 function findDialogButton(
   root: Document,
   dialogText: RegExp,
@@ -159,26 +192,23 @@ function findDialogButton(
 ): HTMLElement | null {
   for (const doc of documentsWithAncestors(root)) {
     const dialogs = doc.querySelectorAll(
-      '[role="alertdialog"], .ui-dialog.ui-dialog-buttons, [role="dialog"], .ui-dialog, .modal',
+      '[role="alertdialog"], .ui-dialog.ui-dialog-buttons, [role="dialog"], .ui-dialog, .ui-dialog-buttonpane, .ui-dialog-buttonset, .modal',
     );
     for (const dialog of dialogs) {
       if (!isShown(dialog)) continue;
-      const text = (dialog.textContent ?? '').replace(/\s+/g, ' ');
+      const scope =
+        dialog.closest(
+          '[role="alertdialog"], .ui-dialog, [role="dialog"], .modal',
+        ) ?? dialog;
+      const text = (scope.textContent ?? '').replace(/\s+/g, ' ');
       if (!dialogText.test(text)) continue;
+      const ok = findJqueryUiOk(scope);
+      if (ok && buttonText.test(controlLabel(ok))) return ok;
       const labeled = Array.from(
         dialog.querySelectorAll<HTMLElement>(
           'button, [role="button"], .ui-button, .ui-button-text, a, input[type="button"]',
         ),
-      ).find((el) => {
-        const label = (
-          el.textContent ??
-          el.getAttribute('value') ??
-          ''
-        )
-          .replace(/\s+/g, ' ')
-          .trim();
-        return buttonText.test(label);
-      });
+      ).find((el) => buttonText.test(controlLabel(el)));
       if (!labeled) continue;
       return (
         labeled.closest('button') ??
@@ -195,7 +225,34 @@ function findDialogButton(
  * Cancel is never returned.
  */
 export function findInstitutionWarningOk(root: Document): HTMLElement | null {
-  return findDialogButton(root, INSTITUTION_WARNING_RE, /^ok$/i);
+  const fromDialog = findDialogButton(root, INSTITUTION_WARNING_RE, /^ok$/i);
+  if (fromDialog) return fromDialog;
+  for (const doc of documentsWithAncestors(root)) {
+    let warningVisible = false;
+    for (const node of doc.querySelectorAll(
+      'div, p, span, [role="alertdialog"], [role="dialog"]',
+    )) {
+      if (!isShown(node)) continue;
+      const text = (node.textContent ?? '').replace(/\s+/g, ' ');
+      if (text.length > 400 || !INSTITUTION_WARNING_RE.test(text)) continue;
+      warningVisible = true;
+      const scope =
+        node.closest(
+          '[role="alertdialog"], .ui-dialog, [role="dialog"], .modal',
+        ) ??
+        node.parentElement ??
+        node;
+      const ok = findJqueryUiOk(scope);
+      if (ok) return ok;
+    }
+    if (!warningVisible) continue;
+    for (const set of doc.querySelectorAll('.ui-dialog-buttonset')) {
+      if (!isShown(set)) continue;
+      const ok = findJqueryUiOk(set);
+      if (ok) return ok;
+    }
+  }
+  return null;
 }
 
 /**
@@ -241,7 +298,7 @@ function normalizeInstitution(value: string): string {
  * Save This Author click. Observed 2026-08-18 on PLOS Add New Author.
  */
 export function hideInstitutionTypeahead(root: Document): void {
-  for (const doc of documentsIn(root)) {
+  for (const doc of documentsWithAncestors(root)) {
     for (const el of doc.querySelectorAll<HTMLElement>(
       '.ui-autocomplete, #institution-suggestions',
     )) {

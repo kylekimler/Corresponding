@@ -430,6 +430,52 @@ describe('Editorial Manager contributor-role requirement', () => {
     ).toBe('2');
   });
 
+  it('retries the live ui-button-text-only Warning OK three times', async () => {
+    const form = mountEditorialManagerFixture({
+      warnUnidentifiedInstitution: true,
+      dialogsOnParent: true,
+    });
+    const ok = document.getElementById(
+      'institution-warning-ok',
+    ) as HTMLButtonElement;
+    expect(ok.className).toContain('ui-button-text-only');
+    expect(ok.querySelector('.ui-button-text')?.textContent).toBe('OK');
+
+    let okClicks = 0;
+    let cancelClicks = 0;
+    ok.addEventListener('click', () => {
+      okClicks += 1;
+    });
+    document
+      .getElementById('institution-warning-cancel')
+      ?.addEventListener('click', () => {
+        cancelClicks += 1;
+      });
+
+    const report = await editorialManagerAdapter.fillAsync!(
+      form,
+      makeRoster([author(1, ['methodology']), author(2, ['supervision'])]),
+      { overwrite: true, dryRun: false },
+    );
+
+    console.log('EM Warning OK retries', {
+      errors: report.errors,
+      warnings: report.warnings,
+      okClicks,
+      cancelClicks,
+      okClass: ok.className,
+      okRole: ok.getAttribute('role'),
+      authorsCount: (form.getElementById('authorsCount') as HTMLInputElement)
+        .value,
+    });
+    expect(report.errors).toEqual([]);
+    expect(okClicks).toBeGreaterThanOrEqual(3);
+    expect(cancelClicks).toBe(0);
+    expect(
+      (form.getElementById('authorsCount') as HTMLInputElement).value,
+    ).toBe('2');
+  });
+
   it('confirms the unidentified-institution warning with OK, never Cancel', async () => {
     const form = mountEditorialManagerFixture({
       warnUnidentifiedInstitution: true,

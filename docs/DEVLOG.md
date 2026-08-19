@@ -4,6 +4,20 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-19 00:10 UTC
+- PLOS Warning “Proceed with this Institution anyway?” still sat open after
+  Save. Live OK is
+  `button.ui-button.ui-button-text-only[role=button] > span.ui-button-text`
+  (“OK”). The first click often only focuses the jQuery UI widget, same as
+  the toolbox floppy.
+- Fill now finds that button (including `.ui-dialog-buttonset` on parent /
+  top / opener), hides any leftover Institution typeahead there, and clicks
+  OK up to three times with a short gap. Save is not clicked again while the
+  warning is visible. Cancel is never clicked.
+- verification: fixture uses the live button classes and ignores the first
+  two OK clicks; a two-author roster reaches authorsCount 2 after ≥3 OK
+  clicks and 0 Cancel clicks.
+
 ### 2026-08-18 22:15 UTC
 - PLOS Add New Author now reaches Save This Author and shows “The Institution
   could not be identified… Proceed with this Institution anyway?” but did not

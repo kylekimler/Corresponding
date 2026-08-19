@@ -177,7 +177,12 @@ function authorFormHtml(options: EditorialManagerFixtureOptions): string {
       <div class="ui-dialog-titlebar">Warning</div>
       Validation found issues. Review the highlighted counts and form.
       <div class="ui-dialog-buttonset">
-        <button type="button" class="ui-button" id="validation-issues-ok">
+        <button
+          type="button"
+          class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only"
+          role="button"
+          id="validation-issues-ok"
+        >
           <span class="ui-button-text">OK</span>
         </button>
       </div>
@@ -192,10 +197,20 @@ function authorFormHtml(options: EditorialManagerFixtureOptions): string {
       The Institution could not be identified by the system. Proceed with this
       Institution anyway?
       <div class="ui-dialog-buttonset">
-        <button type="button" class="ui-button" id="institution-warning-ok">
+        <button
+          type="button"
+          class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only"
+          role="button"
+          id="institution-warning-ok"
+        >
           <span class="ui-button-text">OK</span>
         </button>
-        <button type="button" class="ui-button" id="institution-warning-cancel">
+        <button
+          type="button"
+          class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only"
+          role="button"
+          id="institution-warning-cancel"
+        >
           <span class="ui-button-text">Cancel</span>
         </button>
       </div>
@@ -319,6 +334,7 @@ function wireAuthorForm(
 
   let institutionProceeded = false;
   let validationProceeded = false;
+  let institutionOkClicks = 0;
   const institutionWarning = doc.getElementById('institution-warning');
   const validationIssues = doc.getElementById('validation-issues');
   doc.getElementById('validation-issues-ok')?.addEventListener('click', (event) => {
@@ -327,8 +343,13 @@ function wireAuthorForm(
     if (validationIssues) validationIssues.hidden = true;
     commitAuthor(event);
   });
+  // Live jQuery UI often ignores the first Warning OK click (focus only),
+  // same as the toolbox floppy. Proceed on the third click.
   doc.getElementById('institution-warning-ok')?.addEventListener('click', (event) => {
     event.preventDefault();
+    if (institutionProceeded) return;
+    institutionOkClicks += 1;
+    if (institutionOkClicks < 3) return;
     institutionProceeded = true;
     if (institutionWarning) institutionWarning.hidden = true;
     commitAuthor(event);
