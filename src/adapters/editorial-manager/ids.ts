@@ -73,6 +73,8 @@ export const INSTITUTION_UNVERIFIED_RE =
  */
 export const ADD_ANOTHER_AUTHOR_CLASS = 'fl-add-btn';
 export const ADD_AUTHOR_RE = /add\s+(?:another\s+|new\s+)?authors?\b/i;
+/** In-form toolbar icon — not the Current Author List control. */
+export const SAVE_AND_ADD_AUTHOR_RE = /save\s+and\s+add/i;
 
 /** Manuscript / legal fields captured on the same page — never write these. */
 export const MANUSCRIPT_FIELD_IDS = [

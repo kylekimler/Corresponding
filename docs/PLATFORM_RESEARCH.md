@@ -169,7 +169,12 @@ save, PLOS ONE can also show “Cannot Save Author” / “Some of the
 information entered is in the wrong format. Please correct the indicated
 fields before saving.” over Current Author List — single OK, same
 `ui-button-text-only` widget. Corresponding clicks that OK (up to three
-times) and continues Add Author; the saved row stays.
+times) and continues Add Author; the saved row stays. After the form
+closes, Current Author List has two “+ Add Another Author”
+(`button.fl-add-btn`) controls — header and footer. The closed Add New
+Author iframe still contains FirstName, so Fill must not treat that ghost
+form as open. The next author is a list-page `.fl-add-btn` click, not the
+in-form Save and Add Another toolbar icon.
 
 The “Institution not connected to Ringgold” / **OKAY** dialog is ScholarOne,
 not Editorial Manager.

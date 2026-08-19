@@ -4,6 +4,22 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-19 01:40 UTC
+- PLOS ONE saved the first author and returned to Current Author List, then
+  never opened Add New Author for the rest of the sample team. The first
+  Add Author works because the form iframe is shown. After Save, that iframe
+  is hidden on the parent; FirstName inside the frame still looks visible, so
+  Fill treated the ghost form as open and skipped Add Author. It could also
+  pick the in-form “Save and Add Another Author” icon.
+- The form is open only when its iframe (and dialog) are shown. After each
+  successful save, Fill clicks the list-page `button.fl-add-btn` (“+ Add
+  Another Author”) up to three times — never Save and Add Another — and
+  waits for the form to reappear.
+- verification: fixture hides the author iframe on save, keeps FirstName
+  inside it, and puts two list-page Add buttons on the parent; a three-author
+  roster clicks those buttons (≥2) and reaches authorsCount 3; Save and Add
+  Another is not clicked.
+
 ### 2026-08-19 01:30 UTC
 - PLOS ONE now saves the first Add New Author row, then shows
   “Cannot Save Author” / “Some of the information entered is in the wrong

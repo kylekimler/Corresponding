@@ -3,6 +3,7 @@ import {
   ADD_ANOTHER_AUTHOR_CLASS,
   ADD_ANOTHER_AUTHOR_RE,
   ADD_AUTHOR_RE,
+  SAVE_AND_ADD_AUTHOR_RE,
   AUTHOR_SAVE_CLASS,
   AUTHOR_SAVE_ID,
   AUTHOR_SAVE_TOOL,
@@ -68,35 +69,94 @@ function documentsForAddAuthor(root: Document): Document[] {
   return documentsWithAncestors(root);
 }
 
+function isDocumentFrameHidden(doc: Document): boolean {
+  const frame = doc.defaultView?.frameElement as HTMLElement | null;
+  if (!frame) return false;
+  return !isShown(frame);
+}
+
+/**
+ * Add New Author fields live in an iframe. Closing the dialog hides that
+ * iframe on the parent page; FirstName inside the frame still looks shown.
+ */
+export function isAuthorFormOpen(root: Document): boolean {
+  const form = findAuthorFormDocument(root);
+  if (!form) return false;
+  const first = form.getElementById(AUTHOR_FIELD_IDS.firstName);
+  if (!first || !isShown(first)) return false;
+  if (isDocumentFrameHidden(form)) return false;
+  const dialog = first.closest(
+    '#author-dialog, .ui-dialog, [role="dialog"], [role="alertdialog"]',
+  );
+  if (dialog && !isShown(dialog)) return false;
+  return true;
+}
+
+function addAuthorCandidates(doc: Document): HTMLElement[] {
+  const found: HTMLElement[] = [];
+  const seen = new Set<HTMLElement>();
+  const remember = (el: HTMLElement | null) => {
+    if (!el || seen.has(el)) return;
+    seen.add(el);
+    found.push(el);
+  };
+  for (const el of doc.querySelectorAll<HTMLElement>(
+    `button.${ADD_ANOTHER_AUTHOR_CLASS}, .${ADD_ANOTHER_AUTHOR_CLASS}`,
+  )) {
+    remember(el);
+  }
+  for (const el of doc.querySelectorAll(
+    'button, a, input[type="button"], input[type="image"], [role="button"], img[title], img[alt], [title]',
+  )) {
+    const blob = controlBlob(el);
+    if (!ADD_AUTHOR_RE.test(blob) && !ADD_ANOTHER_AUTHOR_RE.test(blob)) {
+      continue;
+    }
+    remember(
+      (el.closest('button, a, input, [role="button"]') ?? el) as HTMLElement,
+    );
+  }
+  return found;
+}
+
+function addAuthorScore(el: HTMLElement, doc: Document): number {
+  const blob = controlBlob(el);
+  if (SAVE_AND_ADD_AUTHOR_RE.test(blob)) return -1;
+  if (!isShown(el)) return -1;
+  const isFormDoc = Boolean(doc.getElementById(AUTHOR_FIELD_IDS.firstName));
+  let score = 0;
+  if (
+    el.classList.contains(ADD_ANOTHER_AUTHOR_CLASS) ||
+    el.closest(`.${ADD_ANOTHER_AUTHOR_CLASS}`)
+  ) {
+    score += 4;
+  }
+  if (!isFormDoc) score += 3;
+  if (!isDocumentFrameHidden(doc)) score += 2;
+  if (ADD_AUTHOR_RE.test(blob) || ADD_ANOTHER_AUTHOR_RE.test(blob)) score += 1;
+  return score;
+}
+
+/**
+ * Current Author List “+ Add Another Author” (`button.fl-add-btn`).
+ * After the first save the form iframe is hidden and a Save and Add Another
+ * toolbar icon may still exist inside it — that is not this control.
+ */
 export function findAddAnotherAuthorControl(
   root: Document,
 ): HTMLElement | null {
+  let best: HTMLElement | null = null;
+  let bestScore = -1;
   for (const doc of documentsForAddAuthor(root)) {
-    const byClass = Array.from(
-      doc.querySelectorAll<HTMLElement>(
-        `button.${ADD_ANOTHER_AUTHOR_CLASS}, .${ADD_ANOTHER_AUTHOR_CLASS}`,
-      ),
-    ).find((el) => {
-      if (!isShown(el)) return false;
-      const blob = controlBlob(el);
-      return !blob.trim() || ADD_AUTHOR_RE.test(blob);
-    });
-    if (byClass) return byClass;
-    const nodes = doc.querySelectorAll(
-      'button, a, input[type="button"], input[type="image"], [role="button"], img[title], img[alt], [title]',
-    );
-    for (const el of nodes) {
-      if (!isShown(el)) continue;
-      const blob = controlBlob(el);
-      if (!ADD_AUTHOR_RE.test(blob) && !ADD_ANOTHER_AUTHOR_RE.test(blob)) {
-        continue;
+    for (const el of addAuthorCandidates(doc)) {
+      const score = addAuthorScore(el, doc);
+      if (score > bestScore) {
+        best = el;
+        bestScore = score;
       }
-      const clickable =
-        el.closest('button, a, input, [role="button"]') ?? el;
-      return clickable as HTMLElement;
     }
   }
-  return null;
+  return bestScore >= 0 ? best : null;
 }
 
 function isShown(el: Element): boolean {
