@@ -164,7 +164,10 @@ appends the alertdialog to the top window body. Corresponding looks at
 parent/top/opener for OK, then Add Author for the next roster row. Cancel
 and the titlebar Close are never clicked. Typing can clear City/Department,
 so those are written again before Save. “Validation found issues. Review
-the highlighted counts and form.” is the same OK path. After a successful
+the highlighted counts and form.” is the same OK path. A saved row can
+still show a red bang (“Required information is missing”); Corresponding
+clicks OK if a dialog is present, keeps filling the rest of the roster,
+and leaves those marks for the scientist. After a successful
 save, PLOS ONE can also show “Cannot Save Author” / “Some of the
 information entered is in the wrong format. Please correct the indicated
 fields before saving.” over Current Author List — single OK, same

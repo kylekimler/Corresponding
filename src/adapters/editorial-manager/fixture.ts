@@ -68,6 +68,12 @@ export interface EditorialManagerFixtureOptions {
    * toggle is off, so Fill must still replace that leftover.
    */
   reopenWithPreviousAuthor?: boolean;
+  /**
+   * Validation OK commits the author to the list but leaves Add New Author
+   * open with that person still in the fields (live PLOS red-bang row).
+   * Fill must overwrite the leftover and continue the roster.
+   */
+  leaveFormOpenAfterValidationOk?: boolean;
 }
 
 const COUNTRIES = ['', 'United States', 'Germany', 'United Kingdom', 'Canada'];
@@ -398,6 +404,25 @@ function wireAuthorForm(
     event.preventDefault();
     validationProceeded = true;
     if (validationIssues) validationIssues.hidden = true;
+    if (options.leaveFormOpenAfterValidationOk) {
+      const count = doc.getElementById('authorsCount') as HTMLInputElement | null;
+      if (count) {
+        count.value = String(Number.parseInt(count.value || '0', 10) + 1);
+      }
+      lastCommitted = {
+        firstName:
+          (doc.getElementById('FirstName') as HTMLInputElement | null)?.value ??
+          '',
+        lastName:
+          (doc.getElementById('LastName') as HTMLInputElement | null)?.value ??
+          '',
+        email:
+          (doc.getElementById('Email') as HTMLInputElement | null)?.value ?? '',
+      };
+      // Next Save shows the same click-through again, like live PLOS.
+      validationProceeded = false;
+      return;
+    }
     commitAuthor(event);
   });
   // Live jQuery UI often ignores the first Warning OK click (focus only),

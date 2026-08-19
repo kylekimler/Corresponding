@@ -296,6 +296,84 @@ describe('Editorial Manager contributor-role requirement', () => {
     ).toBe('2');
   });
 
+  it('keeps filling after Validation found issues leaves the author on the list', async () => {
+    const form = mountEditorialManagerFixture({
+      warnValidationIssues: true,
+      leaveFormOpenAfterValidationOk: true,
+      includeAddAnotherAuthor: false,
+    });
+    const save = form.querySelector(
+      '[data-toolname="AuthorSave"]',
+    ) as HTMLButtonElement;
+    const namesAtSave: string[] = [];
+    save.addEventListener(
+      'click',
+      () => {
+        namesAtSave.push(
+          (form.getElementById('FirstName') as HTMLInputElement).value,
+        );
+      },
+      true,
+    );
+
+    const roster = makeRoster([
+      author(1, ['methodology']),
+      author(2, ['investigation']),
+      author(3, ['supervision']),
+    ]);
+    const report = await editorialManagerAdapter.fillAsync!(
+      document,
+      roster,
+      { overwrite: false, dryRun: false },
+    );
+    const validation = editorialManagerAdapter.validate(document, roster);
+
+    console.log('EM continue after validation issues', {
+      errors: report.errors,
+      warnings: report.warnings,
+      namesAtSave,
+      authorsCount: (form.getElementById('authorsCount') as HTMLInputElement)
+        .value,
+      validationOk: validation.ok,
+      filledLike: validation.summary.filledLike,
+    });
+    expect(report.errors).toEqual([]);
+    expect(namesAtSave).toEqual(['Given1', 'Given2', 'Given3']);
+    expect(
+      (form.getElementById('authorsCount') as HTMLInputElement).value,
+    ).toBe('3');
+    expect(validation.ok).toBe(true);
+    expect(validation.summary.filledLike).toBe(3);
+    expect(validation.issues.some((issue) => issue.code === 'author_form_missing'))
+      .toBe(false);
+  });
+
+  it('treats Current Author List after fill as success, not a missing form', () => {
+    document.body.innerHTML = `
+      <button id="StepIndicator_stepManuscriptDataButton">Manuscript Data</button>
+      <button type="button" class="fl-add-btn">+ Add Another Author</button>
+      <p>Required information is missing</p>
+    `;
+    Object.defineProperty(document, 'title', {
+      configurable: true,
+      value: 'Add/Edit/Remove Authors',
+    });
+
+    const validation = editorialManagerAdapter.validate(
+      document,
+      makeRoster([
+        author(1, ['methodology']),
+        author(2, ['investigation']),
+      ]),
+    );
+
+    console.log('EM validate on authors list', validation);
+    expect(validation.ok).toBe(true);
+    expect(
+      validation.issues.some((issue) => issue.code === 'author_form_missing'),
+    ).toBe(false);
+  });
+
   it('opens the Edit Contributor Roles pencil, ticks, then collapses with the roles floppy', async () => {
     const form = mountEditorialManagerFixture({
       rolesCollapsed: true,
@@ -391,7 +469,8 @@ describe('Editorial Manager contributor-role requirement', () => {
       ).filter((box) => box.checked).length,
     });
 
-    expect(report.errors.join(' ')).toMatch(
+    expect(report.errors).toEqual([]);
+    expect(report.warnings.join(' ')).toMatch(
       /Please select at least one Contributor Role/i,
     );
     expect(form.getElementById('roles-warning')?.hidden).toBe(false);
