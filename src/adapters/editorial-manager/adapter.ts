@@ -22,6 +22,7 @@ import {
   authorsListGuidance,
   findAddAnotherAuthorControl,
   findAuthorFormDocument,
+  findOpenAuthorFormDocument,
   findAuthorSaveControl,
   findInstitutionWarningOk,
   findValidationIssuesOk,
@@ -519,17 +520,19 @@ async function openAuthorFormFromList(
   afterSave = false,
 ): Promise<Document | null> {
   await dismissSaveDialogsWithRetries(root);
-  if (!afterSave && authorFormVisible(root)) return findAuthorFormDocument(root);
+  if (!afterSave && authorFormVisible(root)) {
+    return findOpenAuthorFormDocument(root);
+  }
   for (let attempt = 1; attempt <= ADD_ATTEMPTS; attempt += 1) {
     const add = findAddAnotherAuthorControl(root);
     if (!add) {
-      return authorFormVisible(root) ? findAuthorFormDocument(root) : null;
+      return findOpenAuthorFormDocument(root);
     }
     clickControl(add);
-    const opened = await waitForAuthorForm(root, ADD_ATTEMPT_MS);
+    const opened = await waitForFreshAuthorForm(root, ADD_ATTEMPT_MS);
     if (opened) return opened;
   }
-  return waitForAuthorForm(root);
+  return waitForFreshAuthorForm(root);
 }
 
 function dismissInstitutionWarning(root: Document): boolean {
@@ -588,7 +591,7 @@ async function dismissSaveDialogsWithRetries(root: Document): Promise<boolean> {
 }
 
 function givenNameValue(root: Document): string {
-  const form = findAuthorFormDocument(root);
+  const form = findOpenAuthorFormDocument(root);
   return form ? readValue(form, AUTHOR_FIELD_IDS.firstName) : '';
 }
 
@@ -626,11 +629,35 @@ async function waitForAuthorForm(
 ): Promise<Document | null> {
   const started = Date.now();
   while (Date.now() - started < timeoutMs) {
-    const form = findAuthorFormDocument(root);
-    if (form && authorFormVisible(root)) return form;
+    const form = findOpenAuthorFormDocument(root);
+    if (form) return form;
     await delay(SAVE_INTERVAL_MS);
   }
   return null;
+}
+
+/**
+ * After Add Another Author the new dialog can still show the previous
+ * person's name for a tick. Wait for FirstName to clear so we fill the
+ * empty form, not a leftover identity.
+ */
+async function waitForFreshAuthorForm(
+  root: Document,
+  timeoutMs = REOPEN_WAIT_MS,
+): Promise<Document | null> {
+  const opened = await waitForAuthorForm(root, timeoutMs);
+  if (!opened) return null;
+  const started = Date.now();
+  while (Date.now() - started < timeoutMs) {
+    const form = findOpenAuthorFormDocument(root);
+    if (!form) break;
+    const given = readValue(form, AUTHOR_FIELD_IDS.firstName);
+    const family = readValue(form, AUTHOR_FIELD_IDS.lastName);
+    const email = readValue(form, AUTHOR_FIELD_IDS.email);
+    if (!given && !family && !email) return form;
+    await delay(SAVE_INTERVAL_MS);
+  }
+  return findOpenAuthorFormDocument(root);
 }
 
 function summarize(plans: FieldPlan[]): Omit<
@@ -801,7 +828,7 @@ export const editorialManagerAdapter: PlatformAdapter = {
     } else {
       for (let index = 0; index < authors.length; index += 1) {
         const author = authors[index]!;
-        const currentForm = findAuthorFormDocument(doc) ?? form;
+        const currentForm = findOpenAuthorFormDocument(doc) ?? form;
         const conflict = authorFormConflict(currentForm, author);
         const authorPlans = buildAuthorPlans(currentForm, author, options);
         authorPlans.push(
@@ -897,13 +924,17 @@ export const editorialManagerAdapter: PlatformAdapter = {
     const warnings: string[] = [];
     const errors: string[] = [];
     const plans: FieldPlan[] = [];
-    let form = findAuthorFormDocument(doc);
+    let form = findOpenAuthorFormDocument(doc) ?? findAuthorFormDocument(doc);
     const manuscriptBefore = snapshotManuscript(doc);
     const requirements = evaluatePortalRequirements('editorial-manager', roster);
+    let openedFreshDialog = false;
 
     if (!form || !authorFormVisible(doc)) {
       const opened = await openAuthorFormFromList(doc);
-      if (opened) form = opened;
+      if (opened) {
+        form = opened;
+        openedFreshDialog = true;
+      }
     }
 
     if (!form || !authorFormVisible(doc)) {
@@ -914,8 +945,9 @@ export const editorialManagerAdapter: PlatformAdapter = {
 
     for (let index = 0; index < authors.length; index += 1) {
       const author = authors[index]!;
-      const currentForm = findAuthorFormDocument(doc) ?? form;
-      const conflict = authorFormConflict(currentForm, author);
+      const currentForm = findOpenAuthorFormDocument(doc) ?? form;
+      const conflict =
+        !openedFreshDialog && authorFormConflict(currentForm, author);
       const authorPlans = buildAuthorPlans(currentForm, author, options);
       authorPlans.push(
         applyCorresponding(currentForm, author, options, conflict),
@@ -986,7 +1018,11 @@ export const editorialManagerAdapter: PlatformAdapter = {
           );
           break;
         }
+        form = reopened;
+        openedFreshDialog = true;
+        continue;
       }
+      openedFreshDialog = false;
     }
 
     if (manuscriptChanged(doc, manuscriptBefore)) {

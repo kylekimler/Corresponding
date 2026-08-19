@@ -52,17 +52,53 @@ export function documentsWithAncestors(root: Document): Document[] {
   return docs;
 }
 
-export function findAuthorFormDocument(root: Document): Document | null {
-  for (const doc of documentsIn(root)) {
-    if (
-      doc.getElementById(AUTHOR_FIELD_IDS.firstName) &&
+function hasAuthorFields(doc: Document): boolean {
+  return Boolean(
+    doc.getElementById(AUTHOR_FIELD_IDS.firstName) &&
       doc.getElementById(AUTHOR_FIELD_IDS.lastName) &&
-      doc.getElementById(AUTHOR_FIELD_IDS.email)
-    ) {
-      return doc;
+      doc.getElementById(AUTHOR_FIELD_IDS.email),
+  );
+}
+
+/**
+ * Parent + every same-origin iframe, including siblings. Fill often runs in
+ * a closed Add New Author frame; the next dialog is a new sibling iframe.
+ */
+function documentsForAuthorForm(root: Document): Document[] {
+  const starts = [root, ...ancestorDocuments(root)];
+  const docs: Document[] = [];
+  for (const start of starts) {
+    for (const doc of documentsIn(start)) {
+      if (!docs.includes(doc)) docs.push(doc);
     }
   }
+  return docs;
+}
+
+function isFormDocumentOpen(form: Document): boolean {
+  const first = form.getElementById(AUTHOR_FIELD_IDS.firstName);
+  if (!first || !isShown(first)) return false;
+  if (isDocumentFrameHidden(form)) return false;
+  const dialog = first.closest('#author-dialog, .ui-dialog.fl-dlg, .ui-dialog');
+  if (dialog && !isShown(dialog)) return false;
+  return true;
+}
+
+export function findOpenAuthorFormDocument(
+  root: Document,
+): Document | null {
+  for (const doc of documentsForAuthorForm(root)) {
+    if (hasAuthorFields(doc) && isFormDocumentOpen(doc)) return doc;
+  }
   return null;
+}
+
+export function findAuthorFormDocument(root: Document): Document | null {
+  return (
+    findOpenAuthorFormDocument(root) ??
+    documentsForAuthorForm(root).find(hasAuthorFields) ??
+    null
+  );
 }
 
 function documentsForAddAuthor(root: Document): Document[] {
@@ -80,16 +116,7 @@ function isDocumentFrameHidden(doc: Document): boolean {
  * iframe on the parent page; FirstName inside the frame still looks shown.
  */
 export function isAuthorFormOpen(root: Document): boolean {
-  const form = findAuthorFormDocument(root);
-  if (!form) return false;
-  const first = form.getElementById(AUTHOR_FIELD_IDS.firstName);
-  if (!first || !isShown(first)) return false;
-  if (isDocumentFrameHidden(form)) return false;
-  const dialog = first.closest(
-    '#author-dialog, .ui-dialog, [role="dialog"], [role="alertdialog"]',
-  );
-  if (dialog && !isShown(dialog)) return false;
-  return true;
+  return findOpenAuthorFormDocument(root) !== null;
 }
 
 function addAuthorCandidates(doc: Document): HTMLElement[] {

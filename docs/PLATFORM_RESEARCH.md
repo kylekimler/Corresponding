@@ -174,7 +174,9 @@ closes, Current Author List has two “+ Add Another Author”
 (`button.fl-add-btn`) controls — header and footer. The closed Add New
 Author iframe still contains FirstName, so Fill must not treat that ghost
 form as open. The next author is a list-page `.fl-add-btn` click, not the
-in-form Save and Add Another toolbar icon.
+in-form Save and Add Another toolbar icon. Closed Add New Author iframes
+can remain in the DOM with leftover FirstName; Fill must use the shown
+sibling frame, not the ghost.
 
 The “Institution not connected to Ringgold” / **OKAY** dialog is ScholarOne,
 not Editorial Manager.
