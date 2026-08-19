@@ -91,8 +91,8 @@ function buildAuthorPlans(
   form: Document,
   author: Author,
   options: FillOptions,
+  conflict = authorFormConflict(form, author),
 ): FieldPlan[] {
-  const conflict = authorFormConflict(form, author);
   const aff = primaryAffiliation(author);
   const specs: Array<{ id: string; label: string; value?: string }> = [
     {
@@ -518,6 +518,7 @@ async function saveAuthorAndProceed(
 async function openAuthorFormFromList(
   root: Document,
   afterSave = false,
+  previous?: Author,
 ): Promise<Document | null> {
   await dismissSaveDialogsWithRetries(root);
   if (!afterSave && authorFormVisible(root)) {
@@ -529,10 +530,14 @@ async function openAuthorFormFromList(
       return findOpenAuthorFormDocument(root);
     }
     clickControl(add);
-    const opened = await waitForFreshAuthorForm(root, ADD_ATTEMPT_MS);
+    const opened = await waitForFreshAuthorForm(
+      root,
+      ADD_ATTEMPT_MS,
+      previous,
+    );
     if (opened) return opened;
   }
-  return waitForFreshAuthorForm(root);
+  return waitForFreshAuthorForm(root, ADD_ATTEMPT_MS, previous);
 }
 
 function dismissInstitutionWarning(root: Document): boolean {
@@ -636,26 +641,59 @@ async function waitForAuthorForm(
   return null;
 }
 
+function formIdentity(form: Document): {
+  givenName: string;
+  familyName: string;
+  email: string;
+} {
+  return {
+    givenName: readValue(form, AUTHOR_FIELD_IDS.firstName),
+    familyName: readValue(form, AUTHOR_FIELD_IDS.lastName),
+    email: readValue(form, AUTHOR_FIELD_IDS.email),
+  };
+}
+
+function samePerson(
+  portal: { givenName: string; familyName: string; email: string },
+  author: Author,
+): boolean {
+  const given = portal.givenName.trim().toLowerCase();
+  const family = portal.familyName.trim().toLowerCase();
+  const email = portal.email.trim().toLowerCase();
+  if (email && author.email && email === author.email.trim().toLowerCase()) {
+    return true;
+  }
+  return (
+    given === author.givenName.trim().toLowerCase() &&
+    family === author.familyName.trim().toLowerCase()
+  );
+}
+
 /**
  * After Add Another Author the new dialog can still show the previous
- * person's name for a tick. Wait for FirstName to clear so we fill the
- * empty form, not a leftover identity.
+ * person's name. Wait for a clear form; leftover previous identity is
+ * overwritten by the next roster row (Overwrite is off in the popup).
  */
 async function waitForFreshAuthorForm(
   root: Document,
   timeoutMs = ADD_ATTEMPT_MS,
+  previous?: Author,
 ): Promise<Document | null> {
   const opened = await waitForAuthorForm(root, timeoutMs);
   if (!opened) return null;
   const started = Date.now();
-  while (Date.now() - started < 400) {
+  const leftoverDeadline = started + 400;
+  while (Date.now() - started < timeoutMs) {
     const form = findOpenAuthorFormDocument(root);
     if (!form) break;
-    const given = readValue(form, AUTHOR_FIELD_IDS.firstName);
-    const family = readValue(form, AUTHOR_FIELD_IDS.lastName);
-    const email = readValue(form, AUTHOR_FIELD_IDS.email);
-    if (!given && !family && !email) return form;
-    await delay(SAVE_INTERVAL_MS);
+    const portal = formIdentity(form);
+    if (!portal.givenName && !portal.familyName && !portal.email) return form;
+    if (previous && samePerson(portal, previous)) {
+      if (Date.now() >= leftoverDeadline) return form;
+      await delay(SAVE_INTERVAL_MS);
+      continue;
+    }
+    return form;
   }
   return findOpenAuthorFormDocument(root);
 }
@@ -946,16 +984,29 @@ export const editorialManagerAdapter: PlatformAdapter = {
     for (let index = 0; index < authors.length; index += 1) {
       const author = authors[index]!;
       const currentForm = findOpenAuthorFormDocument(doc) ?? form;
+      const leftoverPrevious =
+        openedFreshDialog &&
+        Boolean(authors[index - 1]) &&
+        samePerson(formIdentity(currentForm), authors[index - 1]!);
+      const writeOptions =
+        openedFreshDialog || leftoverPrevious
+          ? { ...options, overwrite: true }
+          : options;
       const conflict =
         !openedFreshDialog && authorFormConflict(currentForm, author);
-      const authorPlans = buildAuthorPlans(currentForm, author, options);
+      const authorPlans = buildAuthorPlans(
+        currentForm,
+        author,
+        writeOptions,
+        conflict,
+      );
       authorPlans.push(
-        applyCorresponding(currentForm, author, options, conflict),
+        applyCorresponding(currentForm, author, writeOptions, conflict),
       );
       plans.push(...authorPlans);
       for (const plan of authorPlans) {
         if (plan.fieldId === AUTHOR_FIELD_IDS.corresponding) continue;
-        applyTextPlan(currentForm, plan, options);
+        applyTextPlan(currentForm, plan, writeOptions);
       }
       if (conflict) {
         warnings.push(
@@ -1008,7 +1059,7 @@ export const editorialManagerAdapter: PlatformAdapter = {
       }
 
       if (index < authors.length - 1) {
-        const reopened = await openAuthorFormFromList(doc, true);
+        const reopened = await openAuthorFormFromList(doc, true, author);
         if (!reopened) {
           const add = findAddAnotherAuthorControl(doc);
           warnings.push(

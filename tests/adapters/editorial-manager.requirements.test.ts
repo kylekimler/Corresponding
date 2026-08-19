@@ -252,6 +252,50 @@ describe('Editorial Manager contributor-role requirement', () => {
     ).toBe('3');
   }, 15_000);
 
+  it('overwrites leftover Ada in the next Add dialog when Overwrite is off', async () => {
+    const form = mountEditorialManagerFixture({
+      hideAuthorFrameAfterSave: true,
+      reopenWithPreviousAuthor: true,
+    });
+    const save = form.querySelector(
+      '[data-toolname="AuthorSave"]',
+    ) as HTMLButtonElement;
+    const namesAtSave: string[] = [];
+    save.addEventListener(
+      'click',
+      () => {
+        namesAtSave.push(
+          (form.getElementById('FirstName') as HTMLInputElement).value,
+        );
+      },
+      true,
+    );
+
+    const report = await editorialManagerAdapter.fillAsync!(
+      form,
+      makeRoster([
+        author(1, ['methodology']),
+        author(2, ['investigation']),
+      ]),
+      { overwrite: false, dryRun: false },
+    );
+
+    console.log('EM leftover previous author overwritten', {
+      errors: report.errors,
+      warnings: report.warnings,
+      namesAtSave,
+      overwritten: report.overwritten,
+      preserved: report.preserved,
+      authorsCount: (form.getElementById('authorsCount') as HTMLInputElement)
+        .value,
+    });
+    expect(report.errors).toEqual([]);
+    expect(namesAtSave).toEqual(['Given1', 'Given2']);
+    expect(
+      (form.getElementById('authorsCount') as HTMLInputElement).value,
+    ).toBe('2');
+  });
+
   it('opens the Edit Contributor Roles pencil, ticks, then collapses with the roles floppy', async () => {
     const form = mountEditorialManagerFixture({
       rolesCollapsed: true,

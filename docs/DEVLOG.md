@@ -4,6 +4,19 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-19 02:00 UTC
+- PLOS ONE filled Ada, saved her, opened Add New Author again, then wrote
+  Ada a second time and stuck. The popup Overwrite toggle is off. After
+  Save the next dialog often still shows Ada; Fill preserved those fields
+  and tried to save the same person again.
+- A freshly opened Add dialog now overwrites leftover identity/affiliation
+  even when Overwrite is off. That is not a linked-account conflict — it is
+  the previous row left in the new form. After Add, Fill waits for an empty
+  FirstName and still replaces a leftover previous author.
+- verification: fixture puts Ada back into the form on Add Another Author;
+  Fill runs with overwrite:false; save sees Given1 then Given2; authorsCount
+  is 2.
+
 ### 2026-08-19 01:50 UTC
 - PLOS ONE now saves two authors and opens Add New Author a third time, but
   the third dialog stays empty. After two saves, a closed iframe with
