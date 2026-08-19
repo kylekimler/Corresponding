@@ -59,7 +59,6 @@ const COMMIT_WAIT_MS = 8_000;
 const SETTLE_INTERVAL_MS = 50;
 const SETTLE_SAMPLES = 2;
 const SETTLE_TIMEOUT_MS = 2_000;
-const WRITE_VERIFY_ATTEMPTS = 4;
 
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => {
@@ -698,9 +697,9 @@ function writeAuthorIntoForm(
 }
 
 /**
- * Write, wait for the dialog to go quiet, read back. If PLOS painted another
- * person (Hopper on Rosalind's row), write again. Save only after the form
- * still holds this author once it has stopped changing.
+ * Let the dialog finish painting leftover values, write this author once,
+ * then read back. A late re-render gets one correction write — not a loop
+ * that flashes names back and forth while the form is open.
  */
 async function writeAndVerifyAuthor(
   form: Document,
@@ -709,26 +708,19 @@ async function writeAndVerifyAuthor(
   conflict: boolean,
 ): Promise<{ plans: FieldPlan[]; verified: boolean }> {
   if (conflict) {
-    return { plans: writeAuthorIntoForm(form, author, writeOptions, true), verified: false };
+    return {
+      plans: writeAuthorIntoForm(form, author, writeOptions, true),
+      verified: false,
+    };
   }
-  let plans: FieldPlan[] = [];
-  const force = { ...writeOptions, overwrite: true };
-  for (let attempt = 1; attempt <= WRITE_VERIFY_ATTEMPTS; attempt += 1) {
-    await waitUntilFormSettled(form);
-    plans = writeAuthorIntoForm(
-      form,
-      author,
-      attempt === 1 ? writeOptions : force,
-      false,
-    );
-    await waitUntilFormSettled(form);
-    if (samePerson(formIdentity(form), author)) {
-      await delay(SETTLE_INTERVAL_MS);
-      if (samePerson(formIdentity(form), author)) {
-        return { plans, verified: true };
-      }
-    }
+  await waitUntilFormSettled(form);
+  let plans = writeAuthorIntoForm(form, author, writeOptions, false);
+  await waitUntilFormSettled(form);
+  if (samePerson(formIdentity(form), author)) {
+    return { plans, verified: true };
   }
+  plans = writeAuthorIntoForm(form, author, { ...writeOptions, overwrite: true }, false);
+  await waitUntilFormSettled(form);
   return { plans, verified: samePerson(formIdentity(form), author) };
 }
 

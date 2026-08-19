@@ -22,7 +22,7 @@ describe('radically free product', () => {
   it('leads the README with the hated-form hook', () => {
     const readme = readRepo('README.md');
     expect(readme).toMatch(
-      /Stop entering 74 authors into journal submission forms by hand/,
+      /Stop entering every author into journal submission forms by hand/,
     );
     expect(readme).toMatch(/MIT license\. No account\. No trial\. No freemium gate/);
     expect(readme).toMatch(

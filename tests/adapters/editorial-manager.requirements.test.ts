@@ -407,10 +407,15 @@ describe('Editorial Manager contributor-role requirement', () => {
         delayMs: 80,
       },
     });
+    const first = form.getElementById('FirstName') as HTMLInputElement;
     const save = form.querySelector(
       '[data-toolname="AuthorSave"]',
     ) as HTMLButtonElement;
     const namesAtSave: string[] = [];
+    const firstNameWrites: string[] = [];
+    first.addEventListener('input', () => {
+      firstNameWrites.push(first.value);
+    });
     save.addEventListener(
       'click',
       () => {
@@ -431,16 +436,20 @@ describe('Editorial Manager contributor-role requirement', () => {
       { overwrite: false, dryRun: false },
     );
 
+    const given1Writes = firstNameWrites.filter((value) => value === 'Given1');
     console.log('EM write-verify after late flip', {
       errors: report.errors,
       warnings: report.warnings,
       namesAtSave,
+      firstNameWrites,
+      given1Writes,
       authorsCount: (form.getElementById('authorsCount') as HTMLInputElement)
         .value,
     });
     expect(report.errors).toEqual([]);
     expect(namesAtSave).toEqual(['Given1', 'Given2', 'Given3']);
     expect(namesAtSave[0]).not.toBe('Given3');
+    expect(given1Writes.length).toBeLessThanOrEqual(2);
     expect(
       (form.getElementById('authorsCount') as HTMLInputElement).value,
     ).toBe('3');
