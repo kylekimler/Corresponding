@@ -4,6 +4,17 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-19 04:55 UTC
+- PLOS Add New Author was flashing names for the whole time the dialog
+  sat open. Write-verify retried up to four times against leftover /
+  late paints, so First/Last bounced. Fill now waits until the dialog is
+  quiet, writes once, and allows a single correction write if a late
+  re-render wiped the row.
+- README rewritten for launch (icon, how it works, local-by-default).
+  Demo `.mov` files live in gitignored `docs/media/` until uploaded.
+- verification: late-flip fixture still Saves Given1/2/3; Given1 is
+  written at most twice.
+
 ### 2026-08-19 03:50 UTC
 - Sample roster names and affiliations are ASCII only. Émilie du Châtelet
   is now Emilie du Chatelet; the Paris institute/department no longer use
