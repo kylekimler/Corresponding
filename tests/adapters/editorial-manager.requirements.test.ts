@@ -476,6 +476,46 @@ describe('Editorial Manager contributor-role requirement', () => {
     ).toBe('2');
   });
 
+  it('clicks OK on Cannot Save Author / wrong-format over the author list', async () => {
+    const form = mountEditorialManagerFixture({
+      warnWrongFormatAfterSave: true,
+      dialogsOnParent: true,
+    });
+    expect(form.getElementById('wrong-format')).toBeNull();
+    const dialog = document.getElementById('wrong-format');
+    const ok = document.getElementById('wrong-format-ok') as HTMLButtonElement;
+    expect(dialog?.querySelector('.ui-dialog-titlebar')?.textContent).toBe(
+      'Cannot Save Author',
+    );
+    expect(ok.className).toContain('ui-button-text-only');
+
+    let okClicks = 0;
+    ok.addEventListener('click', () => {
+      okClicks += 1;
+    });
+
+    const report = await editorialManagerAdapter.fillAsync!(
+      form,
+      makeRoster([author(1, ['methodology']), author(2, ['supervision'])]),
+      { overwrite: true, dryRun: false },
+    );
+
+    console.log('EM Cannot Save Author wrong-format OK', {
+      errors: report.errors,
+      warnings: report.warnings,
+      okClicks,
+      dialogHidden: dialog?.hidden,
+      authorsCount: (form.getElementById('authorsCount') as HTMLInputElement)
+        .value,
+    });
+    expect(report.errors).toEqual([]);
+    expect(okClicks).toBeGreaterThan(0);
+    expect(dialog?.hidden).toBe(true);
+    expect(
+      (form.getElementById('authorsCount') as HTMLInputElement).value,
+    ).toBe('2');
+  });
+
   it('confirms the unidentified-institution warning with OK, never Cancel', async () => {
     const form = mountEditorialManagerFixture({
       warnUnidentifiedInstitution: true,

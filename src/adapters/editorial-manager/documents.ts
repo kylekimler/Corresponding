@@ -14,6 +14,7 @@ import {
   INSTITUTION_UNVERIFIED_RE,
   INSTITUTION_WARNING_RE,
   VALIDATION_ISSUES_RE,
+  WRONG_FORMAT_RE,
   SAVE_THIS_AUTHOR_RE,
   SELECT_ROLES_RE,
 } from './ids';
@@ -221,20 +222,22 @@ function findDialogButton(
 }
 
 /**
- * OK on the "Institution could not be identified… Proceed anyway?" warning.
- * Cancel is never returned.
+ * OK on a named jQuery UI click-through. Cancel is never returned.
  */
-export function findInstitutionWarningOk(root: Document): HTMLElement | null {
-  const fromDialog = findDialogButton(root, INSTITUTION_WARNING_RE, /^ok$/i);
+function findClickThroughOk(
+  root: Document,
+  dialogText: RegExp,
+): HTMLElement | null {
+  const fromDialog = findDialogButton(root, dialogText, /^ok$/i);
   if (fromDialog) return fromDialog;
   for (const doc of documentsWithAncestors(root)) {
     let warningVisible = false;
     for (const node of doc.querySelectorAll(
-      'div, p, span, [role="alertdialog"], [role="dialog"]',
+      'div, p, span, section, aside, [role="alertdialog"], [role="dialog"]',
     )) {
       if (!isShown(node)) continue;
       const text = (node.textContent ?? '').replace(/\s+/g, ' ');
-      if (text.length > 400 || !INSTITUTION_WARNING_RE.test(text)) continue;
+      if (text.length > 400 || !dialogText.test(text)) continue;
       warningVisible = true;
       const scope =
         node.closest(
@@ -256,33 +259,27 @@ export function findInstitutionWarningOk(root: Document): HTMLElement | null {
 }
 
 /**
+ * OK on the "Institution could not be identified… Proceed anyway?" warning.
+ * Cancel is never returned.
+ */
+export function findInstitutionWarningOk(root: Document): HTMLElement | null {
+  return findClickThroughOk(root, INSTITUTION_WARNING_RE);
+}
+
+/**
  * OK on “Validation found issues. Review the highlighted counts and form.”
  * That dialog is a click-through, not a reason to abandon Save This Author.
  */
 export function findValidationIssuesOk(root: Document): HTMLElement | null {
-  const fromDialog = findDialogButton(root, VALIDATION_ISSUES_RE, /^ok$/i);
-  if (fromDialog) return fromDialog;
-  for (const doc of documentsWithAncestors(root)) {
-    const nodes = doc.querySelectorAll('div, section, aside, p, span');
-    for (const node of nodes) {
-      if (!isShown(node)) continue;
-      const text = (node.textContent ?? '').replace(/\s+/g, ' ');
-      if (text.length > 400 || !VALIDATION_ISSUES_RE.test(text)) continue;
-      const scope =
-        node.closest(
-          '.ui-dialog, [role="alertdialog"], [role="dialog"], .modal',
-        ) ?? node;
-      const labeled = Array.from(
-        scope.querySelectorAll<HTMLElement>(
-          'button, [role="button"], .ui-button, a',
-        ),
-      ).find((el) => /^ok$/i.test((el.textContent ?? '').trim()));
-      if (labeled) {
-        return (labeled.closest('button') ?? labeled) as HTMLElement;
-      }
-    }
-  }
-  return null;
+  return findClickThroughOk(root, VALIDATION_ISSUES_RE);
+}
+
+/**
+ * OK on “Cannot Save Author” / wrong-format after a successful save.
+ * Observed 2026-08-19 on PLOS ONE Current Author List. Single OK.
+ */
+export function findWrongFormatOk(root: Document): HTMLElement | null {
+  return findClickThroughOk(root, WRONG_FORMAT_RE);
 }
 
 function normalizeInstitution(value: string): string {

@@ -4,6 +4,20 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-19 01:30 UTC
+- PLOS ONE now saves the first Add New Author row, then shows
+  “Cannot Save Author” / “Some of the information entered is in the wrong
+  format. Please correct the indicated fields before saving.” over Current
+  Author List. Single OK; the saved author stays. That popup blocked Add
+  Author for the rest of the roster.
+- Fill treats it as another parent-page jQuery UI click-through
+  (`button.ui-button-text-only` / `span.ui-button-text` OK). OK is clicked
+  up to three times during save wait and again before Add Author. Cancel
+  is never clicked.
+- verification: fixture shows the dialog on the parent after commit and
+  ignores Add Author until OK; two-author roster clicks OK and reaches
+  authorsCount 2.
+
 ### 2026-08-19 00:10 UTC
 - PLOS Warning “Proceed with this Institution anyway?” still sat open after
   Save. Live OK is

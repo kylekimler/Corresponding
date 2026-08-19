@@ -46,6 +46,11 @@ export interface EditorialManagerFixtureOptions {
    * author-form iframe. Fill still runs in the iframe.
    */
   dialogsOnParent?: boolean;
+  /**
+   * After a successful save, show “Cannot Save Author” / wrong-format over
+   * the author list. OK dismisses it; Add Author is blocked until then.
+   */
+  warnWrongFormatAfterSave?: boolean;
 }
 
 const COUNTRIES = ['', 'United States', 'Germany', 'United Kingdom', 'Canada'];
@@ -215,6 +220,26 @@ function authorFormHtml(options: EditorialManagerFixtureOptions): string {
         </button>
       </div>
     </div>
+    <div
+      id="wrong-format"
+      class="ui-dialog ui-front no-close ui-dialog-buttons"
+      role="alertdialog"
+      hidden
+    >
+      <div class="ui-dialog-titlebar">Cannot Save Author</div>
+      Some of the information entered is in the wrong format. Please correct
+      the indicated fields before saving.
+      <div class="ui-dialog-buttonset">
+        <button
+          type="button"
+          class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only"
+          role="button"
+          id="wrong-format-ok"
+        >
+          <span class="ui-button-text">OK</span>
+        </button>
+      </div>
+    </div>
     <input type="button" id="SaveButton" name="ctl00$ctl00$SaveButton" value="Save" />
     <input type="button" id="CancelButton" name="ctl00$ctl00$CancelButton" value="Cancel" />
     </div>
@@ -335,8 +360,10 @@ function wireAuthorForm(
   let institutionProceeded = false;
   let validationProceeded = false;
   let institutionOkClicks = 0;
+  let wrongFormatDismissed = false;
   const institutionWarning = doc.getElementById('institution-warning');
   const validationIssues = doc.getElementById('validation-issues');
+  const wrongFormat = doc.getElementById('wrong-format');
   doc.getElementById('validation-issues-ok')?.addEventListener('click', (event) => {
     event.preventDefault();
     validationProceeded = true;
@@ -360,6 +387,11 @@ function wireAuthorForm(
       event.preventDefault();
       if (institutionWarning) institutionWarning.hidden = true;
     });
+  doc.getElementById('wrong-format-ok')?.addEventListener('click', (event) => {
+    event.preventDefault();
+    wrongFormatDismissed = true;
+    if (wrongFormat) wrongFormat.hidden = true;
+  });
 
   const commitAuthor = (event: Event) => {
     event.preventDefault();
@@ -413,6 +445,10 @@ function wireAuthorForm(
     if (corr && 'checked' in corr) corr.checked = false;
     const dialog = doc.getElementById('author-dialog');
     if (dialog) dialog.hidden = true;
+    if (options.warnWrongFormatAfterSave && wrongFormat) {
+      wrongFormatDismissed = false;
+      wrongFormat.hidden = false;
+    }
   };
   doc
     .querySelector('[data-toolname="AuthorSave"]')
@@ -426,6 +462,14 @@ function wireAuthorForm(
   );
   add?.addEventListener('click', (event) => {
     event.preventDefault();
+    if (
+      options.warnWrongFormatAfterSave &&
+      !wrongFormatDismissed &&
+      wrongFormat &&
+      !wrongFormat.hidden
+    ) {
+      return;
+    }
     const dialog = doc.getElementById('author-dialog');
     if (dialog) dialog.hidden = false;
   });
@@ -460,7 +504,11 @@ export function mountEditorialManagerFixture(
   child.close();
   wireAuthorForm(child, options);
   if (options.dialogsOnParent) {
-    for (const id of ['institution-warning', 'validation-issues']) {
+    for (const id of [
+      'institution-warning',
+      'validation-issues',
+      'wrong-format',
+    ]) {
       const node = child.getElementById(id);
       if (node) document.body.append(node);
     }
