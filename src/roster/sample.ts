@@ -1,5 +1,5 @@
 import { rowsToRoster } from '@/import/rosterFromTable';
-import type { Roster, RosterSource } from '@/schema/author';
+import type { Roster } from '@/schema/author';
 import type { RosterStore } from '@/roster/storage';
 
 const SAMPLE_HEADERS = [
@@ -168,15 +168,3 @@ export async function importSampleRosterOnce(
   }
 }
 
-/**
- * Example authors may fill any page, but only after the person confirms it.
- * A hard block prevented legitimate end-to-end testing on real portals, while
- * the real risk is filling example names without noticing.
- */
-export function sampleFillConfirmation(
-  source: RosterSource,
-  isDevelopmentFixture: boolean,
-): string | undefined {
-  if (source !== 'sample' || isDevelopmentFixture) return undefined;
-  return 'This roster contains example authors, not real people. Fill them into this page anyway?';
-}

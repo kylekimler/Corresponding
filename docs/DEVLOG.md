@@ -4,6 +4,11 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-19 03:25 UTC
+- Removed the popup confirm (“This roster contains example authors, not
+  real people. Fill them into this page anyway?”) before Fill on a
+  sample roster. Fill starts immediately.
+
 ### 2026-08-19 03:20 UTC
 - The list-commit wait did not address in-form instability. PLOS can
   still paint another roster person (Hopper) into an earlier dialog after

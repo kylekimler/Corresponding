@@ -14,10 +14,7 @@ import { parsePastedTable } from '@/import/pasteTable';
 import { rowsToRoster } from '@/import/rosterFromTable';
 import { createEmptyRoster } from '@/roster/mutations';
 import { createRosterStore } from '@/roster/storage';
-import {
-  importSampleRosterOnce,
-  sampleFillConfirmation,
-} from '@/roster/sample';
+import { importSampleRosterOnce } from '@/roster/sample';
 import type { Roster, RosterSource } from '@/schema/author';
 import { previewCapture } from '@/diagnostics/capture';
 import { STRUCTURAL_FRAME_PROBE } from '@/diagnostics/consoleProbe';
@@ -626,17 +623,6 @@ export function App({ surface = 'popup' }: { surface?: 'popup' | 'page' } = {}) 
         tabId: currentSession.context.tabId,
         url: currentSession.context.url,
       };
-      if (selected.source === 'sample') {
-        const confirmation = sampleFillConfirmation(
-          selected.source,
-          await isActiveDevelopmentFixtureTab(),
-        );
-        if (confirmation && !confirm(confirmation)) {
-          setActionStatus('');
-          return;
-        }
-      }
-
       setActionStatus('Filling…');
       const res = await requestActiveTab(
         {
