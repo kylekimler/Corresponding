@@ -21,6 +21,18 @@ describe('sample roster', () => {
       true,
     );
     expect(readyAuthorCount(roster.authors)).toBe(6);
+    const ascii = /^[\x20-\x7E]*$/;
+    for (const author of roster.authors) {
+      expect(author.givenName).toMatch(ascii);
+      expect(author.familyName).toMatch(ascii);
+      expect(author.middleName ?? '').toMatch(ascii);
+      expect(author.email ?? '').toMatch(ascii);
+      for (const aff of author.affiliations) {
+        expect(aff.institution).toMatch(ascii);
+        expect(aff.department ?? '').toMatch(ascii);
+        expect(aff.city ?? '').toMatch(ascii);
+      }
+    }
   });
 
   it('models shared first authors and shared corresponding authors', () => {
@@ -40,7 +52,7 @@ describe('sample roster', () => {
       'Lovelace',
       'Turing',
       'Wu',
-      'du Châtelet',
+      'du Chatelet',
       'Franklin',
       'Hopper',
     ]);
