@@ -62,6 +62,12 @@ export interface EditorialManagerFixtureOptions {
    * Fill must write the next author into the visible form, not this ghost.
    */
   staleHiddenAuthorFrame?: boolean;
+  /**
+   * After Add Another Author, put the just-saved name back in the form.
+   * Live PLOS often leaves Ada in the next dialog; the popup Overwrite
+   * toggle is off, so Fill must still replace that leftover.
+   */
+  reopenWithPreviousAuthor?: boolean;
 }
 
 const COUNTRIES = ['', 'United States', 'Germany', 'United Kingdom', 'Canada'];
@@ -371,6 +377,16 @@ function wireAuthorForm(
     if (unverified) unverified.hidden = true;
   });
 
+  let lastCommitted = { firstName: '', lastName: '', email: '' };
+  const restorePreviousAuthor = () => {
+    if (!options.reopenWithPreviousAuthor) return;
+    const first = doc.getElementById('FirstName') as HTMLInputElement | null;
+    const last = doc.getElementById('LastName') as HTMLInputElement | null;
+    const email = doc.getElementById('Email') as HTMLInputElement | null;
+    if (first) first.value = lastCommitted.firstName;
+    if (last) last.value = lastCommitted.lastName;
+    if (email) email.value = lastCommitted.email;
+  };
   let institutionProceeded = false;
   let validationProceeded = false;
   let institutionOkClicks = 0;
@@ -432,6 +448,22 @@ function wireAuthorForm(
     const count = doc.getElementById('authorsCount') as HTMLInputElement | null;
     if (count) {
       count.value = String(Number.parseInt(count.value || '0', 10) + 1);
+    }
+    lastCommitted = {
+      firstName:
+        (doc.getElementById('FirstName') as HTMLInputElement | null)?.value ??
+        '',
+      lastName:
+        (doc.getElementById('LastName') as HTMLInputElement | null)?.value ??
+        '',
+      email:
+        (doc.getElementById('Email') as HTMLInputElement | null)?.value ?? '',
+    };
+    const frameEl = doc.defaultView?.frameElement as HTMLElement | null;
+    if (frameEl) {
+      frameEl.dataset.leftoverFirst = lastCommitted.firstName;
+      frameEl.dataset.leftoverLast = lastCommitted.lastName;
+      frameEl.dataset.leftoverEmail = lastCommitted.email;
     }
     for (const id of [
       'FirstName',
@@ -497,6 +529,7 @@ function wireAuthorForm(
     }
     const dialog = doc.getElementById('author-dialog');
     if (dialog) dialog.hidden = false;
+    restorePreviousAuthor();
   });
 }
 
@@ -569,6 +602,14 @@ export function mountEditorialManagerFixture(
       iframe.style.display = '';
       const dialog = child.getElementById('author-dialog');
       if (dialog) dialog.hidden = false;
+      if (options.reopenWithPreviousAuthor) {
+        const first = child.getElementById('FirstName') as HTMLInputElement | null;
+        const last = child.getElementById('LastName') as HTMLInputElement | null;
+        const mail = child.getElementById('Email') as HTMLInputElement | null;
+        if (first) first.value = iframe.dataset.leftoverFirst ?? '';
+        if (last) last.value = iframe.dataset.leftoverLast ?? '';
+        if (mail) mail.value = iframe.dataset.leftoverEmail ?? '';
+      }
     };
     for (const btn of list.querySelectorAll('button')) {
       btn.addEventListener('click', reopen);

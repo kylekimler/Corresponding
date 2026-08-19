@@ -176,7 +176,9 @@ Author iframe still contains FirstName, so Fill must not treat that ghost
 form as open. The next author is a list-page `.fl-add-btn` click, not the
 in-form Save and Add Another toolbar icon. Closed Add New Author iframes
 can remain in the DOM with leftover FirstName; Fill must use the shown
-sibling frame, not the ghost.
+sibling frame, not the ghost. The next Add dialog can still show Ada;
+Overwrite is off in the popup, so Fill must replace that leftover with
+the next roster author rather than preserving and re-saving Ada.
 
 The “Institution not connected to Ringgold” / **OKAY** dialog is ScholarOne,
 not Editorial Manager.
