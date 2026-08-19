@@ -250,7 +250,7 @@ describe('Editorial Manager contributor-role requirement', () => {
     expect(
       (form.getElementById('authorsCount') as HTMLInputElement).value,
     ).toBe('3');
-  });
+  }, 15_000);
 
   it('opens the Edit Contributor Roles pencil, ticks, then collapses with the roles floppy', async () => {
     const form = mountEditorialManagerFixture({

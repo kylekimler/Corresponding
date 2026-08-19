@@ -215,7 +215,11 @@ export function findAuthorSaveControl(root: Document): HTMLElement | null {
     `button.${AUTHOR_SAVE_CLASS}`,
     `.${AUTHOR_SAVE_CLASS}`,
   ];
-  for (const doc of documentsIn(root)) {
+  const open = findOpenAuthorFormDocument(root);
+  const docs = open
+    ? [open, ...documentsForAuthorForm(root).filter((doc) => doc !== open)]
+    : documentsForAuthorForm(root);
+  for (const doc of docs) {
     for (const selector of selectors) {
       const match = Array.from(doc.querySelectorAll<HTMLElement>(selector)).find(
         (el) => isShown(el) && !isRolesCollapseSave(el),
@@ -382,7 +386,7 @@ function normalizeInstitution(value: string): string {
  * Save This Author click. Observed 2026-08-18 on PLOS Add New Author.
  */
 export function hideInstitutionTypeahead(root: Document): void {
-  for (const doc of documentsWithAncestors(root)) {
+  for (const doc of documentsForAuthorForm(root)) {
     for (const el of doc.querySelectorAll<HTMLElement>(
       '.ui-autocomplete, #institution-suggestions',
     )) {
@@ -393,7 +397,7 @@ export function hideInstitutionTypeahead(root: Document): void {
 }
 
 export function institutionTypeaheadOpen(root: Document): boolean {
-  for (const doc of documentsIn(root)) {
+  for (const doc of documentsForAuthorForm(root)) {
     const nodes = doc.querySelectorAll<HTMLElement>(
       '[role="option"], [role="listbox"], .ui-autocomplete, .ui-menu-item, #institution-suggestions',
     );

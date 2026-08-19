@@ -500,7 +500,7 @@ async function saveAuthorAndProceed(
       if (afterOk !== 'timeout') return afterOk;
       continue;
     }
-    if (!clickAuthorSave(root)) {
+    if (!clickAuthorSave(form) && !clickAuthorSave(root)) {
       return attempt === 1 ? 'missing' : 'timeout';
     }
     const outcome = await waitAfterAuthorSave(
@@ -643,12 +643,12 @@ async function waitForAuthorForm(
  */
 async function waitForFreshAuthorForm(
   root: Document,
-  timeoutMs = REOPEN_WAIT_MS,
+  timeoutMs = ADD_ATTEMPT_MS,
 ): Promise<Document | null> {
   const opened = await waitForAuthorForm(root, timeoutMs);
   if (!opened) return null;
   const started = Date.now();
-  while (Date.now() - started < timeoutMs) {
+  while (Date.now() - started < 400) {
     const form = findOpenAuthorFormDocument(root);
     if (!form) break;
     const given = readValue(form, AUTHOR_FIELD_IDS.firstName);
