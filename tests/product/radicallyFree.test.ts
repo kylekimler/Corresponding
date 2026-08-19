@@ -24,10 +24,10 @@ describe('radically free product', () => {
     expect(readme).toMatch(
       /Stop entering every author into journal submission forms by hand/,
     );
-    expect(readme).toMatch(/MIT license\. No account\. No trial\. No freemium gate/);
     expect(readme).toMatch(
-      /Install the extension → import a spreadsheet or ORCIDs → fill the form → submit the paper yourself/,
+      /No account\. No backend\. No author data leaves your device/,
     );
+    expect(readme).toMatch(/\[MIT\]/);
     expect(readme).not.toMatch(/Proprietary/);
     expect(readme).not.toMatch(/all rights reserved/i);
   });

@@ -72,7 +72,7 @@ export const COMPATIBILITY_ISSUE_URL =
   'https://github.com/kylekimler/Corresponding/issues/new?template=add-journal.yml';
 
 export const COMPATIBILITY_CTA =
-  "Your journal isn't supported? Open an issue and paste a screenshot.";
+  'Found a journal that does not work?';
 
 export function autofillMark(status: AutofillStatus): '✅' | '⬜' {
   return status === 'supported' ? '✅' : '⬜';

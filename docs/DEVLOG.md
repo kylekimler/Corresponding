@@ -4,6 +4,15 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-19 05:10 UTC
+- README matches the launch draft: icon, hook, See it work placeholders,
+  Working / In progress / Planned table, issue CTA. Removed the extra
+  license/freemium line, catalog checkmarks, version unlock table,
+  “drop files in docs/media”, and “~10 lines” slogan.
+- Desktop demo `.mov` files are not mounted in this environment, so they
+  could not be copied into `docs/media/`.
+- verification: README tests follow launch copy.
+
 ### 2026-08-19 04:55 UTC
 - PLOS Add New Author was flashing names for the whole time the dialog
   sat open. Write-verify retried up to four times against leftover /

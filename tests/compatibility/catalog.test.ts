@@ -16,15 +16,15 @@ function readRepo(relativePath: string): string {
 }
 
 describe('compatibility scoreboard', () => {
-  it('prints the giant README table from the catalog', () => {
+  it('lists working and planned platforms in the README', () => {
     const readme = readRepo('README.md');
-    const table = formatCompatibilityMarkdownTable();
-    expect(readme).toContain(table);
+    expect(readme).toContain('| Nature Portfolio | Working |');
+    expect(readme).toContain('| ScholarOne / Manuscript Central | Working |');
+    expect(readme).toContain('| Cell Press | In progress |');
+    expect(readme).toContain('| Wiley | In progress |');
+    expect(readme).toContain('| eLife | Planned |');
     expect(readme).toContain(COMPATIBILITY_CTA);
     expect(readme).toContain(COMPATIBILITY_ISSUE_URL);
-    expect(readme).toMatch(/v0\.7 \| Cell Press/);
-    expect(readme).toMatch(/v0\.8 \| Wiley/);
-    expect(readme).toMatch(/v0\.9 \| 100 journals/);
   });
 
   it('marks ✅ only for adapters that can actually fill', () => {
