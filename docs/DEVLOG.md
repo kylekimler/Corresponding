@@ -4,6 +4,21 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-19 01:50 UTC
+- PLOS ONE now saves two authors and opens Add New Author a third time, but
+  the third dialog stays empty. After two saves, a closed iframe with
+  leftover FirstName/LastName/Email is still in the DOM. Fill looked at that
+  ghost first, treated it as a conflicting identity (or wrote into it), and
+  left the visible dialog blank.
+- Author-form search now walks parent + sibling iframes and uses only the
+  form whose iframe/dialog is shown. After Add Another Author, Fill waits
+  for an empty FirstName and keeps the reopened document for the next
+  roster row. A leftover name in a freshly opened Add dialog is not a
+  linked-account conflict.
+- verification: a hidden stale iframe holds Ada; Fill is invoked on that
+  ghost document; three roster authors write into the visible form
+  (authorsCount 3) and Ada in the ghost is unchanged.
+
 ### 2026-08-19 01:40 UTC
 - PLOS ONE saved the first author and returned to Current Author List, then
   never opened Add New Author for the rest of the sample team. The first

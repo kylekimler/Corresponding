@@ -57,6 +57,11 @@ export interface EditorialManagerFixtureOptions {
    * the list (`button.fl-add-btn`), not in the closed frame.
    */
   hideAuthorFrameAfterSave?: boolean;
+  /**
+   * A closed Add New Author iframe left in the DOM with leftover values.
+   * Fill must write the next author into the visible form, not this ghost.
+   */
+  staleHiddenAuthorFrame?: boolean;
 }
 
 const COUNTRIES = ['', 'United States', 'Germany', 'United Kingdom', 'Canada'];
@@ -523,6 +528,23 @@ export function mountEditorialManagerFixture(
   );
   child.close();
   wireAuthorForm(child, options);
+  if (options.staleHiddenAuthorFrame) {
+    const ghost = document.createElement('iframe');
+    ghost.id = 'stale-author-frame';
+    ghost.hidden = true;
+    ghost.style.display = 'none';
+    document.body.insertBefore(ghost, iframe);
+    const ghostDoc = ghost.contentDocument;
+    if (ghostDoc) {
+      ghostDoc.open();
+      ghostDoc.write(`<!doctype html><html><body>
+        <input id="FirstName" value="Ada" />
+        <input id="LastName" value="Lovelace" />
+        <input id="Email" value="ada@example.org" />
+      </body></html>`);
+      ghostDoc.close();
+    }
+  }
   if (options.dialogsOnParent) {
     for (const id of [
       'institution-warning',

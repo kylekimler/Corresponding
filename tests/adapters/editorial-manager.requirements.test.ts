@@ -4,6 +4,7 @@ import { mountEditorialManagerFixture } from '@/adapters/editorial-manager/fixtu
 import { CREDIT_ROLES } from '@/schema/credit';
 import {
   findAddAnotherAuthorControl,
+  findOpenAuthorFormDocument,
   findRolesCollapseSave,
   findSelectRolesControl,
 } from '@/adapters/editorial-manager/documents';
@@ -207,6 +208,49 @@ describe('Editorial Manager contributor-role requirement', () => {
       (form.getElementById('authorsCount') as HTMLInputElement).value,
     ).toBe('3');
   });
+
+  it('fills the open form, not a leftover hidden Add New Author iframe', async () => {
+    const form = mountEditorialManagerFixture({
+      staleHiddenAuthorFrame: true,
+      hideAuthorFrameAfterSave: true,
+    });
+    const ghostFrame = document.getElementById(
+      'stale-author-frame',
+    ) as HTMLIFrameElement;
+    const ghost = ghostFrame.contentDocument;
+    expect(ghost).toBeTruthy();
+    expect(findOpenAuthorFormDocument(document)).toBe(form);
+    expect(findOpenAuthorFormDocument(ghost!)).toBe(form);
+
+    const report = await editorialManagerAdapter.fillAsync!(
+      ghost!,
+      makeRoster([
+        author(1, ['methodology']),
+        author(2, ['investigation']),
+        author(3, ['supervision']),
+      ]),
+      { overwrite: true, dryRun: false },
+    );
+
+    console.log('EM open form not ghost iframe', {
+      errors: report.errors,
+      warnings: report.warnings,
+      skippedConflicts: report.skippedConflicts,
+      ghostFirst: (ghost!.getElementById('FirstName') as HTMLInputElement)
+        .value,
+      liveCount: (form.getElementById('authorsCount') as HTMLInputElement)
+        .value,
+      openIsLive: findOpenAuthorFormDocument(ghost!) === form,
+    });
+    expect(report.errors).toEqual([]);
+    expect(report.skippedConflicts).toBe(0);
+    expect((ghost!.getElementById('FirstName') as HTMLInputElement).value).toBe(
+      'Ada',
+    );
+    expect(
+      (form.getElementById('authorsCount') as HTMLInputElement).value,
+    ).toBe('3');
+  }, 15_000);
 
   it('opens the Edit Contributor Roles pencil, ticks, then collapses with the roles floppy', async () => {
     const form = mountEditorialManagerFixture({
