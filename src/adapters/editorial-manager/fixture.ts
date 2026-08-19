@@ -80,6 +80,17 @@ export interface EditorialManagerFixtureOptions {
    * open form before this fires drops the pending row (live race).
    */
   delayListCommitMs?: number;
+  /**
+   * After identity fields are written, paint a different person (live PLOS
+   * late re-render). Fill must rewrite and only Save once the intended
+   * author is still in the form.
+   */
+  lateFlipIdentity?: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    delayMs?: number;
+  };
 }
 
 const COUNTRIES = ['', 'United States', 'Germany', 'United Kingdom', 'Canada'];
@@ -459,6 +470,22 @@ function wireAuthorForm(
     }, delayMs);
   };
 
+  let lateFlipArmed = Boolean(options.lateFlipIdentity);
+  const firstNameInput = doc.getElementById('FirstName') as HTMLInputElement | null;
+  firstNameInput?.addEventListener('input', () => {
+    const flip = options.lateFlipIdentity;
+    if (!flip || !lateFlipArmed) return;
+    lateFlipArmed = false;
+    window.setTimeout(() => {
+      const first = doc.getElementById('FirstName') as HTMLInputElement | null;
+      const last = doc.getElementById('LastName') as HTMLInputElement | null;
+      const mail = doc.getElementById('Email') as HTMLInputElement | null;
+      if (first) first.value = flip.firstName;
+      if (last) last.value = flip.lastName;
+      if (mail) mail.value = flip.email;
+    }, flip.delayMs ?? 80);
+  });
+
   let lastCommitted = { firstName: '', lastName: '', email: '' };
   const restorePreviousAuthor = () => {
     if (!options.reopenWithPreviousAuthor) return;
@@ -607,6 +634,7 @@ function wireAuthorForm(
     const dialog = doc.getElementById('author-dialog');
     if (dialog) dialog.hidden = false;
     restorePreviousAuthor();
+    lateFlipArmed = Boolean(options.lateFlipIdentity);
   });
 }
 
