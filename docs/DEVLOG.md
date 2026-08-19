@@ -4,6 +4,19 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-19 03:20 UTC
+- The list-commit wait did not address in-form instability. PLOS can
+  still paint another roster person (Hopper) into an earlier dialog after
+  we write. A 120ms pause before the first write is not a settle signal
+  and does not stop Save of the wrong identity.
+- Fill now waits for consecutive unchanged field snapshots, writes, waits
+  again, reads First/Last/Email back, and rewrites if they do not match
+  this author. Save This Author runs only after the form still holds that
+  person. Results follow observed portal state, not request latency.
+- verification: after each FirstName write the fixture paints Given3;
+  Fill rewrites; names at Save are Given1, Given2, Given3; authorsCount
+  is 3. The first Save is never Given3.
+
 ### 2026-08-19 03:10 UTC
 - PLOS ONE reached Rosalind but not Grace Hopper. While earlier dialogs
   were filling, fields sometimes flipped to Hopper. The previous

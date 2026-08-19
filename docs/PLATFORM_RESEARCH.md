@@ -172,6 +172,10 @@ written into the still-open dialog: Corresponding waits until the saved
 name appears on Current Author List, then clicks Add Another Author.
 Overwriting the bound form before that commit is why later names
 (Hopper) can flash through earlier rows and the last author never lands.
+A late re-render can also replace the fields after Corresponding has
+written them. Fill waits until the dialog stops changing, reads the
+values back, rewrites if they are the wrong person, and does not click
+Save This Author until this author is still in the form.
 After a successful
 save, PLOS ONE can also show “Cannot Save Author” / “Some of the
 information entered is in the wrong format. Please correct the indicated

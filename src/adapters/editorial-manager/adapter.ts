@@ -56,7 +56,10 @@ const ADD_ATTEMPTS = 3;
 const ADD_ATTEMPT_MS = 1_500;
 const REOPEN_WAIT_MS = 6_000;
 const COMMIT_WAIT_MS = 8_000;
-const FORM_STABLE_MS = 120;
+const SETTLE_INTERVAL_MS = 50;
+const SETTLE_SAMPLES = 2;
+const SETTLE_TIMEOUT_MS = 2_000;
+const WRITE_VERIFY_ATTEMPTS = 4;
 
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => {
@@ -636,38 +639,97 @@ function authorFormVisible(root: Document): boolean {
   return isAuthorFormOpen(root);
 }
 
-function identitiesEqual(
-  a: { givenName: string; familyName: string; email: string },
-  b: { givenName: string; familyName: string; email: string },
-): boolean {
-  return (
-    a.givenName === b.givenName &&
-    a.familyName === b.familyName &&
-    a.email === b.email
-  );
+function formFieldSnapshot(form: Document): string {
+  return [
+    AUTHOR_FIELD_IDS.firstName,
+    AUTHOR_FIELD_IDS.middleName,
+    AUTHOR_FIELD_IDS.lastName,
+    AUTHOR_FIELD_IDS.email,
+    AUTHOR_FIELD_IDS.institution,
+    AUTHOR_FIELD_IDS.department,
+    AUTHOR_FIELD_IDS.city,
+    AUTHOR_FIELD_IDS.zipcode,
+  ]
+    .map((id) => `${id}=${readValue(form, id)}`)
+    .join('|');
 }
 
 /**
- * Do not write while the portal is still painting leftover values. Hopper
- * flashing through an earlier row is a mutating dialog, not a ready form.
+ * Wait until the open dialog stops changing. Consecutive identical snapshots
+ * mean the portal finished a late re-render; a fixed sleep does not.
  */
-async function waitUntilFormStable(
+async function waitUntilFormSettled(
   form: Document,
-  timeoutMs = ADD_ATTEMPT_MS,
+  timeoutMs = SETTLE_TIMEOUT_MS,
 ): Promise<void> {
+  let previous = formFieldSnapshot(form);
+  let stableSamples = 0;
   const started = Date.now();
-  let last = formIdentity(form);
-  let stableSince = Date.now();
   while (Date.now() - started < timeoutMs) {
-    const current = formIdentity(form);
-    if (identitiesEqual(current, last)) {
-      if (Date.now() - stableSince >= FORM_STABLE_MS) return;
+    await delay(SETTLE_INTERVAL_MS);
+    const next = formFieldSnapshot(form);
+    if (next === previous) {
+      stableSamples += 1;
+      if (stableSamples >= SETTLE_SAMPLES) return;
     } else {
-      last = current;
-      stableSince = Date.now();
+      stableSamples = 0;
+      previous = next;
     }
-    await delay(SAVE_INTERVAL_MS);
   }
+}
+
+function writeAuthorIntoForm(
+  form: Document,
+  author: Author,
+  writeOptions: FillOptions,
+  conflict: boolean,
+): FieldPlan[] {
+  const authorPlans = buildAuthorPlans(form, author, writeOptions, conflict);
+  authorPlans.push(applyCorresponding(form, author, writeOptions, conflict));
+  for (const plan of authorPlans) {
+    if (plan.fieldId === AUTHOR_FIELD_IDS.corresponding) continue;
+    applyTextPlan(form, plan, writeOptions);
+  }
+  if (!conflict) {
+    applyInstitutionFreeText(form, primaryAffiliation(author)?.institution);
+    refillAffiliationDetails(form, author);
+  }
+  return authorPlans;
+}
+
+/**
+ * Write, wait for the dialog to go quiet, read back. If PLOS painted another
+ * person (Hopper on Rosalind's row), write again. Save only after the form
+ * still holds this author once it has stopped changing.
+ */
+async function writeAndVerifyAuthor(
+  form: Document,
+  author: Author,
+  writeOptions: FillOptions,
+  conflict: boolean,
+): Promise<{ plans: FieldPlan[]; verified: boolean }> {
+  if (conflict) {
+    return { plans: writeAuthorIntoForm(form, author, writeOptions, true), verified: false };
+  }
+  let plans: FieldPlan[] = [];
+  const force = { ...writeOptions, overwrite: true };
+  for (let attempt = 1; attempt <= WRITE_VERIFY_ATTEMPTS; attempt += 1) {
+    await waitUntilFormSettled(form);
+    plans = writeAuthorIntoForm(
+      form,
+      author,
+      attempt === 1 ? writeOptions : force,
+      false,
+    );
+    await waitUntilFormSettled(form);
+    if (samePerson(formIdentity(form), author)) {
+      await delay(SETTLE_INTERVAL_MS);
+      if (samePerson(formIdentity(form), author)) {
+        return { plans, verified: true };
+      }
+    }
+  }
+  return { plans, verified: samePerson(formIdentity(form), author) };
 }
 
 /**
@@ -1075,7 +1137,6 @@ export const editorialManagerAdapter: PlatformAdapter = {
       const author = authors[index]!;
       const currentForm: Document =
         findOpenAuthorFormDocument(doc) ?? form;
-      await waitUntilFormStable(currentForm);
       const leftoverPrevious =
         openedFreshDialog &&
         Boolean(authors[index - 1]) &&
@@ -1086,32 +1147,34 @@ export const editorialManagerAdapter: PlatformAdapter = {
           : options;
       const conflict =
         !openedFreshDialog && authorFormConflict(currentForm, author);
-      const authorPlans = buildAuthorPlans(
+      const written = await writeAndVerifyAuthor(
         currentForm,
         author,
         writeOptions,
         conflict,
       );
-      authorPlans.push(
-        applyCorresponding(currentForm, author, writeOptions, conflict),
-      );
-      plans.push(...authorPlans);
-      for (const plan of authorPlans) {
-        if (plan.fieldId === AUTHOR_FIELD_IDS.corresponding) continue;
-        applyTextPlan(currentForm, plan, writeOptions);
-      }
+      plans.push(...written.plans);
       if (conflict) {
         warnings.push(
           `Author ${author.sequence} skipped because the open form already has a conflicting identity.`,
         );
         break;
       }
+      if (!written.verified) {
+        const shown = formIdentity(currentForm);
+        warnings.push(
+          `Author ${author.sequence} was not saved: the form kept changing and still showed ${shown.givenName || 'blank'} ${shown.familyName || ''} after write. Did not click Save This Author for the wrong person.`,
+        );
+        if (index < authors.length - 1) {
+          const reopened = await openAuthorFormFromList(doc, true, author);
+          if (!reopened) break;
+          form = reopened;
+          openedFreshDialog = true;
+          continue;
+        }
+        break;
+      }
 
-      applyInstitutionFreeText(
-        currentForm,
-        primaryAffiliation(author)?.institution,
-      );
-      refillAffiliationDetails(currentForm, author);
       await openRolesPanel(currentForm);
       plans.push(...planCreditRoles(currentForm, author));
       tickCreditRoles(currentForm, author);

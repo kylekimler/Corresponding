@@ -398,6 +398,54 @@ describe('Editorial Manager contributor-role requirement', () => {
     ).toBe('3');
   }, 15_000);
 
+  it('rewrites and withholds Save when the form flips to a later author', async () => {
+    const form = mountEditorialManagerFixture({
+      lateFlipIdentity: {
+        firstName: 'Given3',
+        lastName: 'Family3',
+        email: 'author3@example.org',
+        delayMs: 80,
+      },
+    });
+    const save = form.querySelector(
+      '[data-toolname="AuthorSave"]',
+    ) as HTMLButtonElement;
+    const namesAtSave: string[] = [];
+    save.addEventListener(
+      'click',
+      () => {
+        namesAtSave.push(
+          (form.getElementById('FirstName') as HTMLInputElement).value,
+        );
+      },
+      true,
+    );
+
+    const report = await editorialManagerAdapter.fillAsync!(
+      document,
+      makeRoster([
+        author(1, ['methodology']),
+        author(2, ['investigation']),
+        author(3, ['supervision']),
+      ]),
+      { overwrite: false, dryRun: false },
+    );
+
+    console.log('EM write-verify after late flip', {
+      errors: report.errors,
+      warnings: report.warnings,
+      namesAtSave,
+      authorsCount: (form.getElementById('authorsCount') as HTMLInputElement)
+        .value,
+    });
+    expect(report.errors).toEqual([]);
+    expect(namesAtSave).toEqual(['Given1', 'Given2', 'Given3']);
+    expect(namesAtSave[0]).not.toBe('Given3');
+    expect(
+      (form.getElementById('authorsCount') as HTMLInputElement).value,
+    ).toBe('3');
+  }, 15_000);
+
   it('treats Current Author List after fill as success, not a missing form', () => {
     document.body.innerHTML = `
       <button id="StepIndicator_stepManuscriptDataButton">Manuscript Data</button>
