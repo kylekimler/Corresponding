@@ -36,6 +36,10 @@ export const AUTHOR_SAVE_CLASS = 'fl-flToolSave';
 /**
  * jQuery UI warning after Save This Author when the institution is not in
  * the portal directory. OK proceeds; Cancel must never be clicked.
+ * Live OK (PLOS, 2026-08-18):
+ * `<button type="button" class="ui-button ui-widget ui-state-default
+ *   ui-corner-all ui-button-text-only" role="button">
+ *   <span class="ui-button-text">OK</span></button>`
  */
 export const INSTITUTION_WARNING_RE =
   /institution could not be identified|proceed with this institution/i;

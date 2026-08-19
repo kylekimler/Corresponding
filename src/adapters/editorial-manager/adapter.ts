@@ -44,6 +44,8 @@ const SAVE_WATCH_MS = 6_000;
 const SAVE_INTERVAL_MS = 40;
 const SAVE_ATTEMPTS = 3;
 const SAVE_ATTEMPT_MS = 1_500;
+const DIALOG_OK_ATTEMPTS = 3;
+const DIALOG_OK_GAP_MS = 80;
 const REOPEN_WAIT_MS = 6_000;
 
 function delay(ms: number): Promise<void> {
@@ -435,10 +437,13 @@ function clickControl(el: HTMLElement): void {
   assertSafeMutationTarget(el);
   // Editorial Manager's toolbox and jQuery UI dialogs listen for a full
   // mouse sequence, not only the synthetic click() used by most forms.
-  el.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }));
-  el.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
-  el.dispatchEvent(new MouseEvent('pointerup', { bubbles: true }));
-  el.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+  // Do not set `view`: the Warning OK lives on the parent page while Fill
+  // runs in the author-form iframe, and that window is the wrong realm.
+  const opts = { bubbles: true, cancelable: true, button: 0 };
+  el.dispatchEvent(new MouseEvent('pointerdown', opts));
+  el.dispatchEvent(new MouseEvent('mousedown', opts));
+  el.dispatchEvent(new MouseEvent('pointerup', opts));
+  el.dispatchEvent(new MouseEvent('mouseup', opts));
   el.click();
 }
 
@@ -479,6 +484,17 @@ async function saveAuthorAndProceed(
   park?.focus();
 
   for (let attempt = 1; attempt <= SAVE_ATTEMPTS; attempt += 1) {
+    if (saveDialogVisible(root)) {
+      await dismissSaveDialogsWithRetries(root);
+      const afterOk = await waitAfterAuthorSave(
+        root,
+        form,
+        givenBefore,
+        SAVE_ATTEMPT_MS,
+      );
+      if (afterOk !== 'timeout') return afterOk;
+      continue;
+    }
     if (!clickAuthorSave(root)) {
       return attempt === 1 ? 'missing' : 'timeout';
     }
@@ -490,7 +506,7 @@ async function saveAuthorAndProceed(
     );
     if (outcome !== 'timeout') return outcome;
   }
-  dismissSaveDialogs(root);
+  await dismissSaveDialogsWithRetries(root);
   return waitAfterAuthorSave(root, form, givenBefore);
 }
 
@@ -505,6 +521,7 @@ async function openAuthorFormFromList(
 }
 
 function dismissInstitutionWarning(root: Document): boolean {
+  hideInstitutionTypeahead(root);
   const ok = findInstitutionWarningOk(root);
   if (!ok) return false;
   clickControl(ok);
@@ -512,6 +529,7 @@ function dismissInstitutionWarning(root: Document): boolean {
 }
 
 function dismissValidationIssues(root: Document): boolean {
+  hideInstitutionTypeahead(root);
   const ok = findValidationIssuesOk(root);
   if (!ok) return false;
   clickControl(ok);
@@ -523,6 +541,25 @@ function dismissSaveDialogs(root: Document): boolean {
   const validation = dismissValidationIssues(root);
   const institution = dismissInstitutionWarning(root);
   return validation || institution;
+}
+
+function saveDialogVisible(root: Document): boolean {
+  return Boolean(findInstitutionWarningOk(root) || findValidationIssuesOk(root));
+}
+
+/**
+ * The Warning OK is the same jQuery UI widget as Save This Author: the first
+ * click often only focuses the button. Hammer OK (never Cancel) up to three
+ * times, re-finding it each time so a replaced node is still hit.
+ */
+async function dismissSaveDialogsWithRetries(root: Document): Promise<boolean> {
+  let clicked = false;
+  for (let attempt = 1; attempt <= DIALOG_OK_ATTEMPTS; attempt += 1) {
+    if (!saveDialogVisible(root)) return clicked;
+    if (dismissSaveDialogs(root)) clicked = true;
+    await delay(DIALOG_OK_GAP_MS);
+  }
+  return clicked;
 }
 
 function givenNameValue(root: Document): string {
@@ -547,6 +584,7 @@ async function waitAfterAuthorSave(
   timeoutMs = SAVE_WATCH_MS,
 ): Promise<'closed' | 'cleared' | 'warning' | 'timeout'> {
   const started = Date.now();
+  await dismissSaveDialogsWithRetries(root);
   while (Date.now() - started < timeoutMs) {
     if (rolesWarningText(root) || rolesWarningText(form)) return 'warning';
     dismissSaveDialogs(root);
