@@ -52,6 +52,16 @@ export const INSTITUTION_WARNING_RE =
 export const VALIDATION_ISSUES_RE =
   /validation found issues\.?\s*review the highlighted counts and form/i;
 
+/**
+ * After a successful Save This Author, PLOS ONE (2026-08-19) can show
+ * “Cannot Save Author” / “Some of the information entered is in the wrong
+ * format. Please correct the indicated fields before saving.” over the
+ * Current Author List. Single OK dismisses it; the saved author stays.
+ * Cancel / Close are never clicked.
+ */
+export const WRONG_FORMAT_RE =
+  /cannot save author|information entered is in the wrong format|correct the indicated fields before saving/i;
+
 /** Inline typeahead state shown when the typed name is not a directory pick. */
 export const INSTITUTION_UNVERIFIED_RE =
   /author institution is unverified|start typing to display potentially matching institutions/i;

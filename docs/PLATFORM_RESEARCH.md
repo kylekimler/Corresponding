@@ -164,7 +164,12 @@ appends the alertdialog to the top window body. Corresponding looks at
 parent/top/opener for OK, then Add Author for the next roster row. Cancel
 and the titlebar Close are never clicked. Typing can clear City/Department,
 so those are written again before Save. “Validation found issues. Review
-the highlighted counts and form.” is the same OK path.
+the highlighted counts and form.” is the same OK path. After a successful
+save, PLOS ONE can also show “Cannot Save Author” / “Some of the
+information entered is in the wrong format. Please correct the indicated
+fields before saving.” over Current Author List — single OK, same
+`ui-button-text-only` widget. Corresponding clicks that OK (up to three
+times) and continues Add Author; the saved row stays.
 
 The “Institution not connected to Ringgold” / **OKAY** dialog is ScholarOne,
 not Editorial Manager.

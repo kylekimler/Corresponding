@@ -25,6 +25,7 @@ import {
   findAuthorSaveControl,
   findInstitutionWarningOk,
   findValidationIssuesOk,
+  findWrongFormatOk,
   hideInstitutionTypeahead,
   findRolesCollapseSave,
   findSelectRolesControl,
@@ -514,6 +515,7 @@ async function openAuthorFormFromList(
   root: Document,
 ): Promise<Document | null> {
   if (authorFormVisible(root)) return findAuthorFormDocument(root);
+  await dismissSaveDialogsWithRetries(root);
   const add = findAddAnotherAuthorControl(root);
   if (!add) return null;
   clickControl(add);
@@ -536,15 +538,28 @@ function dismissValidationIssues(root: Document): boolean {
   return true;
 }
 
+function dismissWrongFormat(root: Document): boolean {
+  hideInstitutionTypeahead(root);
+  const ok = findWrongFormatOk(root);
+  if (!ok) return false;
+  clickControl(ok);
+  return true;
+}
+
 /** Click through the save-state dialogs; never Cancel. */
 function dismissSaveDialogs(root: Document): boolean {
   const validation = dismissValidationIssues(root);
   const institution = dismissInstitutionWarning(root);
-  return validation || institution;
+  const format = dismissWrongFormat(root);
+  return validation || institution || format;
 }
 
 function saveDialogVisible(root: Document): boolean {
-  return Boolean(findInstitutionWarningOk(root) || findValidationIssuesOk(root));
+  return Boolean(
+    findInstitutionWarningOk(root) ||
+      findValidationIssuesOk(root) ||
+      findWrongFormatOk(root),
+  );
 }
 
 /**
