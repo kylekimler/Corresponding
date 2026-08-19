@@ -126,3 +126,6 @@ export const ROLES_WARNING_RE = /please select at least one contributor role/i;
 
 /** Parent Manuscript Data authors list, not the Add New Author form. */
 export const AUTHORS_LIST_TITLE_RE = /add\/edit\/remove authors/i;
+
+/** Observed heading on the PLOS Current Author List page. */
+export const CURRENT_AUTHOR_LIST_RE = /current author list/i;

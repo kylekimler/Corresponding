@@ -300,7 +300,6 @@ describe('Editorial Manager contributor-role requirement', () => {
     const form = mountEditorialManagerFixture({
       warnValidationIssues: true,
       leaveFormOpenAfterValidationOk: true,
-      includeAddAnotherAuthor: false,
     });
     const save = form.querySelector(
       '[data-toolname="AuthorSave"]',
@@ -347,6 +346,57 @@ describe('Editorial Manager contributor-role requirement', () => {
     expect(validation.issues.some((issue) => issue.code === 'author_form_missing'))
       .toBe(false);
   });
+
+  it('waits for the list row before writing the next author when PLOS is slow', async () => {
+    const form = mountEditorialManagerFixture({
+      warnValidationIssues: true,
+      leaveFormOpenAfterValidationOk: true,
+      hideAuthorFrameAfterSave: true,
+      reopenWithPreviousAuthor: true,
+      delayListCommitMs: 250,
+    });
+    const save = form.querySelector(
+      '[data-toolname="AuthorSave"]',
+    ) as HTMLButtonElement;
+    const namesAtSave: string[] = [];
+    save.addEventListener(
+      'click',
+      () => {
+        namesAtSave.push(
+          (form.getElementById('FirstName') as HTMLInputElement).value,
+        );
+      },
+      true,
+    );
+
+    const report = await editorialManagerAdapter.fillAsync!(
+      document,
+      makeRoster([
+        author(1, ['methodology']),
+        author(2, ['investigation']),
+        author(3, ['supervision']),
+      ]),
+      { overwrite: false, dryRun: false },
+    );
+
+    const list = document.getElementById('committed-authors')?.textContent ?? '';
+    console.log('EM wait for delayed list commit', {
+      errors: report.errors,
+      warnings: report.warnings,
+      namesAtSave,
+      list,
+      authorsCount: (form.getElementById('authorsCount') as HTMLInputElement)
+        .value,
+    });
+    expect(report.errors).toEqual([]);
+    expect(namesAtSave).toEqual(['Given1', 'Given2', 'Given3']);
+    expect(list).toMatch(/Given1\s+Family1/);
+    expect(list).toMatch(/Given2\s+Family2/);
+    expect(list).toMatch(/Given3\s+Family3/);
+    expect(
+      (form.getElementById('authorsCount') as HTMLInputElement).value,
+    ).toBe('3');
+  }, 15_000);
 
   it('treats Current Author List after fill as success, not a missing form', () => {
     document.body.innerHTML = `

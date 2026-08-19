@@ -167,7 +167,12 @@ so those are written again before Save. “Validation found issues. Review
 the highlighted counts and form.” is the same OK path. A saved row can
 still show a red bang (“Required information is missing”); Corresponding
 clicks OK if a dialog is present, keeps filling the rest of the roster,
-and leaves those marks for the scientist. After a successful
+and leaves those marks for the scientist. The next roster row is not
+written into the still-open dialog: Corresponding waits until the saved
+name appears on Current Author List, then clicks Add Another Author.
+Overwriting the bound form before that commit is why later names
+(Hopper) can flash through earlier rows and the last author never lands.
+After a successful
 save, PLOS ONE can also show “Cannot Save Author” / “Some of the
 information entered is in the wrong format. Please correct the indicated
 fields before saving.” over Current Author List — single OK, same

@@ -8,6 +8,7 @@ import {
   AUTHOR_SAVE_ID,
   AUTHOR_SAVE_TOOL,
   AUTHORS_LIST_TITLE_RE,
+  CURRENT_AUTHOR_LIST_RE,
   AUTHOR_FIELD_IDS,
   COLLAPSE_SAVE_ROLES_RE,
   EDIT_ROLES_ID,
@@ -522,4 +523,50 @@ export function findRolesCollapseSave(root: Document): HTMLElement | null {
 
 export function isRolesCollapseSave(el: Element): boolean {
   return COLLAPSE_SAVE_ROLES_RE.test(controlBlob(el));
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * True when Current Author List (or the parent page outside the open form)
+ * already shows this person. Input values are not in textContent, so a still-
+ * open Add New Author dialog does not count as a committed row.
+ */
+export function authorAppearsOnList(
+  root: Document,
+  author: { givenName: string; middleName?: string; familyName: string },
+): boolean {
+  const given = author.givenName.trim();
+  const family = author.familyName.trim();
+  if (!given || !family) return false;
+  const middle = author.middleName?.trim();
+  const middlePart = middle
+    ? `\\s+${escapeRegExp(middle)}`
+    : '(?:\\s+\\S+)?';
+  const nameRe = new RegExp(
+    `${escapeRegExp(given)}${middlePart}\\s+${escapeRegExp(family)}`,
+    'i',
+  );
+  for (const doc of documentsWithAncestors(root)) {
+    const region = findCurrentAuthorListRegion(doc);
+    const haystack = (region ?? doc.body)?.textContent ?? '';
+    if (nameRe.test(haystack.replace(/\s+/g, ' '))) return true;
+  }
+  return false;
+}
+
+function findCurrentAuthorListRegion(doc: Document): HTMLElement | null {
+  const byId = doc.getElementById('current-author-list');
+  if (byId) return byId;
+  for (const el of doc.querySelectorAll('div, section, table, h1, h2, h3, td')) {
+    if (!CURRENT_AUTHOR_LIST_RE.test(el.textContent ?? '')) continue;
+    return (
+      (el.closest('#current-author-list') as HTMLElement) ??
+      (el.parentElement as HTMLElement) ??
+      (el as HTMLElement)
+    );
+  }
+  return null;
 }
