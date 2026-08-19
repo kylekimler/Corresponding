@@ -4,6 +4,12 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-19 03:50 UTC
+- Sample roster names and affiliations are ASCII only. Émilie du Châtelet
+  is now Emilie du Chatelet; the Paris institute/department no longer use
+  é/â; Rosalind’s CRediT line uses a hyphen instead of an en dash. Live
+  PLOS fields were choking on those characters.
+
 ### 2026-08-19 03:25 UTC
 - Removed the popup confirm (“This roster contains example authors, not
   real people. Fill them into this page anyway?”) before Fill on a
