@@ -33,6 +33,7 @@ import {
   findRolesCollapseSave,
   findSelectRolesControl,
   isAuthorsListPage,
+  authorAppearsOnList,
 } from './documents';
 import {
   ADD_ANOTHER_AUTHOR_CLASS,
@@ -54,6 +55,8 @@ const DIALOG_OK_GAP_MS = 80;
 const ADD_ATTEMPTS = 3;
 const ADD_ATTEMPT_MS = 1_500;
 const REOPEN_WAIT_MS = 6_000;
+const COMMIT_WAIT_MS = 8_000;
+const FORM_STABLE_MS = 120;
 
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => {
@@ -633,6 +636,60 @@ function authorFormVisible(root: Document): boolean {
   return isAuthorFormOpen(root);
 }
 
+function identitiesEqual(
+  a: { givenName: string; familyName: string; email: string },
+  b: { givenName: string; familyName: string; email: string },
+): boolean {
+  return (
+    a.givenName === b.givenName &&
+    a.familyName === b.familyName &&
+    a.email === b.email
+  );
+}
+
+/**
+ * Do not write while the portal is still painting leftover values. Hopper
+ * flashing through an earlier row is a mutating dialog, not a ready form.
+ */
+async function waitUntilFormStable(
+  form: Document,
+  timeoutMs = ADD_ATTEMPT_MS,
+): Promise<void> {
+  const started = Date.now();
+  let last = formIdentity(form);
+  let stableSince = Date.now();
+  while (Date.now() - started < timeoutMs) {
+    const current = formIdentity(form);
+    if (identitiesEqual(current, last)) {
+      if (Date.now() - stableSince >= FORM_STABLE_MS) return;
+    } else {
+      last = current;
+      stableSince = Date.now();
+    }
+    await delay(SAVE_INTERVAL_MS);
+  }
+}
+
+/**
+ * The next author is not written until this person is on Current Author List.
+ * A closed dialog is not enough — PLOS can still be reconciling the row.
+ */
+async function waitForAuthorCommitted(
+  root: Document,
+  author: Author,
+  beforeCount: number,
+  timeoutMs = COMMIT_WAIT_MS,
+): Promise<'confirmed' | 'unconfirmed'> {
+  const started = Date.now();
+  while (Date.now() - started < timeoutMs) {
+    await dismissSaveDialogsWithRetries(root);
+    if (authorAppearsOnList(root, author)) return 'confirmed';
+    if (countCommittedAuthors(root) > beforeCount) return 'confirmed';
+    await delay(SAVE_INTERVAL_MS);
+  }
+  return 'unconfirmed';
+}
+
 /**
  * After Save This Author the dialog closes (live) or the fields clear (fixture).
  * Either means the author was committed and Add Another Author can be clicked.
@@ -1018,6 +1075,7 @@ export const editorialManagerAdapter: PlatformAdapter = {
       const author = authors[index]!;
       const currentForm: Document =
         findOpenAuthorFormDocument(doc) ?? form;
+      await waitUntilFormStable(currentForm);
       const leftoverPrevious =
         openedFreshDialog &&
         Boolean(authors[index - 1]) &&
@@ -1061,6 +1119,7 @@ export const editorialManagerAdapter: PlatformAdapter = {
 
       const givenBefore =
         givenNameValue(doc) || author.givenName || `author-${author.sequence}`;
+      const beforeCount = countCommittedAuthors(doc);
       const afterSave = await saveAuthorAndProceed(
         doc,
         currentForm,
@@ -1092,16 +1151,17 @@ export const editorialManagerAdapter: PlatformAdapter = {
         );
       }
 
+      if (afterSave !== 'warning') {
+        const commit = await waitForAuthorCommitted(doc, author, beforeCount);
+        if (commit === 'unconfirmed') {
+          warnings.push(
+            `Author ${author.sequence} was saved but Current Author List did not show ${author.givenName} ${author.familyName} yet. Opening the next author only after that wait so later names cannot overwrite this row.`,
+          );
+        }
+      }
+
       if (index < authors.length - 1) {
         await dismissSaveDialogsWithRetries(doc);
-        if (authorFormVisible(doc)) {
-          // PLOS can keep Add New Author open after a save that still has
-          // highlighted issues. The current person is often already on the
-          // list (red bang). Overwrite the leftover and fill the next row.
-          form = findOpenAuthorFormDocument(doc) ?? currentForm;
-          openedFreshDialog = true;
-          continue;
-        }
         const reopened = await openAuthorFormFromList(doc, true, author);
         if (!reopened) {
           const add = findAddAnotherAuthorControl(doc);

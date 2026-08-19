@@ -71,9 +71,15 @@ export interface EditorialManagerFixtureOptions {
   /**
    * Validation OK commits the author to the list but leaves Add New Author
    * open with that person still in the fields (live PLOS red-bang row).
-   * Fill must overwrite the leftover and continue the roster.
+   * Fill must wait for the list row, then Add Another Author — not write
+   * the next person into the still-bound dialog.
    */
   leaveFormOpenAfterValidationOk?: boolean;
+  /**
+   * Delay Current Author List / authorsCount after Save. Overwriting the
+   * open form before this fires drops the pending row (live race).
+   */
+  delayListCommitMs?: number;
 }
 
 const COUNTRIES = ['', 'United States', 'Germany', 'United Kingdom', 'Canada'];
@@ -383,6 +389,76 @@ function wireAuthorForm(
     if (unverified) unverified.hidden = true;
   });
 
+  const listHost = (): Document => {
+    try {
+      const parentDoc = doc.defaultView?.parent?.document;
+      if (parentDoc && parentDoc !== doc) return parentDoc;
+    } catch {
+      // Cross-origin parent; stay on the form document.
+    }
+    return doc;
+  };
+
+  const ensureAuthorList = (): HTMLElement => {
+    const host = listHost();
+    let list = host.getElementById('current-author-list');
+    if (!list) {
+      list = host.createElement('div');
+      list.id = 'current-author-list';
+      list.innerHTML =
+        '<div>Current Author List</div><div id="committed-authors"></div>';
+      host.body.append(list);
+    }
+    if (!list.querySelector('#committed-authors')) {
+      const rows = host.createElement('div');
+      rows.id = 'committed-authors';
+      list.append(rows);
+    }
+    return list;
+  };
+
+  const readFormIdentity = () => ({
+    firstName:
+      (doc.getElementById('FirstName') as HTMLInputElement | null)?.value ?? '',
+    lastName:
+      (doc.getElementById('LastName') as HTMLInputElement | null)?.value ?? '',
+    email: (doc.getElementById('Email') as HTMLInputElement | null)?.value ?? '',
+  });
+
+  const publishCommittedAuthor = (identity: {
+    firstName: string;
+    lastName: string;
+    email: string;
+  }) => {
+    const apply = () => {
+      const list = ensureAuthorList();
+      const rows =
+        list.querySelector('#committed-authors') ??
+        list.appendChild(list.ownerDocument.createElement('div'));
+      if (!rows.id) rows.id = 'committed-authors';
+      const row = list.ownerDocument.createElement('div');
+      row.textContent = `${identity.firstName} ${identity.lastName}`.trim();
+      rows.append(row);
+      const count = doc.getElementById('authorsCount') as HTMLInputElement | null;
+      if (count) {
+        count.value = String(Number.parseInt(count.value || '0', 10) + 1);
+      }
+    };
+    const delayMs = options.delayListCommitMs ?? 0;
+    if (delayMs <= 0) {
+      apply();
+      return;
+    }
+    window.setTimeout(() => {
+      const current = readFormIdentity();
+      const samePerson =
+        current.firstName === identity.firstName &&
+        current.lastName === identity.lastName;
+      const cleared = !current.firstName && !current.lastName;
+      if (samePerson || cleared) apply();
+    }, delayMs);
+  };
+
   let lastCommitted = { firstName: '', lastName: '', email: '' };
   const restorePreviousAuthor = () => {
     if (!options.reopenWithPreviousAuthor) return;
@@ -405,20 +481,8 @@ function wireAuthorForm(
     validationProceeded = true;
     if (validationIssues) validationIssues.hidden = true;
     if (options.leaveFormOpenAfterValidationOk) {
-      const count = doc.getElementById('authorsCount') as HTMLInputElement | null;
-      if (count) {
-        count.value = String(Number.parseInt(count.value || '0', 10) + 1);
-      }
-      lastCommitted = {
-        firstName:
-          (doc.getElementById('FirstName') as HTMLInputElement | null)?.value ??
-          '',
-        lastName:
-          (doc.getElementById('LastName') as HTMLInputElement | null)?.value ??
-          '',
-        email:
-          (doc.getElementById('Email') as HTMLInputElement | null)?.value ?? '',
-      };
+      lastCommitted = readFormIdentity();
+      publishCommittedAuthor(lastCommitted);
       // Next Save shows the same click-through again, like live PLOS.
       validationProceeded = false;
       return;
@@ -470,20 +534,8 @@ function wireAuthorForm(
         return;
       }
     }
-    const count = doc.getElementById('authorsCount') as HTMLInputElement | null;
-    if (count) {
-      count.value = String(Number.parseInt(count.value || '0', 10) + 1);
-    }
-    lastCommitted = {
-      firstName:
-        (doc.getElementById('FirstName') as HTMLInputElement | null)?.value ??
-        '',
-      lastName:
-        (doc.getElementById('LastName') as HTMLInputElement | null)?.value ??
-        '',
-      email:
-        (doc.getElementById('Email') as HTMLInputElement | null)?.value ?? '',
-    };
+    lastCommitted = readFormIdentity();
+    publishCommittedAuthor(lastCommitted);
     const frameEl = doc.defaultView?.frameElement as HTMLElement | null;
     if (frameEl) {
       frameEl.dataset.leftoverFirst = lastCommitted.firstName;
@@ -617,6 +669,8 @@ export function mountEditorialManagerFixture(
     const list = document.createElement('div');
     list.id = 'current-author-list';
     list.innerHTML = `
+      <div>Current Author List</div>
+      <div id="committed-authors"></div>
       <button type="button" class="fl-add-btn" id="list-add-top">+ Add Another Author</button>
       <button type="button" class="fl-add-btn" id="list-add-bottom">+ Add Another Author</button>
     `;

@@ -4,6 +4,21 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-19 03:10 UTC
+- PLOS ONE reached Rosalind but not Grace Hopper. While earlier dialogs
+  were filling, fields sometimes flipped to Hopper. The previous
+  continue-on-validation path reused the still-open Add New Author form
+  for the next person as soon as OK was clicked. PLOS had not committed
+  the row yet; later roster values overwrote the in-flight author. Last
+  save became an edit of Rosalind instead of a new Hopper row.
+- Fill now waits until Current Author List shows the saved name (or
+  authorsCount increases), and until the open form’s identity is stable,
+  then clicks Add Another Author. It does not write the next author into
+  a dialog that is still bound to the previous save.
+- verification: Validation OK leaves the form open; list row is delayed
+  250ms; overwriting before then drops the pending row. Fill waits;
+  names at Save are Given1/2/3; all three names are on the list.
+
 ### 2026-08-19 02:40 UTC
 - PLOS ONE filled through Émilie, then Corresponding showed “Validation
   found issues. Review the highlighted counts and form.” and stopped before
