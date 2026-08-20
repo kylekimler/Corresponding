@@ -1,4 +1,4 @@
-<p align="center">
+<p align="left">
   <img src="public/icons/corr-128.png" alt="Corresponding" width="96" height="96" />
 </p>
 
@@ -8,25 +8,21 @@
 
 Corresponding is a free, open-source Chrome extension that takes the author list you already have and fills journal submission forms for you.
 
-Import a spreadsheet. Check the preview. Fill the form. Review it. Submit the paper yourself.
-
-No account. No backend. No author data leaves your device.
-
-> If you have ever entered 40, 70, or 100+ coauthors one at a time, this is for you.
+> If you have ever entered 20, 50, or 100+ coauthors one at a time, this is for you.
 
 ## See it work
 
 ### Editorial Manager / PLOS
 
-<img src="docs/media/plos-one.gif" width="300" alt="Editorial Manager filling a PLOS ONE author form">
+<img src="docs/media/plos-one.gif" width="400" alt="Editorial Manager filling a PLOS ONE author form">
 
 ### ScholarOne / Bioinformatics
 
-<img src="docs/media/scholarone.gif" width="300" alt="ScholarOne filling a Bioinformatics author form">
+<img src="docs/media/scholarone.gif" width="400" alt="ScholarOne filling a Bioinformatics author form">
 
 ### bioRxiv / medRxiv
 
-<img src="docs/media/medrxiv.gif" width="300" alt="medRxiv filling an author form">
+<img src="docs/media/medrxiv.gif" width="400" alt="medRxiv filling an author form">
 
 ## Supported platforms
 
