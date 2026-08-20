@@ -17,3 +17,5 @@ test-results
 blob-report
 docs/media/*
 !docs/media/README.md
+!docs/media/*.mov
+!docs/media/*.png

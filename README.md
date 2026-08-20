@@ -16,21 +16,17 @@ No account. No backend. No author data leaves your device.
 
 ## See it work
 
-### Nature Portfolio
-
-https://github.com/user-attachments/assets/NATURE_DEMO_PLACEHOLDER
-
 ### Editorial Manager / PLOS
 
-https://github.com/user-attachments/assets/PLOS_DEMO_PLACEHOLDER
+[![Editorial Manager filling a PLOS ONE author form](docs/media/plos-one.png)](docs/media/plos-one.mov)
 
 ### ScholarOne / Bioinformatics
 
-https://github.com/user-attachments/assets/SCHOLARONE_DEMO_PLACEHOLDER
+[![ScholarOne filling a Bioinformatics author form](docs/media/scholarone.png)](docs/media/scholarone.mov)
 
 ### bioRxiv / medRxiv
 
-https://github.com/user-attachments/assets/BIORXIV_DEMO_PLACEHOLDER
+[![medRxiv filling an author form](docs/media/medrxiv.png)](docs/media/medrxiv.mov)
 
 ## Supported platforms
 

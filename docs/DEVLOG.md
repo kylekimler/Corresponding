@@ -4,6 +4,12 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-20 04:50 UTC
+- Live demo recordings live in `docs/media/` (PLOS ONE, ScholarOne,
+  medRxiv) with README posters. Nature placeholder links are gone until
+  that recording exists.
+- verification: README still leads with the hated-form hook.
+
 ### 2026-08-20 03:48 UTC
 - README ends with a GitHub Sponsors tip link after License.
   `FUNDING.yml` is already on main.
