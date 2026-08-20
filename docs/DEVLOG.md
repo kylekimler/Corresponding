@@ -4,6 +4,12 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-20 05:12 UTC
+- README demos are looping GIFs. In-repo `.mov` files do not play on
+  GitHub; the recordings were scaled down (800px, ScholarOne 600px) and
+  palette-quantized instead of lowering encode quality.
+- verification: README still leads with the hated-form hook.
+
 ### 2026-08-20 04:50 UTC
 - Live demo recordings live in `docs/media/` (PLOS ONE, ScholarOne,
   medRxiv) with README posters. Nature placeholder links are gone until

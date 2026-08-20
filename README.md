@@ -18,15 +18,15 @@ No account. No backend. No author data leaves your device.
 
 ### Editorial Manager / PLOS
 
-[![Editorial Manager filling a PLOS ONE author form](docs/media/plos-one.png)](docs/media/plos-one.mov)
+![Editorial Manager filling a PLOS ONE author form](docs/media/plos-one.gif)
 
 ### ScholarOne / Bioinformatics
 
-[![ScholarOne filling a Bioinformatics author form](docs/media/scholarone.png)](docs/media/scholarone.mov)
+![ScholarOne filling a Bioinformatics author form](docs/media/scholarone.gif)
 
 ### bioRxiv / medRxiv
 
-[![medRxiv filling an author form](docs/media/medrxiv.png)](docs/media/medrxiv.mov)
+![medRxiv filling an author form](docs/media/medrxiv.gif)
 
 ## Supported platforms
 
