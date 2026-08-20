@@ -1,6 +1,6 @@
 import { defineConfig } from 'wxt';
 import { loadEnv } from 'vite';
-import { serveFixturesPlugin } from './dev/serveFixturesPlugin';
+import { serveFixturesPlugin } from './scripts/serveFixturesPlugin';
 
 /** Pinned so `webExt.startUrls` always matches the WXT Vite server. */
 const DEV_SERVER_PORT = 3000;

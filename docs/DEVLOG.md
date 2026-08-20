@@ -4,6 +4,14 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-20 02:43 UTC
+- Root listing is shorter: `CHANGELOG.md` → `docs/CHANGELOG.md`,
+  brand source PNG → `docs/brand/`, fixture Vite plugin → `scripts/`.
+  Toolchain files stay at root (WXT/Vitest/Playwright/ESLint look there).
+  `fixtures/` and `sites/` stay at root so contributor and `npm run dev`
+  paths do not move.
+- verification: plugin import and fixture-serve test updated.
+
 ### 2026-08-19 05:10 UTC
 - README matches the launch draft: icon, hook, See it work placeholders,
   Working / In progress / Planned table, issue CTA. Removed the extra
