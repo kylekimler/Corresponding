@@ -4,6 +4,10 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-20 03:48 UTC
+- README ends with a GitHub Sponsors tip link after License.
+  `FUNDING.yml` is already on main.
+
 ### 2026-08-20 02:43 UTC
 - Root listing is shorter: `CHANGELOG.md` → `docs/CHANGELOG.md`,
   brand source PNG → `docs/brand/`, fixture Vite plugin → `scripts/`.
