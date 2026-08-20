@@ -218,3 +218,7 @@ If Corresponding cannot confidently understand an author form, it should fail cl
 [MIT](https://github.com/kylekimler/Corresponding/blob/main/LICENSE).
 
 Use it. Share it. Fork it. Add your journal.
+
+### Support Corresponding
+
+If Corresponding saved you some time, you can [leave a tip](https://github.com/sponsors/kylekimler).

@@ -5,7 +5,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
   createFixturesMiddleware,
   resolveFixturePath,
-} from '../../dev/serveFixturesPlugin';
+} from '../../scripts/serveFixturesPlugin';
 
 const projectRoot = path.resolve(__dirname, '../..');
 const fixturesRoot = path.join(projectRoot, 'fixtures');
