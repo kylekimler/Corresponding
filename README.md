@@ -4,7 +4,7 @@
 
 # Corresponding
 
-**Stop entering every author into journal submission forms by hand.**
+**Stop entering author information into journal submission forms by hand.**
 
 Corresponding is a free, open-source Chrome extension that takes the author list you already have and fills journal submission forms for you.
 
