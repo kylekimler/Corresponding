@@ -82,9 +82,11 @@ export function isAllowedWebsiteOrigin(
     return false;
   }
   if (parsed.origin === PRODUCTION_WEBSITE_ORIGIN) return true;
-  if (mode !== 'development') return false;
   const localHost =
     parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1';
+  // Local Vite is how the site is developed before corresponding.app is live.
+  // Remote pages are never allowed, regardless of build mode.
+  void mode;
   return localHost && (parsed.protocol === 'http:' || parsed.protocol === 'https:');
 }
 

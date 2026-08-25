@@ -27,7 +27,7 @@ describe('website origin validation', () => {
     );
   });
 
-  it('allows localhost only in development', () => {
+  it('allows localhost for the local web app in every mode', () => {
     expect(isAllowedWebsiteOrigin('http://localhost:5173', 'development')).toBe(
       true,
     );
@@ -35,7 +35,7 @@ describe('website origin validation', () => {
       true,
     );
     expect(isAllowedWebsiteOrigin('http://localhost:5173', 'production')).toBe(
-      false,
+      true,
     );
   });
 

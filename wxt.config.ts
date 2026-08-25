@@ -77,14 +77,11 @@ export default defineConfig({
       // First-party website only. Not a host permission and not a
       // content script. Journal pages still use activeTab injection.
       externally_connectable: {
-        matches:
-          mode === 'production'
-            ? ['https://corresponding.app/*']
-            : [
-                'https://corresponding.app/*',
-                'http://localhost/*',
-                'http://127.0.0.1/*',
-              ],
+        matches: [
+          'https://corresponding.app/*',
+          'http://localhost/*',
+          'http://127.0.0.1/*',
+        ],
       },
     };
   },
