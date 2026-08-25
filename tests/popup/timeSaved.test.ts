@@ -8,7 +8,10 @@ import {
   formatLifetimeHours,
   formatSavedDuration,
 } from '@/popup/timeSaved';
-import { createMemoryLifetimeHoursStore } from '@/popup/lifetimeHours';
+import {
+  LIFETIME_AUTHORS_STORAGE_KEY,
+  createMemoryLifetimeHoursStore,
+} from '@/popup/lifetimeHours';
 
 function reportForAuthors(count: number): FillReport {
   return {
@@ -104,5 +107,48 @@ describe('time saved delight', () => {
     expect(await store.recordEligibleFill(0)).toBe(0);
     expect(await store.recordEligibleFill(73)).toBe(73);
     expect(await store.recordEligibleFill(2)).toBe(75);
+  });
+
+  it('stores the lifetime count only on this device', () => {
+    expect(LIFETIME_AUTHORS_STORAGE_KEY).toBe(
+      'corresponding_lifetime_authors_v1',
+    );
+  });
+
+  it('counts Editorial Manager fill plans the same way the popup does', () => {
+    const emReport: FillReport = {
+      platformId: 'editorial-manager',
+      dryRun: false,
+      overwrite: false,
+      plans: [1, 2, 3].flatMap((sequence) => [
+        {
+          fieldId: 'FirstName',
+          label: 'Given/First Name',
+          authorSequence: sequence,
+          action: 'fill',
+          proposedValue: `Given${sequence}`,
+        },
+        {
+          fieldId: 'LastName',
+          label: 'Family/Last Name',
+          authorSequence: sequence,
+          action: 'overwrite',
+          proposedValue: `Family${sequence}`,
+        },
+      ]),
+      filled: 3,
+      preserved: 0,
+      overwritten: 3,
+      skippedConflicts: 0,
+      missingSource: 0,
+      unmapped: 0,
+      warnings: [],
+      errors: [],
+    };
+    expect(countFilledAuthors(emReport, 3)).toBe(3);
+    expect(countsTowardLifetime({
+      rosterSource: 'csv',
+      isDevelopmentFixture: false,
+    })).toBe(true);
   });
 });

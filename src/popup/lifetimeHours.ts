@@ -4,7 +4,11 @@
  * be recorded — those are practice, not researcher time saved.
  */
 
-const STORAGE_KEY = 'corresponding_lifetime_authors_v1';
+/** chrome.storage.local key. Local to this browser profile — not a
+ *  community-wide counter. Inspect in DevTools → Application → Extension
+ *  storage, or the popup footer. */
+export const LIFETIME_AUTHORS_STORAGE_KEY = 'corresponding_lifetime_authors_v1';
+const STORAGE_KEY = LIFETIME_AUTHORS_STORAGE_KEY;
 
 type StorageLike = {
   get: (key: string) => Promise<Record<string, unknown>>;

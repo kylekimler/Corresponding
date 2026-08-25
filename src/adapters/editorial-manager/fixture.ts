@@ -725,6 +725,42 @@ export function mountEditorialManagerFixture(
   return child;
 }
 
+/**
+ * Live PLOS Add New Author: list page, iframe dialog, leftover name after
+ * save, late re-render of another person, Validation-found-issues OK that
+ * leaves the form open, delayed Current Author List commit.
+ */
+export const EM_POPUP_VALIDATION_DEFAULTS: EditorialManagerFixtureOptions = {
+  startOnAuthorsList: true,
+  hideAuthorFrameAfterSave: true,
+  leaveFormOpenAfterValidationOk: true,
+  warnValidationIssues: true,
+  delayListCommitMs: 120,
+  reopenWithPreviousAuthor: true,
+  dialogsOnParent: true,
+  lateFlipIdentity: {
+    firstName: 'Given3',
+    lastName: 'Family3',
+    email: 'author3@example.org',
+    delayMs: 80,
+  },
+};
+
+export function mountEmPopupValidationHarness(
+  overrides: EditorialManagerFixtureOptions = {},
+): Document {
+  const form = mountEditorialManagerFixture({
+    ...EM_POPUP_VALIDATION_DEFAULTS,
+    ...overrides,
+  });
+  const iframe = document.getElementById('content') as HTMLIFrameElement | null;
+  if (iframe) {
+    iframe.hidden = true;
+    iframe.style.display = 'none';
+  }
+  return form;
+}
+
 export function readAuthorForm(doc: Document): {
   firstName: string;
   lastName: string;

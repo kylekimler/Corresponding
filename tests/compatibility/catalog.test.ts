@@ -5,7 +5,6 @@ import { defaultRegistry } from '@/adapters/registry';
 import { createEmptyRoster } from '@/roster/mutations';
 import {
   COMPATIBILITY_CATALOG,
-  COMPATIBILITY_CTA,
   COMPATIBILITY_ISSUE_URL,
   formatCompatibilityMarkdownTable,
   supportedCompatibilityCount,
@@ -18,12 +17,11 @@ function readRepo(relativePath: string): string {
 describe('compatibility scoreboard', () => {
   it('lists working and planned platforms in the README', () => {
     const readme = readRepo('README.md');
-    expect(readme).toContain('| Nature Portfolio | Working |');
-    expect(readme).toContain('| ScholarOne / Manuscript Central | Working |');
-    expect(readme).toContain('| Cell Press | In progress |');
-    expect(readme).toContain('| Wiley | In progress |');
-    expect(readme).toContain('| eLife | Planned |');
-    expect(readme).toContain(COMPATIBILITY_CTA);
+    expect(readme).toContain('| Nature Portfolio | Supported! |');
+    expect(readme).toContain('| ScholarOne / Manuscript Central | Supported! |');
+    expect(readme).toContain('| Cell Press | Not yet |');
+    expect(readme).toContain('| Wiley | Not yet |');
+    expect(readme).toContain('| eLife | Not yet |');
     expect(readme).toContain(COMPATIBILITY_ISSUE_URL);
   });
 

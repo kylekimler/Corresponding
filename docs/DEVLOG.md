@@ -4,6 +4,18 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-25 15:50 UTC
+- Editorial Manager write waits 150ms after each identity write so a late
+  PLOS re-render is visible before the correction write. That is one
+  Given3 flash + one rewrite, not a chase loop.
+- New playground: `fixtures/em-popup-validation.html` (and
+  `mountEmPopupValidationHarness`) copies list page, leftover name,
+  late flip, Validation-found-issues OK, delayed list commit.
+- Lifetime hours remain `chrome.storage.local` key
+  `corresponding_lifetime_authors_v1` on this device only.
+- verification: harness fills Given1/2/3; Given1 written at most twice;
+  README left untouched.
+
 ### 2026-08-20 05:12 UTC
 - README demos are looping GIFs. In-repo `.mov` files do not play on
   GitHub; the recordings were scaled down (800px, ScholarOne 600px) and

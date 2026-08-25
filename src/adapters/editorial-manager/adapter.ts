@@ -59,6 +59,10 @@ const COMMIT_WAIT_MS = 8_000;
 const SETTLE_INTERVAL_MS = 50;
 const SETTLE_SAMPLES = 2;
 const SETTLE_TIMEOUT_MS = 2_000;
+/** PLOS can paint another identity ~80ms after a write. Wait that out
+ *  before deciding the dialog is stable, so we correct once instead of
+ *  chasing the late paint with extra First/Last flashes. */
+const LATE_PAINT_MS = 150;
 
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => {
@@ -715,11 +719,13 @@ async function writeAndVerifyAuthor(
   }
   await waitUntilFormSettled(form);
   let plans = writeAuthorIntoForm(form, author, writeOptions, false);
+  await delay(LATE_PAINT_MS);
   await waitUntilFormSettled(form);
   if (samePerson(formIdentity(form), author)) {
     return { plans, verified: true };
   }
   plans = writeAuthorIntoForm(form, author, { ...writeOptions, overwrite: true }, false);
+  await delay(LATE_PAINT_MS);
   await waitUntilFormSettled(form);
   return { plans, verified: samePerson(formIdentity(form), author) };
 }
