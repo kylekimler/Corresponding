@@ -77,7 +77,7 @@ export function parseCsv(text: string): CsvParseResult {
  * Excel/Sheets/LibreOffice. Prefixes leading =, +, -, @, tab, CR with a quote.
  */
 export function neutralizeCsvFormula(value: string): string {
-  if (/^[=+\-@\t\r]/.test(value)) {
+  if (/^[=+\-@\t\r]/.test(value) || /^'[=+\-@\t\r]/.test(value)) {
     return `'${value}`;
   }
   return value;

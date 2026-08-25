@@ -22,10 +22,10 @@ describe('radically free product', () => {
   it('leads the README with the hated-form hook', () => {
     const readme = readRepo('README.md');
     expect(readme).toMatch(
-      /Stop entering every author into journal submission forms by hand/,
+      /Stop entering author information into journal submission forms by hand/,
     );
     expect(readme).toMatch(
-      /No account\. No backend\. No author data leaves your device/,
+      /Corresponding does not collect your information/,
     );
     expect(readme).toMatch(/\[MIT\]/);
     expect(readme).not.toMatch(/Proprietary/);

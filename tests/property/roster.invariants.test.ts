@@ -151,12 +151,22 @@ describe('property-based roster invariants', () => {
         });
         expect(imported.authors).toHaveLength(roster.authors.length);
         for (let i = 0; i < roster.authors.length; i += 1) {
-          expect(imported.authors[i]?.givenName).toBe(
-            roster.authors[i]?.givenName.trim(),
-          );
-          expect(imported.authors[i]?.familyName).toBe(
-            roster.authors[i]?.familyName.trim(),
-          );
+          const wantGiven = roster.authors[i]?.givenName.trim();
+          const wantFamily = roster.authors[i]?.familyName.trim();
+          const gotGiven = imported.authors[i]?.givenName;
+          const gotFamily = imported.authors[i]?.familyName;
+          if (gotGiven !== wantGiven || gotFamily !== wantFamily) {
+            console.log('CSV round-trip name mismatch', {
+              index: i,
+              wantGiven,
+              gotGiven,
+              wantFamily,
+              gotFamily,
+              csv,
+            });
+          }
+          expect(gotGiven).toBe(wantGiven);
+          expect(gotFamily).toBe(wantFamily);
           expect(imported.authors[i]?.email || undefined).toBe(
             roster.authors[i]?.email || undefined,
           );

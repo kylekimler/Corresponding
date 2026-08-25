@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Add/Edit/Remove Authors</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 1.5rem; max-width: 52rem; }
+    h1 { font-size: 1.1rem; }
+    .note { color: #444; font-size: 0.9rem; }
+    .list { border: 1px solid #bbb; padding: 0.75rem; margin: 1rem 0; }
+    .dialog { border: 1px solid #888; padding: 1rem; margin-top: 1rem; background: #fafafa; }
+    .row { margin: 0.4rem 0; }
+    label { display: inline-block; min-width: 11rem; }
+    .fl-add-btn { margin-right: 0.5rem; }
+    .fl-flToolSave { padding: 0.4rem 0.8rem; }
+    .log { font-family: ui-monospace, monospace; font-size: 0.8rem; white-space: pre-wrap;
+           background: #111; color: #eee; padding: 0.75rem; min-height: 6rem; }
+    [hidden] { display: none !important; }
+    .warn { border: 1px solid #b58900; background: #fff8e1; padding: 0.75rem; margin: 0.5rem 0; }
+  </style>
+</head>
+<body>
+  <h1>Editorial Manager / PLOS — popup + validation harness</h1>
+  <p class="note">
+    Observed IDs from PLOS Add New Author. Live behaviors: leftover name after
+    Save, late re-render of another person, “Validation found issues” OK that
+    leaves the dialog open, delayed Current Author List commit.
+    Open via <code>npm run dev</code> then
+    <code>http://localhost:3000/fixtures/em-popup-validation.html</code>.
+  </p>
+
+  <p>
+    <label><input type="checkbox" id="opt-late-flip" checked /> Late flip to Given3</label>
+    <label><input type="checkbox" id="opt-validation" checked /> Validation found issues</label>
+    <label><input type="checkbox" id="opt-leftover" checked /> Leftover previous author</label>
+  </p>
+
+  <div class="list" id="current-author-list">
+    <div>Current Author List</div>
+    <div id="committed-authors"></div>
+    <button type="button" class="fl-add-btn" id="list-add-top">+ Add Another Author</button>
+    <button type="button" class="fl-add-btn" id="list-add-bottom">+ Add Another Author</button>
+  </div>
+
+  <input type="text" id="authorsCount" name="authorsCount" value="0" />
+  <button type="button" id="StepIndicator_stepManuscriptDataButton">Manuscript Data</button>
+  <select id="RoleDropdown" name="RoleDropdown">
+    <option>Author</option>
+    <option>Reviewer</option>
+  </select>
+
+  <div id="author-dialog" class="dialog" hidden>
+    <label for="FirstName">Given/First Name *</label>
+    <input type="text" id="FirstName" name="ctl00$FirstName" />
+    <div class="row">
+      <label for="LastName">Family/Last Name *</label>
+      <input type="text" id="LastName" name="ctl00$LastName" />
+    </div>
+    <div class="row">
+      <label for="Email">E-mail Address *</label>
+      <input type="text" id="Email" name="ctl00$Email" />
+    </div>
+    <div class="row">
+      <label for="Institution">Institution *</label>
+      <input type="text" id="Institution" name="ctl00$Institution" />
+    </div>
+    <div class="row">
+      <label for="Department">Department *</label>
+      <input type="text" id="Department" name="ctl00$Department" />
+    </div>
+    <div class="row">
+      <label for="City">City</label>
+      <input type="text" id="City" name="ctl00$City" />
+    </div>
+    <div class="row">
+      <label for="Zipcode">Zip or Postal Code *</label>
+      <input type="text" id="Zipcode" name="ctl01$Zipcode" class="valueCell required Zipcode" />
+    </div>
+    <div class="row">
+      <label for="CountryCode">Country or Region *</label>
+      <select id="CountryCode" name="ctl00$CountryCode">
+        <option value="">Select country</option>
+        <option value="United States">United States</option>
+        <option value="United Kingdom">United Kingdom</option>
+      </select>
+    </div>
+    <input type="text" id="MiddleName" name="ctl00$MiddleName" hidden />
+    <textarea id="Affiliation" name="ctl00$Affiliation" hidden></textarea>
+    <input type="text" id="State" name="ctl00$State" hidden />
+    <div>
+      <input type="image" id="EditButton" name="ctl01$ctl24$EditButton"
+             title="Edit Contributor Roles" alt="Edit Contributor Roles" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" />
+      <div id="contributor-roles-panel">
+        <label><input type="checkbox" id="ContributorRole_0" /> Conceptualization</label>
+        <label><input type="checkbox" id="ContributorRole_5" /> Methodology</label>
+        <label><input type="checkbox" id="ContributorRole_4" /> Investigation</label>
+        <label><input type="checkbox" id="ContributorRole_9" /> Supervision</label>
+        <input type="image" id="roles-floppy" title="Collapse and Save Changes"
+               alt="Collapse and Save Changes" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" />
+      </div>
+    </div>
+    <label>
+      <input type="checkbox" id="CorrespondingAuthorCheckbox" name="ctl00$CorrespondingAuthorCheckbox" />
+      This is the corresponding author
+    </label>
+    <div class="ui-dialog fl-dlg">
+      <div class="fl-toolbox">
+        <button type="button" class="fl-tool fl-flToolSave" title="Save This Author"
+                aria-label="Save This Author" data-toolname="AuthorSave">Save This Author</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="validation-issues" class="warn ui-dialog" hidden>
+    <div class="ui-dialog-titlebar">Warning</div>
+    Validation found issues. Review the highlighted counts and form.
+    <button type="button" id="validation-issues-ok" class="ui-button" role="button">
+      <span class="ui-button-text">OK</span>
+    </button>
+  </div>
+
+  <h2>Write log</h2>
+  <div id="write-log" class="log"></div>
+
+  <script>
+    const first = document.getElementById('FirstName');
+    const last = document.getElementById('LastName');
+    const email = document.getElementById('Email');
+    const dialog = document.getElementById('author-dialog');
+    const validation = document.getElementById('validation-issues');
+    const logEl = document.getElementById('write-log');
+    const committed = document.getElementById('committed-authors');
+    const count = document.getElementById('authorsCount');
+    const harness = {
+      firstNameValues: [],
+      namesAtSave: [],
+      leftover: { firstName: '', lastName: '', email: '' },
+    };
+    window.__corrHarness = harness;
+
+    function logLine() {
+      logEl.textContent = JSON.stringify(harness, null, 2);
+    }
+    function track(value) {
+      harness.firstNameValues.push(value);
+      logLine();
+    }
+    const proto = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+    Object.defineProperty(first, 'value', {
+      get() { return proto.get.call(this); },
+      set(next) {
+        proto.set.call(this, next);
+        track(next);
+      },
+    });
+    first.addEventListener('input', () => track(first.value));
+
+    let lateFlipArmed = true;
+    first.addEventListener('input', () => {
+      if (!document.getElementById('opt-late-flip').checked || !lateFlipArmed) return;
+      lateFlipArmed = false;
+      setTimeout(() => {
+        first.value = 'Given3';
+        last.value = 'Family3';
+        email.value = 'author3@example.org';
+      }, 80);
+    });
+
+    function identity() {
+      return { firstName: first.value, lastName: last.value, email: email.value };
+    }
+
+    function publish(person) {
+      const row = document.createElement('div');
+      row.textContent = (person.firstName + ' ' + person.lastName).trim();
+      committed.append(row);
+      count.value = String(Number.parseInt(count.value || '0', 10) + 1);
+    }
+
+    document.getElementById('validation-issues-ok').addEventListener('click', (event) => {
+      event.preventDefault();
+      validation.hidden = true;
+      harness.leftover = identity();
+      setTimeout(() => publish(harness.leftover), 120);
+    });
+
+    document.querySelector('[data-toolname="AuthorSave"]').addEventListener('click', (event) => {
+      event.preventDefault();
+      harness.namesAtSave.push(first.value);
+      logLine();
+      if (document.getElementById('opt-validation').checked) {
+        validation.hidden = false;
+        return;
+      }
+      harness.leftover = identity();
+      publish(harness.leftover);
+      first.value = '';
+      last.value = '';
+      email.value = '';
+      dialog.hidden = true;
+    });
+
+    function openDialog() {
+      dialog.hidden = false;
+      lateFlipArmed = document.getElementById('opt-late-flip').checked;
+      if (document.getElementById('opt-leftover').checked) {
+        first.value = harness.leftover.firstName;
+        last.value = harness.leftover.lastName;
+        email.value = harness.leftover.email;
+      }
+    }
+    for (const btn of document.querySelectorAll('.fl-add-btn')) {
+      btn.addEventListener('click', (event) => {
+        event.preventDefault();
+        openDialog();
+      });
+    }
+    logLine();
+  </script>
+</body>
+</html>
