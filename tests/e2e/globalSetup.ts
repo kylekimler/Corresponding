@@ -1,5 +1,6 @@
 import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { isFirstPartyWebsiteMatch } from '../../src/messaging/websiteHandshake';
 
 export const E2E_EXTENSION_PATH = path.resolve('.wxt/playwright-extension');
 const PRODUCTION_EXTENSION_PATH = path.resolve('.output/chrome-mv3');
@@ -9,7 +10,7 @@ type Manifest = {
   name?: string;
   permissions?: string[];
   host_permissions?: string[];
-  content_scripts?: unknown[];
+  content_scripts?: Array<{ matches?: string[] }>;
 };
 
 export default async function globalSetup(): Promise<void> {
@@ -32,10 +33,22 @@ export default async function globalSetup(): Promise<void> {
   if ((manifest.host_permissions?.length ?? 0) > 0) {
     throw new Error('Production manifest must not contain host permissions');
   }
-  if ((manifest.content_scripts?.length ?? 0) > 0) {
+  const websiteScripts = manifest.content_scripts ?? [];
+  if (websiteScripts.length === 0) {
     throw new Error(
-      'Production manifest must not register automatic content scripts',
+      'Production manifest must include the corresponding.app handshake content script',
     );
+  }
+  for (const script of websiteScripts) {
+    const matches = script.matches ?? [];
+    if (
+      matches.length === 0 ||
+      matches.some((match) => !isFirstPartyWebsiteMatch(match))
+    ) {
+      throw new Error(
+        'Production content scripts may only match corresponding.app or local Vite ports',
+      );
+    }
   }
 
   await rm(E2E_EXTENSION_PATH, { recursive: true, force: true });

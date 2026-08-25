@@ -1,9 +1,12 @@
 import type { Roster } from '@/schema/author';
 import type { WebsiteRequest, WebsiteResponse } from '@/messaging/website';
+import {
+  createWebsiteHandshakeRequest,
+  isWebsiteHandshakeReady,
+} from '@/messaging/websiteHandshake';
 
 export type BridgeErrorCode =
   | 'NOT_INSTALLED'
-  | 'NO_ID'
   | 'UNAVAILABLE'
   | 'FORBIDDEN'
   | 'INVALID'
@@ -23,6 +26,9 @@ type ChromeRuntime = {
   lastError?: { message?: string };
 };
 
+export const EXTENSION_NOT_CONNECTED =
+  'Extension not connected. The roster is saved in this browser only.';
+
 function getChromeRuntime(): ChromeRuntime | undefined {
   const chromeApi = (
     globalThis as { chrome?: { runtime?: ChromeRuntime } }
@@ -30,9 +36,51 @@ function getChromeRuntime(): ChromeRuntime | undefined {
   return chromeApi?.runtime;
 }
 
+let cachedExtensionId = '';
+
 export function configuredExtensionId(): string {
   const value = import.meta.env.VITE_EXTENSION_ID;
   return typeof value === 'string' ? value.trim() : '';
+}
+
+export function discoverExtensionId(
+  options: {
+    timeoutMs?: number;
+    addListener?: typeof window.addEventListener;
+    removeListener?: typeof window.removeEventListener;
+    postMessage?: typeof window.postMessage;
+    origin?: string;
+  } = {},
+): Promise<string> {
+  const configured = configuredExtensionId();
+  if (configured) return Promise.resolve(configured);
+  if (cachedExtensionId) return Promise.resolve(cachedExtensionId);
+
+  const addListener = options.addListener ?? window.addEventListener.bind(window);
+  const removeListener =
+    options.removeListener ?? window.removeEventListener.bind(window);
+  const post =
+    options.postMessage ?? window.postMessage.bind(window);
+  const origin = options.origin ?? window.location.origin;
+
+  return new Promise((resolve) => {
+    const timer = window.setTimeout(() => {
+      removeListener('message', onMessage);
+      resolve('');
+    }, options.timeoutMs ?? 1200);
+
+    function onMessage(event: MessageEvent) {
+      if (event.origin !== origin) return;
+      if (!isWebsiteHandshakeReady(event.data)) return;
+      window.clearTimeout(timer);
+      removeListener('message', onMessage);
+      cachedExtensionId = event.data.extensionId;
+      resolve(event.data.extensionId);
+    }
+
+    addListener('message', onMessage);
+    post(createWebsiteHandshakeRequest(), origin);
+  });
 }
 
 export function sendToExtension(
@@ -43,73 +91,77 @@ export function sendToExtension(
     timeoutMs?: number;
   } = {},
 ): Promise<BridgeResult> {
-  const extensionId = options.extensionId ?? configuredExtensionId();
-  if (!extensionId) {
-    return Promise.resolve({
-      type: 'ERROR',
-      code: 'NO_ID',
-      message:
-        'The web app does not know the Corresponding extension id yet. Set VITE_EXTENSION_ID for local development.',
-    });
-  }
-
-  const runtime = options.runtime ?? getChromeRuntime();
-  if (!runtime?.sendMessage) {
-    return Promise.resolve({
-      type: 'ERROR',
-      code: 'NOT_INSTALLED',
-      message: 'The Corresponding extension is not installed in this browser.',
-    });
-  }
-
-  return new Promise((resolve) => {
-    let settled = false;
-    const timer = setTimeout(() => {
-      if (settled) return;
-      settled = true;
-      resolve({
+  return (async () => {
+    const extensionId =
+      options.extensionId ?? (await discoverExtensionId());
+    if (!extensionId) {
+      return {
         type: 'ERROR',
-        code: 'UNAVAILABLE',
-        message: 'The extension did not respond.',
-      });
-    }, options.timeoutMs ?? 4000);
+        code: 'NOT_INSTALLED',
+        message: EXTENSION_NOT_CONNECTED,
+      };
+    }
 
-    try {
-      runtime.sendMessage(extensionId, message, (response) => {
+    const runtime = options.runtime ?? getChromeRuntime();
+    if (!runtime?.sendMessage) {
+      return {
+        type: 'ERROR',
+        code: 'NOT_INSTALLED',
+        message: EXTENSION_NOT_CONNECTED,
+      };
+    }
+
+    return new Promise((resolve) => {
+      let settled = false;
+      const timer = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        resolve({
+          type: 'ERROR',
+          code: 'UNAVAILABLE',
+          message: 'The extension did not respond.',
+        });
+      }, options.timeoutMs ?? 4000);
+
+      try {
+        runtime.sendMessage(extensionId, message, (response) => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timer);
+          if (runtime.lastError) {
+            resolve({
+              type: 'ERROR',
+              code: 'NOT_INSTALLED',
+              message: EXTENSION_NOT_CONNECTED,
+            });
+            return;
+          }
+          if (
+            !response ||
+            typeof response !== 'object' ||
+            !('type' in response)
+          ) {
+            resolve({
+              type: 'ERROR',
+              code: 'UNAVAILABLE',
+              message: 'The extension did not respond.',
+            });
+            return;
+          }
+          resolve(response as WebsiteResponse);
+        });
+      } catch {
         if (settled) return;
         settled = true;
         clearTimeout(timer);
-        if (runtime.lastError) {
-          resolve({
-            type: 'ERROR',
-            code: 'NOT_INSTALLED',
-            message:
-              runtime.lastError.message ??
-              'Could not reach the Corresponding extension.',
-          });
-          return;
-        }
-        if (!response || typeof response !== 'object' || !('type' in response)) {
-          resolve({
-            type: 'ERROR',
-            code: 'UNAVAILABLE',
-            message: 'The extension returned an empty reply.',
-          });
-          return;
-        }
-        resolve(response as WebsiteResponse);
-      });
-    } catch {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      resolve({
-        type: 'ERROR',
-        code: 'NOT_INSTALLED',
-        message: 'The Corresponding extension is not installed in this browser.',
-      });
-    }
-  });
+        resolve({
+          type: 'ERROR',
+          code: 'NOT_INSTALLED',
+          message: EXTENSION_NOT_CONNECTED,
+        });
+      }
+    });
+  })();
 }
 
 export function pingExtension(

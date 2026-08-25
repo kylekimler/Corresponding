@@ -4,6 +4,12 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-25 20:50 UTC
+- Website finds the installed extension by a first-party handshake. Scientists
+  never set `VITE_EXTENSION_ID`. The content script matches only
+  corresponding.app and local Vite ports; journal pages stay on-demand inject.
+- verification: handshake origin/id tests; bridge no longer mentions env vars.
+
 ### 2026-08-25 20:00 UTC
 - Web app MVP at `web/`: local manuscript workspace (title, paste/CSV/manual
   authors, order, corresponding, affiliations, ORCID, CRediT) with no account

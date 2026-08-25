@@ -155,13 +155,10 @@ export function Workspace() {
         const ping = await pingExtension();
         if (cancelled) return;
         if (ping.type !== 'PONG') {
-          const code = ping.type === 'ERROR' ? ping.code : 'UNAVAILABLE';
           setSync({
             kind: 'not_installed',
             detail:
-              code === 'NO_ID'
-                ? 'Set VITE_EXTENSION_ID so this page can find the installed extension.'
-                : 'Extension not connected. The roster is saved in this browser only.',
+              'Extension not connected. The roster is saved in this browser only.',
           });
           return;
         }
@@ -445,7 +442,7 @@ export function Workspace() {
             <p>
               {authors.length === 0
                 ? 'Paste an author block or add people by hand.'
-                : 'Connect the Chrome extension to make this roster available on journal sites.'}
+                : 'Open a journal submission portal and click Corresponding to fill once the extension is connected.'}
             </p>
           </>
         )}

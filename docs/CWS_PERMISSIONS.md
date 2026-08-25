@@ -22,6 +22,10 @@ None required for Nature MTS filling (activeTab model).
 save a roster into local extension storage. It does not grant access to journal
 sites, and website messages cannot trigger fill.
 
+A content script runs only on corresponding.app (and local Vite ports in
+development). It announces that the extension is installed. It does not read
+author fields or journal pages.
+
 Optional future Google Sheets import may add OAuth (`identity`) and Google API host access limited to Sheets read-only endpoints — only when credentials are configured and the feature is enabled. Sheets write access will not be requested.
 
 ## Single purpose
