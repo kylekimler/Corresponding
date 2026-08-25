@@ -4,6 +4,14 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-25 16:00 UTC
+- Community hours backend: Cloudflare Worker accepts only `{ v: 1, authors }`
+  and serves GET /stats. Popup pings after eligible fills; sample/fixture
+  fills and Vitest do not. Failures cannot break Fill.
+- Privacy/product updated. README left untouched.
+- verification: protocol rejects email/name/url; worker increments 12+3;
+  ping posts only v and authors.
+
 ### 2026-08-25 15:50 UTC
 - Editorial Manager write waits 150ms after each identity write so a late
   PLOS re-render is visible before the correction write. That is one

@@ -2,7 +2,7 @@
 
 **Product:** Corresponding
 **Status:** Draft for development and Chrome Web Store preparation  
-**Last updated:** 2026-08-14
+**Last updated:** 2026-08-25
 
 ## Summary
 
@@ -39,7 +39,8 @@ The extension does **not** intentionally read, store, or transmit:
 
 ## Network activity
 
-- Form filling runs in the active tab using on-demand scripting (`activeTab`). Author data is not sent to a journal-autofill server.
+- Form filling runs in the active tab using on-demand scripting (`activeTab`). Author names, emails, affiliations, and manuscript text are not sent to a Corresponding server.
+- After an eligible Fill (not sample authors, not development fixtures), the extension may POST `{ "v": 1, "authors": N }` to the Corresponding hours counter so we can estimate community hours saved for marketing. That request contains no names, emails, ORCID, roster identifiers, page URLs, or manuscript text. It cannot break Fill if it fails.
 - DOCX parsing runs locally in the extension. The selected file is not uploaded
   to Corresponding.
 - Optional Google Sheets import (when configured) uses Chrome Identity OAuth with the minimum Google Sheets **read-only** scope to fetch sheet rows you explicitly select. Those rows are normalized locally into the author schema. No write access to Google Sheets is requested.
@@ -64,9 +65,9 @@ The extension never clicks final submission, certification, copyright acceptance
 - Journal submission portals receive only the form values you choose to fill into their pages (same as manual entry).
 - Google (optional Sheets import) receives OAuth consent and read requests for sheets you authorize.
 - There is no analytics pipeline that transmits author PII.
-- Lifetime hours saved are a clearly labeled local estimate on this device.
-  The extension does not send usage telemetry and does not compute a
-  community-wide counter.
+- Lifetime hours in the popup footer are a local estimate on this device.
+  A separate privacy-safe increment (author count only) updates the
+  community hours total used for marketing.
 
 ## Contact
 
