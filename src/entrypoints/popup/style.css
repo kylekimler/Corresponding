@@ -88,6 +88,10 @@ textarea {
   font: inherit;
 }
 
+a {
+  color: var(--c-accent);
+}
+
 button {
   appearance: none;
   border: 1px solid var(--c-accent);

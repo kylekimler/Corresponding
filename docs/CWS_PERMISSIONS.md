@@ -18,6 +18,10 @@ Injects the content script on demand into the active tab after the user invokes 
 
 None required for Nature MTS filling (activeTab model).
 
+`externally_connectable` is not a permission. It lets `https://corresponding.app`
+save a roster into local extension storage. It does not grant access to journal
+sites, and website messages cannot trigger fill.
+
 Optional future Google Sheets import may add OAuth (`identity`) and Google API host access limited to Sheets read-only endpoints — only when credentials are configured and the feature is enabled. Sheets write access will not be requested.
 
 ## Single purpose

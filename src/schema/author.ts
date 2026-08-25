@@ -50,6 +50,7 @@ export const RosterSourceSchema = z.enum([
   'google_sheets',
   'json',
   'duplicate',
+  'web',
 ]);
 
 export const ROSTER_SCHEMA_VERSION = 1;

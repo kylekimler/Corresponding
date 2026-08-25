@@ -17,6 +17,8 @@
     "playwright.config.ts",
     "vitest.config.ts",
     "services/hours-counter/**/*.ts",
+    "web/**/*.ts",
+    "web/**/*.tsx",
     ".wxt/wxt.d.ts"
   ]
 }
