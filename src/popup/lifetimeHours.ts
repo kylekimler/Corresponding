@@ -4,9 +4,8 @@
  * be recorded — those are practice, not researcher time saved.
  */
 
-/** chrome.storage.local key. Local to this browser profile — not a
- *  community-wide counter. Inspect in DevTools → Application → Extension
- *  storage, or the popup footer. */
+/** chrome.storage.local key. The popup footer is this device only.
+ *  Eligible fills also POST an author count (no PII) to the hours worker. */
 export const LIFETIME_AUTHORS_STORAGE_KEY = 'corresponding_lifetime_authors_v1';
 const STORAGE_KEY = LIFETIME_AUTHORS_STORAGE_KEY;
 

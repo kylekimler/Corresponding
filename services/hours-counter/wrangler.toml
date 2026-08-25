@@ -1,0 +1,11 @@
+name = "corresponding-hours"
+main = "worker.ts"
+compatibility_date = "2026-08-25"
+
+# Create with: npx wrangler kv namespace create HOURS
+# Then paste the id here (and in [[kv_namespaces]] below).
+# Without KV the worker still runs, but totals reset on every isolate.
+
+# [[kv_namespaces]]
+# binding = "HOURS"
+# id = "replace-me"

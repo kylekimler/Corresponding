@@ -40,6 +40,7 @@ import {
   chooseSelectedRosterId,
   createPopupPreferences,
 } from '@/popup/preferences';
+import { pingCommunityHours } from '@/hours/ping';
 import { createLifetimeHoursStore } from '@/popup/lifetimeHours';
 import { summarizePreview } from '@/popup/previewSummary';
 import {
@@ -242,6 +243,7 @@ export function App({ surface = 'popup' }: { surface?: 'popup' | 'page' } = {}) 
       countsTowardLifetime({ rosterSource, isDevelopmentFixture })
     ) {
       setLifetimeAuthors(await lifetimeHours.recordEligibleFill(authors));
+      void pingCommunityHours(authors);
     }
     return delight;
   }

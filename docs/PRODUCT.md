@@ -26,7 +26,8 @@ A Chrome Manifest V3 extension that:
 9. After a successful fill, tells the scientist how many authors were filled
    and how much time that gave back (about 40 seconds per author). The popup
    footer keeps a local lifetime hours estimate. Example authors and test
-   fixtures are not counted. There is no community-wide counter.
+   fixtures are not counted. Eligible fills also increment a community
+   hours total via a privacy-safe author-count ping (no PII).
 
 ## Supported platform adapters
 
