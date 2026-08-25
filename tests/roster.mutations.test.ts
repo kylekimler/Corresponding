@@ -5,6 +5,7 @@ import {
   removeAuthor,
   reorderAuthors,
   renameRoster,
+  setAuthorCorresponding,
   setCorrespondingAuthor,
   updateAuthor,
 } from '@/roster/mutations';
@@ -41,6 +42,18 @@ describe('roster mutations', () => {
     const r = createEmptyRoster('Blank');
     expect(r.authors).toHaveLength(0);
     expect(r.source).toBe('manual');
+  });
+
+  it('can mark more than one corresponding author', () => {
+    const roster = makeRoster(makeNAuthors(2));
+    const both = setAuthorCorresponding(
+      roster,
+      roster.authors[1]!.id,
+      true,
+    );
+    expect(both.authors.filter((author) => author.isCorresponding)).toHaveLength(
+      2,
+    );
   });
 
   it('adds and removes authors while maintaining sequence', () => {

@@ -26,6 +26,11 @@ On your device, the extension may store:
 
 Storage uses Chrome extension local storage APIs.
 
+The optional corresponding.app website keeps a manuscript draft in the
+browser (`localStorage`) and may send that roster only to the installed
+Corresponding extension on the same device. It does not create an account
+and does not upload author information to a Corresponding server.
+
 ## Data we do not collect
 
 The extension does **not** intentionally read, store, or transmit:

@@ -7,7 +7,10 @@
   "type": "module",
   "scripts": {
     "dev": "wxt",
+    "dev:web": "vite --config web/vite.config.ts",
     "build": "wxt build",
+    "build:web": "vite build --config web/vite.config.ts",
+    "preview:web": "vite preview --config web/vite.config.ts",
     "zip": "wxt zip",
     "postinstall": "wxt prepare",
     "test": "vitest run",

@@ -4,6 +4,19 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-08-25 20:00 UTC
+- Web app MVP at `web/`: local manuscript workspace (title, paste/CSV/manual
+  authors, order, corresponding, affiliations, ORCID, CRediT) with no account
+  or backend. Drafts persist in `localStorage` and sync to the extension.
+- Extension background now accepts origin-checked `externally_connectable`
+  messages from corresponding.app (localhost in development only). Website
+  cannot send FILL / DETECT / INSPECT. Permissions unchanged.
+- Shared pieces: manuscript schema, author-block parser, website message
+  protocol. Fill adapters and on-demand journal injection are untouched.
+- Deploy config is static (`npm run build:web` → `web/dist`). Not published.
+- verification: unit tests for serialization, origin, sync, parser, and
+  persistence; then full suite / typecheck / extension build / web build.
+
 ### 2026-08-25 16:00 UTC
 - Community hours backend: Cloudflare Worker accepts only `{ v: 1, authors }`
   and serves GET /stats. Popup pings after eligible fills; sample/fixture

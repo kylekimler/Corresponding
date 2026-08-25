@@ -59,6 +59,23 @@ export function setCorrespondingAuthor(
   };
 }
 
+/** Set one author's corresponding flag without clearing the others. */
+export function setAuthorCorresponding(
+  roster: Roster,
+  authorId: string,
+  isCorresponding: boolean,
+): Roster {
+  if (!roster.authors.some((a) => a.id === authorId)) {
+    throw new Error(`Author not found: ${authorId}`);
+  }
+  return {
+    ...roster,
+    authors: roster.authors.map((a) =>
+      a.id === authorId ? { ...a, isCorresponding } : a,
+    ),
+  };
+}
+
 export function createEmptyRoster(name = 'New roster'): Roster {
   const now = new Date().toISOString();
   return {
@@ -83,6 +100,7 @@ export function addAuthor(
     givenName: partial?.givenName?.trim() || 'Given',
     middleName: partial?.middleName,
     familyName: partial?.familyName?.trim() || 'Family',
+    namePrefix: partial?.namePrefix,
     email: partial?.email,
     orcid: partial?.orcid,
     isCorresponding:

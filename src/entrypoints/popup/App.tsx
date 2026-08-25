@@ -807,10 +807,23 @@ export function App({ surface = 'popup' }: { surface?: 'popup' | 'page' } = {}) 
               </button>
             </div>
             {showSampleOnboarding && (
-              <p className="muted tight">
-                Example authors for practice: two shared first, two shared
-                corresponding. Not real people.
-              </p>
+              <>
+                <p className="muted tight">
+                  Example authors for practice: two shared first, two shared
+                  corresponding. Not real people.
+                </p>
+                <p className="muted tight">
+                  Or prepare the roster at{' '}
+                  <a
+                    href="https://corresponding.app"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    corresponding.app
+                  </a>
+                  .
+                </p>
+              </>
             )}
           </section>
         ) : (
