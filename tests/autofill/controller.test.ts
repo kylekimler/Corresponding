@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { buildNatureMtsFixtureHtml, mountNatureMtsFixture } from '@/adapters/nature-mts/fixture';
 import { startContextualAutofill } from '@/autofill/controller';
-import { FIELD_CARD_ATTR, PAGE_CHIP_ATTR } from '@/autofill/ui';
+import { FIELD_CARD_ATTR, PAGE_CHIP_ATTR, REVIEW_NOTICE_ATTR } from '@/autofill/ui';
+import { runContextualFill, type ContextualFillResult } from '@/autofill/fill';
 import { makeAuthor, makeNAuthors, makeRoster } from '../helpers/roster';
 import type { Roster } from '@/schema/author';
 
@@ -41,6 +42,7 @@ function card(controller: ReturnType<typeof startContextualAutofill>) {
 async function start(options: {
   roster?: Roster | undefined;
   subscribe?: (listener: () => void) => () => void;
+  fill?: typeof runContextualFill;
 }) {
   let current = options.roster;
   const controller = startContextualAutofill({
@@ -50,6 +52,7 @@ async function start(options: {
     isTopFrame: true,
     getActiveRoster: async () => current,
     subscribeRoster: options.subscribe,
+    fill: options.fill,
   });
   await controller.refresh();
   return {
@@ -61,6 +64,108 @@ async function start(options: {
 }
 
 describe('contextual autofill controller', () => {
+  const review = (controller: ReturnType<typeof startContextualAutofill>) =>
+    controller.ui.shadow.querySelector(`[${REVIEW_NOTICE_ATTR}]`);
+  const fillWithWarning: typeof runContextualFill = async (...args) => {
+    const result = await runContextualFill(...args);
+    if (result.ok) result.report.warnings.push('Author 1 saved with journal validation marks.');
+    return result;
+  };
+
+  it('keeps warnings visible after fill, focus changes, and DOM refresh without offering a duplicate fill', async () => {
+    mountNatureMtsFixture({ slots: 2 });
+    const fill = vi.fn(fillWithWarning);
+    const { controller } = await start({ roster: kyleAdaRoster(), fill });
+    chip(controller)!.querySelector('button')!.click();
+    await vi.waitFor(() => expect(review(controller)?.textContent).toContain('journal validation marks'));
+    expect(chip(controller)).toBeNull();
+    document.getElementById('contrib_auth_1_first_nm')!.dispatchEvent(new Event('focusin', { bubbles: true }));
+    await controller.refresh();
+    expect(review(controller)).toBeTruthy();
+    expect(card(controller)).toBeNull();
+    expect(review(controller)?.textContent).not.toContain('Fill authors');
+    review(controller)!.querySelector('button')!.click();
+    await controller.refresh();
+    expect(review(controller)).toBeNull();
+    expect(chip(controller)).toBeNull();
+    expect(fill).toHaveBeenCalledTimes(1);
+    controller.destroy();
+  });
+
+  it('shows a persistent review notice after a one-author fill as well', async () => {
+    mountNatureMtsFixture({ slots: 2 });
+    const { controller } = await start({ roster: kyleAdaRoster(), fill: fillWithWarning });
+    document.getElementById('contrib_auth_2_first_nm')!.dispatchEvent(new Event('focusin', { bubbles: true }));
+    card(controller)!.querySelector('button')!.click();
+    await vi.waitFor(() => expect(review(controller)).toBeTruthy());
+    expect(card(controller)).toBeNull();
+    expect((document.getElementById('contrib_auth_1_first_nm') as HTMLInputElement).value).toBe('');
+    controller.destroy();
+  });
+
+  it('clears old review notices when the website updates or removes the roster', async () => {
+    mountNatureMtsFixture({ slots: 2 });
+    const data = kyleAdaRoster();
+    const { controller, setRoster } = await start({ roster: data, fill: fillWithWarning });
+    chip(controller)!.querySelector('button')!.click();
+    await vi.waitFor(() => expect(review(controller)).toBeTruthy());
+    setRoster({ ...data, updatedAt: '2026-09-12T00:00:00.000Z' });
+    await controller.refresh();
+    expect(review(controller)).toBeNull();
+    expect(chip(controller)).toBeTruthy();
+    setRoster(undefined);
+    await controller.refresh();
+    expect(chip(controller)).toBeNull();
+    controller.destroy();
+  });
+
+  it('clears review notices on SPA navigation and hides them on unsupported content', async () => {
+    mountNatureMtsFixture({ slots: 2 });
+    const { controller } = await start({ roster: kyleAdaRoster(), fill: fillWithWarning });
+    chip(controller)!.querySelector('button')!.click();
+    await vi.waitFor(() => expect(review(controller)).toBeTruthy());
+    window.dispatchEvent(new HashChangeEvent('hashchange'));
+    expect(review(controller)).toBeNull();
+    await controller.refresh();
+    expect(chip(controller)).toBeTruthy();
+    document.body.innerHTML = '<input id="unrelated">';
+    await controller.refresh();
+    expect(chip(controller)).toBeNull();
+    controller.destroy();
+  });
+
+  it('does not attach an old asynchronous fill result to a newly synced roster', async () => {
+    mountNatureMtsFixture({ slots: 2 });
+    let finish!: (value: ContextualFillResult) => void;
+    const pending = new Promise<ContextualFillResult>((resolve) => { finish = resolve; });
+    const data = kyleAdaRoster();
+    const { controller, setRoster } = await start({ roster: data, fill: () => pending });
+    chip(controller)!.querySelector('button')!.click();
+    const result = await fillWithWarning(document, data, { mode: 'all' });
+    setRoster(makeRoster(makeNAuthors(3)));
+    await controller.refresh();
+    finish(result);
+    await vi.waitFor(() => expect(chip(controller)?.textContent).toContain('Fill authors'));
+    expect(review(controller)).toBeNull();
+    controller.destroy();
+  });
+
+  it('does not offer an immediate full-roster retry after a partially failed fill', async () => {
+    mountNatureMtsFixture({ slots: 2 });
+    const { controller } = await start({ roster: kyleAdaRoster(), fill: async (...args) => {
+      const result = await runContextualFill(...args);
+      if (!result.ok) return result;
+      return { ok: false, reason: 'Some author fields were preserved because of conflicts.', report: result.report };
+    } });
+    chip(controller)!.querySelector('button')!.click();
+    await vi.waitFor(() => expect(review(controller)?.textContent).toContain('conflicts'));
+    expect(chip(controller)).toBeNull();
+    review(controller)!.querySelector('button')!.click();
+    await controller.refresh();
+    expect(chip(controller)).toBeNull();
+    controller.destroy();
+  });
+
   it('shows a page chip on a supported author page when a roster exists', async () => {
     mountNatureMtsFixture({ slots: 2 });
     const { controller } = await start({ roster: kyleAdaRoster() });
