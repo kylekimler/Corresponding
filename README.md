@@ -25,16 +25,24 @@ One roster, no retyping: the local web app syncs three synthetic coauthors to th
 Institutional verification and ScholarOne CRediT roles still require manual review. [Watch the MP4](docs/media/scholarone-workflow.mp4) · [Recording notes](docs/media/README.md)
 
 <details>
-<summary>Editorial Manager / PLOS ONE — earlier walkthrough</summary>
+<summary>Editorial Manager / PLOS Genetics — fill three coauthors</summary>
 
-<img src="docs/media/plos-one.gif" width="600" alt="Corresponding filling the author form for PLOS ONE in Editorial Manager">
+<img src="docs/media/plos-genetics-workflow.gif" width="800" alt="Click Corresponding to add Maya Chen, Leo Rivera, and Priya Shah to PLOS Genetics, ending with the ordered roster and institution-review notice">
+
+Three synthetic coauthors added in order; the existing corresponding author is preserved. Institution-verification warnings remain visible and need review. Recorded September 11, 2026; condensed, privacy-redacted footage at original speed. Nothing was submitted.
+
+[Watch the edited MP4](docs/media/plos-genetics-workflow.mp4) · [Recording notes](docs/media/README.md#editorial-manager--plos-genetics)
 
 </details>
 
 <details>
-<summary>bioRxiv / medRxiv — earlier walkthrough</summary>
+<summary>bioRxiv — from an empty author list to three authors</summary>
 
-<img src="docs/media/medrxiv.gif" width="600" alt="Corresponding filling a medRxiv author form">
+<img src="docs/media/biorxiv-workflow.gif" width="800" alt="Click Corresponding on an empty bioRxiv author list, fill the first author, and see all three synthetic authors in order with emails and affiliations">
+
+Three synthetic authors appear in order, with emails and affiliations. This condensed GIF skips repeated dialog cycles; the continuous MP4 retains the transient portal lookup warnings. No corresponding author was designated, and **Save / Continue was not clicked**. Recorded September 11, 2026; private browser suggestions are redacted.
+
+[Watch the continuous MP4](docs/media/biorxiv-workflow.mp4) · [Recording notes](docs/media/README.md#biorxiv)
 
 </details>
 
@@ -71,7 +79,7 @@ Support is specific to tested author forms, not every journal using a platform.
 
 | Platform | Evidence and current workflow |
 | --- | --- |
-| Editorial Manager / PLOS ONE | Capture-backed, automated tests; contextual fill and popup |
+| Editorial Manager / PLOS ONE and PLOS Genetics | Capture-backed, automated tests; contextual fill and popup |
 | ScholarOne / Manuscript Central | Bioinformatics capture-backed, automated tests; contextual fill and popup |
 | bioRxiv / medRxiv | Capture-backed, automated tests; contextual fill and popup |
 | Nature Portfolio | Experimental, synthetic-fixture tests; live sites use the popup |
@@ -80,7 +88,7 @@ Support is specific to tested author forms, not every journal using a platform.
 | Frontiers | Not yet |
 | eLife | Not yet |
 
-“Capture-backed” means tests use redacted portal HTML. It does **not** mean every live journal configuration has been verified. The ScholarOne demo above confirms one live three-coauthor run, including names, emails, order, and basic affiliations—not completion of every journal requirement. Broader live checks remain necessary; automated CI cannot replace them.
+“Capture-backed” means tests use redacted portal HTML. It does **not** mean every live journal configuration has been verified. The recordings above show three-author entry runs in Bioinformatics, PLOS Genetics, and bioRxiv—not completion of every journal requirement. See each clip's review and persistence limitations. Broader live checks remain necessary; automated CI cannot replace them.
 
 Portal layouts and required fields vary. Existing non-empty fields are preserved by default; review skipped fields, identity conflicts, author order, and affiliations. If no contextual suggestion appears, try the extension popup's preview. Unsupported forms are not filled automatically.
 
