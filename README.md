@@ -16,21 +16,23 @@ Free and open source. No account. Author information stays local.
 
 ## See it work
 
-**Editorial Manager / PLOS ONE**
+**From your author list to Bioinformatics / ScholarOne**
 
-<img src="docs/media/plos-one.gif" width="600" alt="Corresponding filling the author form for PLOS ONE in Editorial Manager">
+<img src="docs/media/scholarone-workflow.gif" width="800" alt="Create a manuscript, import three coauthors, sync to the Chrome extension, and click Corresponding to fill the live Bioinformatics author form">
 
-These recordings show the earlier extension workflow. Updated web-app-to-journal walkthroughs are coming.
+One roster, no retyping: the local web app syncs three synthetic coauthors to the extension, which adds them to a Bioinformatics test draft in order. Recorded September 11, 2026; edited for length, with private account details redacted. No manuscript was submitted.
+
+Institutional verification and ScholarOne CRediT roles still require manual review. [Watch the MP4](docs/media/scholarone-workflow.mp4) · [Recording notes](docs/media/README.md)
 
 <details>
-<summary>ScholarOne / Bioinformatics</summary>
+<summary>Editorial Manager / PLOS ONE — earlier walkthrough</summary>
 
-<img src="docs/media/scholarone.gif" width="600" alt="Corresponding filling a Bioinformatics author form in ScholarOne">
+<img src="docs/media/plos-one.gif" width="600" alt="Corresponding filling the author form for PLOS ONE in Editorial Manager">
 
 </details>
 
 <details>
-<summary>bioRxiv / medRxiv</summary>
+<summary>bioRxiv / medRxiv — earlier walkthrough</summary>
 
 <img src="docs/media/medrxiv.gif" width="600" alt="Corresponding filling a medRxiv author form">
 
@@ -78,7 +80,7 @@ Support is specific to tested author forms, not every journal using a platform.
 | Frontiers | Not yet |
 | eLife | Not yet |
 
-“Capture-backed” means tests use redacted portal HTML. It does **not** mean every live journal configuration has been verified. Fresh authenticated portal checks are still pending for this release; automated CI cannot replace those checks.
+“Capture-backed” means tests use redacted portal HTML. It does **not** mean every live journal configuration has been verified. The ScholarOne demo above confirms one live three-coauthor run, including names, emails, order, and basic affiliations—not completion of every journal requirement. Broader live checks remain necessary; automated CI cannot replace them.
 
 Portal layouts and required fields vary. Existing non-empty fields are preserved by default; review skipped fields, identity conflicts, author order, and affiliations. If no contextual suggestion appears, try the extension popup's preview. Unsupported forms are not filled automatically.
 

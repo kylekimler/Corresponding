@@ -4,6 +4,24 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-09-11 — Live ScholarOne walkthrough
+- Recorded the website → local extension sync → contextual Fill workflow using
+  three synthetic coauthors and user-approved disposable live portal drafts.
+- ScholarOne/Bioinformatics saved all three in order, retaining the original
+  corresponding author. Institutional verification and CRediT remain manual.
+- PLOS Genetics required a page refresh to recover an empty author dialog.
+  Its subsequent fill saved all three but left required-information warnings;
+  that take is excluded from the new showcase, pending diagnosis.
+- Added a trimmed, privacy-redacted ScholarOne GIF and silent MP4, with a
+  reproducible timecoded FFmpeg edit script. Raw recording is not committed.
+- README now leads with the new web-to-journal demonstration, accurately
+  describes its limitations, and retains older PLOS/medRxiv clips in disclosures.
+- Runtime code, portal selectors, and extension permissions are unchanged.
+- Verification: 375 tests, seven Chromium journeys, typecheck, security lint,
+  and both builds passed. Both media files decode successfully; GIF dimensions,
+  duration, and silent MP4 stream were checked. Scene/contact-sheet review
+  included all pre-fill transition frames for privacy-mask coverage.
+
 ### 2026-09-10 — README and public CI
 - Reorganized README around the product hook, one lead demo, expandable publisher
   recordings, three-step workflow, install instructions, and privacy/safety FAQ.
