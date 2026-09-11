@@ -2,13 +2,14 @@
 
 ## Website → Bioinformatics / ScholarOne
 
-The lead [GIF](scholarone-workflow.gif) and [MP4](scholarone-workflow.mp4) are
-edited from a real macOS selected-region recording on September 11, 2026.
-The GIF is 960 × 640, 15 fps, approximately 27 seconds and 1.2 MB. The MP4
-is a smaller, pausable alternative. Neither contains audio.
+The lead [GIF](scholarone-workflow.gif) and [60 fps MP4](scholarone-workflow.mp4)
+combine the original September 11 website introduction with the user's new
+Bioinformatics recording saved around 12:50 PM. Both are 960 × 640 and 15.4 seconds.
+The GIF is 25 fps (even 40ms delays), about 2.4 MB; the smoother, pausable MP4
+is 60 fps and about 719 KB. Neither contains audio.
 
-The sequence shows the local website importing a synthetic three-person
-spreadsheet, confirming extension synchronization, and an explicit click on
+The sequence shows a pasted synthetic three-person spreadsheet in the local
+website, confirmed extension synchronization, and an explicit click on
 the contextual fill control in the live Bioinformatics ScholarOne portal.
 Maya Chen, Leo Rivera, and Priya Shah were added in that order after the
 pre-existing submitting author. No final submission or declarations were
@@ -16,11 +17,18 @@ performed. Both portal drafts were explicitly approved as disposable test space.
 
 ### Editing and privacy
 
-- Idle gaps and repeated dialog cycles were removed; retained footage runs
-  at original speed. This is an edited walkthrough, not a timing benchmark.
+- Idle gaps, setup clicks, and repeated dialog cycles were removed. Retained
+  footage runs at original speed, with a one-second hold of the last frame.
+  The portal click through the first dialog is continuous. This is an edited
+  walkthrough, not a timing benchmark or an uncut cross-application session.
+- The new portal take uses the normal system pointer, not the agent cursor.
+  Clean portions of the old website footage are retained; its remaining cursor
+  halo over blank background is removed with an adjacent same-frame background
+  patch. No author fields, status text, or filled data are replaced.
 - The recording excludes the browser address bar. Existing author identity
-  and contact details are masked before filling; other shots are cropped to
-  the author dialog or synthetic roster. Original footage remains outside Git.
+  and contact details are masked before filling, behind the dialog, and above
+  the synthetic roster. Account-menu chrome is cropped out. Both original
+  recordings remain untouched outside Git.
 - The institutional warning icons are deliberately retained. Institution
   verification and ScholarOne CRediT contribution entry remain manual steps.
 - The initial PLOS Genetics attempt is **not** included: it flagged missing
@@ -30,10 +38,12 @@ performed. Both portal drafts were explicitly approved as disposable test space.
 ### Reproduce this edit
 
 Requires FFmpeg with libx264. The edit list and privacy masks are specific to
-this 2464 × 1622 source recording, not a general-purpose redactor:
+the 2464 × 1622 original website recording and 2368 × 1616 new portal recording,
+not a general-purpose redactor. The MP4 is rendered from those 60 fps originals,
+not upsampled from the earlier 15 fps GIF:
 
 ```sh
-node scripts/render-scholarone-demo.mjs /absolute/path/to/original-recording.mov
+node scripts/render-scholarone-demo.mjs /absolute/path/to/website-recording.mov /absolute/path/to/new-portal-recording.mov
 ```
 
 Review the entire resulting video before publishing if the source changes;

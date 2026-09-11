@@ -18,11 +18,11 @@ Free and open source. No account. Author information stays local.
 
 **From your author list to Bioinformatics / ScholarOne**
 
-<img src="docs/media/scholarone-workflow.gif" width="800" alt="Create a manuscript, import three coauthors, sync to the Chrome extension, and click Corresponding to fill the live Bioinformatics author form">
+<img src="docs/media/scholarone-workflow.gif" width="800" alt="Prepare three coauthors in Corresponding, confirm local extension sync, and click Corresponding to fill the live Bioinformatics author form">
 
-One roster, no retyping: the local web app syncs three synthetic coauthors to the extension, which adds them to a Bioinformatics test draft in order. Recorded September 11, 2026; edited for length, with private account details redacted. No manuscript was submitted.
+One roster, no retyping: the local web app syncs three synthetic coauthors to the extension, which adds them to a Bioinformatics test draft in order. The website opening is paired with a fresh September 11 Bioinformatics recording; idle time and repeated dialogs are cut, and private account details are redacted. No manuscript was submitted.
 
-Institutional verification and ScholarOne CRediT roles still require manual review. [Watch the MP4](docs/media/scholarone-workflow.mp4) · [Recording notes](docs/media/README.md)
+Institutional verification and ScholarOne CRediT roles still require manual review. [Watch the smoother 60 fps MP4](docs/media/scholarone-workflow.mp4) · [Recording notes](docs/media/README.md)
 
 <details>
 <summary>Editorial Manager / PLOS Genetics — fill three coauthors</summary>
