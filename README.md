@@ -48,7 +48,7 @@ Your roster remains editable and reusable. Download a JSON backup before switchi
 
 **Pre-release:** there is no Chrome Web Store listing yet. Installation currently requires building and loading the extension locally; the web app alone cannot fill journal pages.
 
-With Node.js 22.12+ installed:
+With the latest Node.js 22 LTS installed (22.13 or newer):
 
 ```sh
 git clone https://github.com/kylekimler/Corresponding.git

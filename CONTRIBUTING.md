@@ -6,7 +6,7 @@ private submission content, credentials, or unredacted portal HTML.
 
 ## Develop locally
 
-Use Node.js 22.12+ and the committed lockfile:
+Use the latest Node.js 22 LTS (22.13 or newer) and the committed lockfile:
 
 ```sh
 npm ci

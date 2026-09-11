@@ -15,7 +15,10 @@ Chronological overnight / autonomous iteration log.
 - Added read-only, SHA-pinned GitHub Actions CI: locked dependency installation,
   typecheck, security lint, unit tests, both builds, and Chromium fixture journeys.
   No secrets, deployment, portal accounts, extension permissions, or runtime changes.
-- Verification: local and hosted checks in progress; results recorded below once complete.
+- Verification: 375 tests, seven Chromium journeys, typecheck, security lint,
+  extension build, and web build passed locally. The first public CI run also
+  passed all checks on a clean Ubuntu runner:
+  https://github.com/kylekimler/Corresponding/actions/runs/34552435212
 
 ### 2026-09-10 — Publication preparation
 - Website: restrained serif headline, clearer three-step introduction, free/local
