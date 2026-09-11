@@ -4,6 +4,29 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-09-11 — Smoother ScholarOne demo from the new capture
+- Replaced the lead demo's old portal shots with the user's 12:49 PM
+  Bioinformatics recording, retaining clean portions of the original website
+  opening, pasted roster, and successful local-sync state.
+- Removed the old agent cursor from the retained introduction: omit its click
+  shots and patch only an empty background area using an adjacent same-frame
+  clean plate. The new portal footage retains the normal system pointer.
+  No form values or status text were replaced; both source movies are untouched.
+- Rendered a 15.4-second, 960 × 640 MP4 directly from the 60 fps sources
+  (719 KB), plus a 25 fps GIF with uniform 40ms delays (2.4 MB). Five scenes
+  replace seven; portal click through the first dialog is continuous. Repeated
+  dialogs and idle time are cut, with a one-second final-frame hold.
+- Retained institution warnings and privacy redactions. README promotes the
+  smoother MP4; recording notes explain the two-source edit and limitations.
+  Updated the reproducible edit script to require and validate both sources.
+- Added a GIF-block timing regression and a 3 MB budget specifically for the
+  higher-frame-rate lead preview; other demo budgets remain unchanged.
+- Verification: 401 unit/integration tests, eight Chromium fixture journeys,
+  typecheck, security lint, and both builds passed. Both assets fully decode;
+  dimensions, frame counts/rates, duration, audio absence, and size verified.
+  Contact-sheet review and OCR of every 60 fps portal frame found no known
+  private account/contact strings after redaction. No runtime/permission changes.
+
 ### 2026-09-11 — PLOS Genetics and bioRxiv README demos
 - Added two compact, source-recorded GIFs and silent H.264 MP4 alternatives.
   PLOS is an 8.5-second edited walkthrough; bioRxiv has 7.5-second highlights
