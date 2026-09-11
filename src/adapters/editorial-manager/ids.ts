@@ -80,7 +80,7 @@ export const INSTITUTION_UNVERIFIED_RE =
  * Add Another Author.
  */
 export const ADD_ANOTHER_AUTHOR_CLASS = 'fl-add-btn';
-export const ADD_AUTHOR_RE = /add\s+(?:another\s+|new\s+)?authors?\b/i;
+export const ADD_AUTHOR_RE = /add\s+authors?\b|add\s+another\s+authors?\b|add\s+new\s+authors?\b/i;
 /** In-form toolbar icon — not the Current Author List control. */
 export const SAVE_AND_ADD_AUTHOR_RE = /save\s+and\s+add/i;
 

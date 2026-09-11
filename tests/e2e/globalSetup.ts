@@ -1,5 +1,6 @@
 import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { isAllowedManifestContentScriptMatch } from '../../src/autofill/hosts';
 import { isFirstPartyWebsiteMatch } from '../../src/messaging/websiteHandshake';
 
 export const E2E_EXTENSION_PATH = path.resolve('.wxt/playwright-extension');
@@ -39,14 +40,22 @@ export default async function globalSetup(): Promise<void> {
       'Production manifest must include the corresponding.app handshake content script',
     );
   }
+  const hasWebsiteHandshake = websiteScripts.some((script) =>
+    (script.matches ?? []).some((match) => isFirstPartyWebsiteMatch(match)),
+  );
+  if (!hasWebsiteHandshake) {
+    throw new Error(
+      'Production manifest must include the corresponding.app handshake content script',
+    );
+  }
   for (const script of websiteScripts) {
     const matches = script.matches ?? [];
     if (
       matches.length === 0 ||
-      matches.some((match) => !isFirstPartyWebsiteMatch(match))
+      matches.some((match) => !isAllowedManifestContentScriptMatch(match))
     ) {
       throw new Error(
-        'Production content scripts may only match corresponding.app or local Vite ports',
+        'Production content scripts may only match corresponding.app, local Vite ports, or known journal autofill hosts',
       );
     }
   }

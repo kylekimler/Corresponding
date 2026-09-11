@@ -4,7 +4,7 @@
  */
 
 import { CREDIT_ROLE_LABELS, CREDIT_ROLES } from '@/schema/credit';
-import { CONTRIBUTOR_ROLE_PREFIX } from './ids';
+import { ADD_AUTHOR_RE, CONTRIBUTOR_ROLE_PREFIX } from './ids';
 
 export interface EditorialManagerFixtureOptions {
   /** When true (default), author fields live in a same-origin iframe. */
@@ -614,7 +614,7 @@ function wireAuthorForm(
     .forEach((el) => el.addEventListener('click', commitAuthor));
 
   const add = [...doc.querySelectorAll('button')].find((el) =>
-    /add\s+(?:another\s+|new\s+)?authors?\b/i.test(el.textContent || ''),
+    ADD_AUTHOR_RE.test(el.textContent || ''),
   );
   add?.addEventListener('click', (event) => {
     event.preventDefault();

@@ -20,8 +20,8 @@ const SUPER_DIGITS: Record<string, string> = {
 };
 
 const EMAIL_RE = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i;
-const ORCID_RE = /(?:https?:\/\/orcid\.org\/)?(\d{4}-\d{4}-\d{4}-\d{3}[\dX])/i;
-const AFFILIATION_LINE_RE = /^\s*(\d+)\s*[.)]?\s+(\S.*)$/;
+const ORCID_RE = /(\d{4}-\d{4}-\d{4}-\d{3}[\dX])/i;
+const AFFILIATION_LINE_RE = /^(\d+)[.)]?\s+(\S.*)$/;
 const CORRESPONDING_NOTE_RE =
   /corresponding authors?\s*:?\s*(.+)$/i;
 
@@ -55,6 +55,7 @@ function splitLines(text: string): string[] {
 }
 
 function splitTopLevel(value: string, separators: RegExp): string[] {
+  const atStart = new RegExp(`^(?:${separators.source})`, separators.flags);
   const parts: string[] = [];
   let current = '';
   let depth = 0;
@@ -64,8 +65,15 @@ function splitTopLevel(value: string, separators: RegExp): string[] {
     if (ch === ')' || ch === ']' || ch === '>') depth = Math.max(0, depth - 1);
     if (depth === 0) {
       const rest = value.slice(i);
-      const match = rest.match(separators);
+      const match = rest.match(atStart);
       if (match && match.index === 0) {
+        // Commas before affiliation numbers or a corresponding marker belong
+        // to this author, not to a new person.
+        if (match[0].includes(',') && /^\s*[\d*†‡]/.test(rest.slice(match[0].length))) {
+          current += match[0];
+          i += match[0].length - 1;
+          continue;
+        }
         if (current.trim()) parts.push(current.trim());
         current = '';
         i += match[0]!.length - 1;
@@ -89,11 +97,12 @@ function extractEmail(token: string): { text: string; email?: string } {
 }
 
 function extractOrcid(token: string): { text: string; orcid?: string } {
-  const match = token.match(ORCID_RE);
+  const normalized = token.replace(/https?:\/\/orcid\.org\//gi, '');
+  const match = normalized.match(ORCID_RE);
   if (!match) return { text: token };
   return {
     orcid: normalizeOrcid(match[1] ?? match[0]),
-    text: token.replace(match[0]!, '').replace(/\s+/g, ' ').trim(),
+    text: normalized.replace(match[0]!, '').replace(/\s+/g, ' ').trim(),
   };
 }
 
@@ -102,16 +111,18 @@ function peelMarkers(token: string): {
   corresponding: boolean;
   markers: string[];
 } {
-  let corresponding = token.includes('*');
+  const corresponding = token.includes('*');
   let text = normalizeSuperscripts(token)
     .replace(/[*†‡§¶]/g, '')
     .replace(/[,\s;]+$/g, '')
     .trim();
   const markers: string[] = [];
-  const trailing = text.match(/^(.*?)((?:\s*[,;]?\s*\d+)+)\s*$/);
-  if (trailing && trailing[1]!.trim()) {
-    text = trailing[1]!.trim();
-    markers.push(...(trailing[2]!.match(/\d+/g) ?? []));
+  let start = text.length;
+  while (start > 0 && /[\d\s,;]/.test(text[start - 1]!)) start -= 1;
+  const suffix = text.slice(start);
+  if (start > 0 && /\d/.test(suffix)) {
+    text = text.slice(0, start).trim();
+    markers.push(...(suffix.match(/\d+/g) ?? []));
   }
   return { text, corresponding, markers };
 }
@@ -189,9 +200,10 @@ function isCorrespondingNote(line: string): boolean {
  * Does not guess unrecognized names or CRediT roles.
  */
 export function parseAuthorBlock(text: string): AuthorBlockParseResult {
+  if (text.length > 250_000) throw new Error('Paste just the author block, not the full manuscript.');
   const warnings: string[] = [];
   const lines = splitLines(text)
-    .map((line) => line.trim())
+    .map((line) => normalizeSuperscripts(line).trim())
     .filter(Boolean);
   if (lines.length === 0) {
     return { authors: [], affiliations: [], warnings: ['Nothing to parse'] };

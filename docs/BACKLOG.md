@@ -45,6 +45,7 @@ Status key: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked (exte
 - [x] Post-fill delight line and local lifetime hours footer (example/test fills excluded)
 - [x] Persist last-selected roster id
 - [x] Wire audit log to chrome.storage in popup (metadata + counts, clearable)
+- [x] Contextual page/field autofill over existing adapters (Shadow DOM, click-to-fill)
 - [ ] Optional visual regression for popup tokens
 - [ ] Excel parse enablement after dependency decision (`docs/EXCEL_IMPORT.md`)
 

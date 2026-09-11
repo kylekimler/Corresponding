@@ -43,7 +43,11 @@ Prefer false negatives to false positives. Never mutate low-confidence mappings 
 
 ## Core experience
 
-The first-use loop is: open submission page → select/import roster → detect portal → Preview exact effects → surface missing/uncertain data → user clicks Fill → fill safely → validate → scientist reviews and submits.
+The first-use loop is: prepare a roster → open a supported submission page →
+Corresponding offers a small fill control, or the scientist opens the popup
+→ Preview exact effects when using the popup → surface missing/uncertain
+data → user clicks Fill → fill safely → validate → scientist reviews and
+submits. Fill never runs without an explicit click.
 
 The main popup should be small, warm, calm, beautiful, legible, scientifically credible, and subtly delightful—radically better than legacy scholarly software, without generic enterprise SaaS aesthetics.
 

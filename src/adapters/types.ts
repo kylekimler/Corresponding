@@ -49,6 +49,11 @@ export interface FillOptions {
   overwrite: boolean;
   /** When true, plan only — never mutate the DOM. When false, apply fills. */
   dryRun: boolean;
+  /**
+   * When set, only these roster sequences are written and count fields
+   * are left alone. Used by contextual one-author fill.
+   */
+  onlySequences?: number[];
 }
 
 export interface FillReport {

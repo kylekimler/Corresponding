@@ -43,13 +43,26 @@ Corresponding is a free, open-source Chrome extension that takes the author list
 ## How it works
 
 1. Install the Corresponding Chrome Extension
-2. Open a manuscript submission portal.
-3. Open Corresponding.
-4. Import your author roster by copy+pasting a table or the top of your article or uploading a tabular format file (csv, tsv, etc)
-5. Confirm the column mapping if needed.
-6. Click **Fill**.
-7. Review the result.
-8. Finish the submission yourself.
+2. Prepare a manuscript roster on [corresponding.app](https://corresponding.app) or in the extension.
+3. Open a supported manuscript submission portal as usual.
+4. When Corresponding recognizes the author form, click **Fill authors** or **Fill author** — you do not have to open the popup.
+5. Or open the extension to preview, import, and fill from there.
+6. Review the result.
+7. Finish the submission yourself.
+
+## Install
+
+Corresponding is preparing for its first public release. Until the Chrome Web
+Store listing is available, you can run it locally:
+
+1. Clone this repository and run `npm ci`, then `npm run build` (Node.js 22+).
+2. Open `chrome://extensions`, enable **Developer mode**, and choose **Load unpacked**.
+3. Select the `.output/chrome-mv3` folder inside this repository.
+4. Run `npm run dev:web` and open `http://localhost:5173` to prepare a roster.
+
+The website discovers the installed extension automatically. No account or
+extension ID is required. Reload the extension and refresh open journal tabs
+after rebuilding it. Local drafts can be downloaded as JSON backups.
 
 ## To contribute a journal yourself:
 

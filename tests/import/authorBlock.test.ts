@@ -6,6 +6,13 @@ import {
 import { ingestAuthorText, looksLikeSpreadsheet } from '@/import/ingestAuthors';
 
 describe('author-block parser', () => {
+  it('keeps multiple affiliations and a corresponding marker attached to the author', () => {
+    const parsed = parseAuthorBlock('Ada Lovelace¹,²,*, Alan Turing²\n¹ First institute\n² Second institute');
+    const roster = authorBlockToRoster(parsed);
+    expect(roster.authors).toHaveLength(2);
+    expect(roster.authors[0]!.isCorresponding).toBe(true);
+    expect(roster.authors[0]!.affiliations.map((item) => item.institution)).toEqual(['First institute', 'Second institute']);
+  });
   it('parses a numbered manuscript author block', () => {
     const parsed = parseAuthorBlock(
       [

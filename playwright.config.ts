@@ -9,6 +9,11 @@ export default defineConfig({
     timeout: 5_000,
   },
   globalSetup: './tests/e2e/globalSetup.ts',
+  webServer: {
+    command: 'npm run preview:web',
+    url: 'http://localhost:4173',
+    reuseExistingServer: true,
+  },
   outputDir: 'test-results',
   reporter: [
     ['list'],

@@ -4,6 +4,41 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-09-10 — Publication preparation
+- Website: restrained serif headline, clearer three-step introduction, free/local
+  reassurance, GitHub/privacy/feedback links, readable editor labels, responsive layout.
+- Fixed partial-email editing crashes, trailing-space loss, extra-affiliation
+  deletion, and misleading synced/readiness wording. Invalid edits stay visible,
+  block sync, and warn before leaving. Storage failures have actionable errors.
+- Added manuscript history plus JSON backup download/restore, import error
+  feedback and replacement confirmation. New drafts no longer resurrect the
+  previous extension roster. Extension saves are queued to preserve update order.
+- Automatic discovery now wins over stale development extension IDs. Replies
+  are validated before the website trusts them; failed connections can be retried.
+- Finished the previously uncommitted contextual layer: keyboard click support,
+  hidden/readonly rejection, interrupted-fill recovery, attribute/navigation
+  refresh, selected-roster-only suggestions, and sample-fill protection.
+  Modal portals use page-level fill; a field without an author sequence no longer
+  guesses the first person. Live Nature still uses the popup.
+- Parser retains comma-separated superscript affiliations and corresponding
+  markers. Removed ambiguous nested regex repetition without adding portal selectors.
+- Browser evidence: six existing MV3 journeys passed; new web → edit → reload →
+  extension sync → contextual Nature fixture fill passed. Desktop/mobile captures
+  are written by the browser test. Authenticated publisher smoke remains pending.
+- Public deployment, store publication, and new showcase GIFs were not performed.
+- Final verification: 375 unit/integration tests, TypeScript, zero-warning
+  security lint, extension build, web build, and all 7 Playwright journeys passed.
+
+### 2026-08-25 21:10 UTC
+- Contextual autofill: on known submission hosts the extension detects an
+  author-entry page and shows a small Shadow DOM chip or field suggestion.
+  Fill still requires a click and reuses the existing adapters. Unsupported
+  pages, low-confidence host-only matches, and missing rosters stay silent.
+  The popup path is unchanged.
+- verification: field recognition/rejection, chip lifecycle, one-author and
+  fill-all on Nature, roster-order, SPA insertion, no-roster and roster-update
+  states, fixture detect on EM / ScholarOne / bioRxiv / Nature.
+
 ### 2026-08-25 20:50 UTC
 - Website finds the installed extension by a first-party handshake. Scientists
   never set `VITE_EXTENSION_ID`. The content script matches only

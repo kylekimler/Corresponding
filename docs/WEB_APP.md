@@ -7,6 +7,16 @@ no account and no remote roster store.
 Scientists never configure an extension id. The installed extension announces
 itself to this site.
 
+An old local `VITE_EXTENSION_ID` is only a fallback; a discovered installed
+extension takes priority. Reload the extension and refresh the website after
+updating. The workspace also has a Check connection again action.
+
+Drafts stay in this browser. Starting a new manuscript keeps the previous one
+in manuscript history. Download backup exports a JSON file; Import file restores
+it. Clearing site data deletes local drafts/history, so keep a backup when moving
+browsers or devices. Incomplete invalid edits are not saved or synced; the UI
+warns before leaving and keeps the last valid draft available for export.
+
 ## Develop
 
 ```bash

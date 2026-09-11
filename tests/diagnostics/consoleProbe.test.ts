@@ -1,4 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
+// This suite intentionally executes the repository's fixed console snippet
+// against synthetic DOM to verify redaction. No external source is evaluated.
+/* eslint-disable security/detect-eval-with-expression */
 import {
   STRUCTURAL_FRAME_PROBE,
   looksLikeSafeStructuralProbe,
