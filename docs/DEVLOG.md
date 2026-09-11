@@ -4,6 +4,19 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-09-10 — README and public CI
+- Reorganized README around the product hook, one lead demo, expandable publisher
+  recordings, three-step workflow, install instructions, and privacy/safety FAQ.
+- Replaced blanket support claims with capture/synthetic evidence and live-check
+  limitations. Disclosed author-count pings precisely; retained existing GIFs.
+- Added MIT, pre-release, and live GitHub CI badges. No release exists yet.
+- Moved the JSON adapter example into its guide; added CONTRIBUTING.md and
+  updated documentation regression assertions for the new copy and location.
+- Added read-only, SHA-pinned GitHub Actions CI: locked dependency installation,
+  typecheck, security lint, unit tests, both builds, and Chromium fixture journeys.
+  No secrets, deployment, portal accounts, extension permissions, or runtime changes.
+- Verification: local and hosted checks in progress; results recorded below once complete.
+
 ### 2026-09-10 — Publication preparation
 - Website: restrained serif headline, clearer three-step introduction, free/local
   reassurance, GitHub/privacy/feedback links, readable editor labels, responsive layout.
