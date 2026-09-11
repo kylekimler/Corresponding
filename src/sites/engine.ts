@@ -335,14 +335,17 @@ export function createSiteAdapter(site: SiteDefinition): PlatformAdapter {
     fill(doc: Document, roster: Roster, options: FillOptions): FillReport {
       if (!canFill || !site.authors) return refusedFill(site, options);
 
-      const authors = sortAuthors(roster.authors);
+      const scoped = options.onlySequences;
+      const authors = sortAuthors(roster.authors).filter(
+        (author) => !scoped || scoped.includes(author.sequence),
+      );
       const slots = countSlots(doc, site);
       const warnings: string[] = [];
       const errors: string[] = [];
       const plans: FieldPlan[] = [];
       const start = site.authors.start;
 
-      if (site.countField) {
+      if (site.countField && !scoped) {
         plans.push(
           planField(
             site.countField,
@@ -356,19 +359,20 @@ export function createSiteAdapter(site: SiteDefinition): PlatformAdapter {
         );
       }
 
-      if (authors.length > slots) {
+      if (!scoped && authors.length > slots) {
         warnings.push(
           `Roster has ${authors.length} authors but form only exposes ${slots} contributor slots`,
         );
       }
-      if (authors.length < slots) {
+      if (!scoped && authors.length < slots) {
         warnings.push(
           `Form has ${slots} contributor slots but roster has ${authors.length} authors`,
         );
       }
 
-      const corresponding =
-        authors.find((a) => a.isCorresponding) ?? authors[0];
+      const corresponding = scoped
+        ? authors.find((a) => a.isCorresponding)
+        : authors.find((a) => a.isCorresponding) ?? authors[0];
       const correspondingContribIndex = corresponding
         ? authors.indexOf(corresponding) + start
         : undefined;
@@ -423,7 +427,8 @@ export function createSiteAdapter(site: SiteDefinition): PlatformAdapter {
       const limit = Math.min(authors.length, slots);
       for (let i = 0; i < limit; i += 1) {
         const author = authors[i]!;
-        const index = start + i;
+        const index = scoped ? author.sequence : start + i;
+        if (index < start || index >= start + slots) continue;
         const conflict = authorConflict(doc, site, index, author);
         for (const [key, template] of Object.entries(site.authors.fields) as Array<
           [AuthorFieldKey, string]

@@ -52,6 +52,83 @@ export function elementKey(el: Element, index: number): string {
   return `idx:${index}:${el.tagName.toLowerCase()}`;
 }
 
+const SKIPPED_INPUT_TYPES = new Set([
+  'password',
+  'submit',
+  'button',
+  'file',
+  'image',
+  'reset',
+]);
+
+export function isSkippedInputType(inputType: string | undefined): boolean {
+  return Boolean(inputType && SKIPPED_INPUT_TYPES.has(inputType));
+}
+
+/**
+ * Structural features for one control. Never uses the field value.
+ */
+export function extractControlFeatures(
+  el: Element,
+  index = 0,
+): FieldFeatures | null {
+  const tag = el.tagName.toLowerCase();
+  const inputType =
+    el instanceof HTMLInputElement ? (el.type || 'text').toLowerCase() : undefined;
+
+  if (isSkippedInputType(inputType)) return null;
+
+  const id = el.id || undefined;
+  const name = el.getAttribute('name') || undefined;
+  const label = labelFor(el);
+  const ariaLabel = el.getAttribute('aria-label') || undefined;
+  const placeholder =
+    el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement
+      ? el.placeholder || undefined
+      : undefined;
+  const near = nearbyLabel(el);
+  const optionLabels =
+    el instanceof HTMLSelectElement
+      ? Array.from(el.options).map((o) => o.text.trim()).filter(Boolean)
+      : undefined;
+
+  const required =
+    el.hasAttribute('required') || el.getAttribute('aria-required') === 'true';
+  const disabled =
+    (el instanceof HTMLInputElement ||
+      el instanceof HTMLSelectElement ||
+      el instanceof HTMLTextAreaElement) &&
+    el.disabled;
+  const hidden =
+    inputType === 'hidden' ||
+    (el instanceof HTMLElement && el.hidden) ||
+    (el instanceof HTMLElement && getComputedStyle(el).display === 'none');
+
+  return {
+    elementKey: elementKey(el, index),
+    tag,
+    inputType,
+    id,
+    name,
+    label,
+    ariaLabel,
+    placeholder,
+    nearbyLabel: near,
+    optionLabels,
+    required,
+    disabled,
+    hidden,
+    normalizedText: normalizeStructuralText([
+      id,
+      name,
+      label,
+      ariaLabel,
+      placeholder,
+      near,
+    ]),
+  };
+}
+
 /**
  * Extract structural features for editable fields.
  * Never uses field values for classification.
@@ -62,75 +139,8 @@ export function extractFieldFeatures(doc: Document): FieldFeatures[] {
   let index = 0;
 
   nodes.forEach((el) => {
-    const tag = el.tagName.toLowerCase();
-    const inputType =
-      el instanceof HTMLInputElement ? (el.type || 'text').toLowerCase() : undefined;
-
-    // Skip non-editable / auth / submit controls from recognition candidates.
-    if (
-      inputType === 'password' ||
-      inputType === 'submit' ||
-      inputType === 'button' ||
-      inputType === 'file' ||
-      inputType === 'image' ||
-      inputType === 'reset'
-    ) {
-      index += 1;
-      return;
-    }
-
-    const id = el.id || undefined;
-    const name = el.getAttribute('name') || undefined;
-    const label = labelFor(el);
-    const ariaLabel = el.getAttribute('aria-label') || undefined;
-    const placeholder =
-      el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement
-        ? el.placeholder || undefined
-        : undefined;
-    const near = nearbyLabel(el);
-    const optionLabels =
-      el instanceof HTMLSelectElement
-        ? Array.from(el.options).map((o) => o.text.trim()).filter(Boolean)
-        : undefined;
-
-    const required =
-      el.hasAttribute('required') ||
-      el.getAttribute('aria-required') === 'true';
-    const disabled =
-      (el instanceof HTMLInputElement ||
-        el instanceof HTMLSelectElement ||
-        el instanceof HTMLTextAreaElement) &&
-      el.disabled;
-    const hidden =
-      inputType === 'hidden' ||
-      (el instanceof HTMLElement && el.hidden) ||
-      (el instanceof HTMLElement &&
-        getComputedStyle(el).display === 'none');
-
-    const key = elementKey(el, index);
-    out.push({
-      elementKey: key,
-      tag,
-      inputType,
-      id,
-      name,
-      label,
-      ariaLabel,
-      placeholder,
-      nearbyLabel: near,
-      optionLabels,
-      required,
-      disabled,
-      hidden,
-      normalizedText: normalizeStructuralText([
-        id,
-        name,
-        label,
-        ariaLabel,
-        placeholder,
-        near,
-      ]),
-    });
+    const described = extractControlFeatures(el, index);
+    if (described) out.push(described);
     index += 1;
   });
 

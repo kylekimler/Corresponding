@@ -18,12 +18,14 @@ A Chrome Manifest V3 extension that:
 1. Lets a scientist maintain one canonical local author roster.
 2. Imports rosters from CSV, Google Sheets (read-only), or saved local storage.
 3. Detects the active submission platform.
-4. Previews exactly what will be filled.
-5. Shows missing information and conflicts.
-6. Fills the form deterministically via a platform adapter.
-7. Validates the resulting form.
-8. Leaves final submission, certification, payment, and legal actions to the human.
-9. After a successful fill, tells the scientist how many authors were filled
+4. On supported author-entry pages, offers a small contextual fill control
+   without opening the popup. Fill still requires an explicit click.
+5. Previews exactly what will be filled.
+6. Shows missing information and conflicts.
+7. Fills the form deterministically via a platform adapter.
+8. Validates the resulting form.
+9. Leaves final submission, certification, payment, and legal actions to the human.
+10. After a successful fill, tells the scientist how many authors were filled
    and how much time that gave back (about 40 seconds per author). The popup
    footer keeps a local lifetime hours estimate. Example authors and test
    fixtures are not counted. Eligible fills also increment a community

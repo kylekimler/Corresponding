@@ -41,12 +41,17 @@ The extension does **not** intentionally read, store, or transmit:
 - Cookies
 - Authentication tokens for journal portals
 - Unrelated browsing history
-- Unrelated page content outside the active submission form interaction
+- Unrelated page content outside a supported submission-host author form
+  or an explicit popup interaction
 - Manuscript text (unless a future explicit, user-initiated feature requires it — not present in v0)
 
 ## Network activity
 
-- Form filling runs in the active tab using on-demand scripting (`activeTab`). Author names, emails, affiliations, and manuscript text are not sent to a Corresponding server.
+- Form filling runs in the active tab. On known journal submission hosts the
+  extension may detect author-entry fields and show a fill control; filling
+  still requires a click. On other pages it uses on-demand scripting
+  (`activeTab`) after the user opens the popup. Author names, emails,
+  affiliations, and manuscript text are not sent to a Corresponding server.
 - After an eligible Fill (not sample authors, not development fixtures), the extension may POST `{ "v": 1, "authors": N }` to the Corresponding hours counter so we can estimate community hours saved for marketing. That request contains no names, emails, ORCID, roster identifiers, page URLs, or manuscript text. It cannot break Fill if it fails.
 - DOCX parsing runs locally in the extension. The selected file is not uploaded
   to Corresponding.
@@ -61,7 +66,9 @@ Typical permissions:
 - `storage` — save rosters and settings locally
 - `scripting` — inject the fill/inspect logic into the active tab on demand
 
-No broad host permissions are required for Nature MTS filling.
+No broad host permissions. A content script is registered only for
+corresponding.app, local development ports, and known submission-host
+families that already have a fill adapter.
 
 ## Human-in-the-loop safety
 

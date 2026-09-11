@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { makeNAuthors, makeRoster } from '../helpers/roster';
 import {
   pingExtension,
@@ -7,6 +7,24 @@ import {
 } from '../../web/src/bridge/client';
 
 describe('website-to-extension client', () => {
+  it('prefers the installed extension handshake over a stale environment ID', async () => {
+    vi.resetModules();
+    vi.stubEnv('VITE_EXTENSION_ID', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
+    const { discoverExtensionId } = await import('../../web/src/bridge/client');
+    const discovered = discoverExtensionId({ origin: window.location.origin });
+    window.dispatchEvent(new MessageEvent('message', { origin: window.location.origin, data: {
+      source: 'corresponding-extension', type: 'READY', extensionId: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+    } }));
+    expect(await discovered).toBe('bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb');
+    vi.unstubAllEnvs();
+  });
+  it('rejects a success envelope without a valid saved roster', async () => {
+    const result = await sendToExtension({ type: 'PING' }, {
+      extensionId: 'abcdefghijklmnopabcdefghijklmnop',
+      runtime: { sendMessage(_id, _message, callback) { callback?.({ type: 'SAVED', roster: { authors: [] } }); } },
+    });
+    expect(result).toMatchObject({ type: 'ERROR', code: 'UNAVAILABLE' });
+  });
   it('reports a missing extension as not installed without sending', async () => {
     const result = await sendToExtension(
       { type: 'PING' },

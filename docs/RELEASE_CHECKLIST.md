@@ -25,3 +25,23 @@
 
 - [ ] Tag `vX.Y.Z`
 - [ ] Monitor user diagnostic reports for new portals (do not invent selectors without fixtures)
+
+## This week's launch and showcase recording
+
+- [ ] Set the real Chrome Web Store install URL once the listing is available;
+  the current website link honestly points to local setup instructions.
+- [ ] Replace the privacy contact placeholder and review the final policy date.
+- [ ] Confirm HTTPS corresponding.app can discover the published extension and
+  save/select a roster. Preview-host origins are intentionally not allowed.
+- [ ] Run a live author-page smoke on PLOS/Editorial Manager, ScholarOne, and
+  bioRxiv/medRxiv with explicitly chosen test authors. Do not submit a manuscript.
+- [ ] Record each GIF: website roster → journal author page → click Fill authors
+  → inspect saved authors in order. Stop before Continue or Submit.
+- [ ] Show missing requirements/review honestly; never describe fixture tests as
+  live publisher validation. Nature production validation still needs a capture.
+- [ ] Replace `docs/media/plos-one.gif`, `scholarone.gif`, and `medrxiv.gif` after
+  reviewing recordings for real names, emails, manuscript details, and account UI.
+
+Local verification: `npm test`, `npm run typecheck`, `npm run lint:security`,
+`npm run build`, `npm run build:web`, then `npx playwright test`. Browser tests
+use an isolated extension profile and synthetic publisher fixtures.

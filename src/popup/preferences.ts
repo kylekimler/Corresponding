@@ -1,4 +1,4 @@
-const SELECTED_ROSTER_KEY = 'corresponding_selected_roster_v1';
+export const SELECTED_ROSTER_KEY = 'corresponding_selected_roster_v1';
 
 type MemoryPreferences = {
   selectedRosterId?: string;

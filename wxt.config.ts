@@ -7,7 +7,8 @@ const DEV_SERVER_PORT = 3000;
 const NATURE_FIXTURE_URL = `http://localhost:${DEV_SERVER_PORT}/fixtures/nature-mts-sample.html`;
 
 // Local-first MV3 extension: only activeTab + storage + scripting.
-// Content scripts are injected on demand via activeTab; no broad host permissions.
+// Contextual autofill registers a narrow content script on known journal
+// hosts. Other pages still use activeTab injection. No broad host permissions.
 export default defineConfig({
   modules: ['@wxt-dev/module-react'],
   srcDir: 'src',

@@ -19,13 +19,15 @@ import {
   setAuthorCorresponding,
   updateAuthor,
 } from '@/roster/mutations';
-import type { Author, Roster } from '@/schema/author';
+import { AuthorSchema, type Author, type Roster } from '@/schema/author';
 import { CREDIT_ROLES, creditRoleLabel, type CreditRole } from '@/schema/credit';
 import { normalizeOrcid } from '@/schema/orcid';
 import {
   compileManuscriptRoster,
   createEmptyManuscript,
   touchManuscript,
+  serializeManuscript,
+  parseManuscriptJson,
   type Manuscript,
 } from '@/schema/manuscript';
 import {
@@ -37,6 +39,7 @@ import {
 import {
   loadLocalManuscript,
   saveLocalManuscript,
+  listLocalManuscripts,
 } from '../storage/localManuscript';
 
 type SyncState =
@@ -106,8 +109,21 @@ export function Workspace() {
   const [warnings, setWarnings] = useState<string[]>([]);
   const [pendingTable, setPendingTable] = useState<PendingTable | null>(null);
   const [sync, setSync] = useState<SyncState>({ kind: 'checking' });
+  const [localError, setLocalError] = useState('');
+  const [invalidAuthors, setInvalidAuthors] = useState<Record<string, boolean>>({});
+  const [retry, setRetry] = useState(0);
   const fileRef = useRef<HTMLInputElement>(null);
-  const hydrated = useRef(false);
+  const saveQueue = useRef<Promise<unknown>>(Promise.resolve());
+  const hasInvalidEdits = Object.values(invalidAuthors).some(Boolean);
+  useEffect(() => {
+    const warnBeforeLeaving = (event: BeforeUnloadEvent) => {
+      if (!hasInvalidEdits && !localError) return;
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', warnBeforeLeaving);
+    return () => window.removeEventListener('beforeunload', warnBeforeLeaving);
+  }, [hasInvalidEdits, localError]);
 
   const authors = useMemo(
     () => [...manuscript.roster.authors].sort((a, b) => a.sequence - b.sequence),
@@ -124,34 +140,39 @@ export function Workspace() {
       roster: next.roster,
     });
     setManuscript(parsed);
-    saveLocalManuscript(parsed);
+    setSync({ kind: 'checking' });
+    try {
+      saveLocalManuscript(parsed);
+      setLocalError('');
+    } catch {
+      setLocalError('Could not save in this browser. Download a backup before closing this page.');
+    }
   }
 
   useEffect(() => {
-    if (hydrated.current) return;
-    hydrated.current = true;
+    let cancelled = false;
     const local = loadLocalManuscript();
-    if (local && (local.title || local.roster.authors.length > 0)) {
+    if (local) {
       setManuscript(local);
       return;
     }
     void loadSelectedRoster().then((result) => {
       if (result.type !== 'SELECTED_ROSTER' || !result.roster) return;
-      if (loadLocalManuscript()?.roster.authors.length) return;
+      if (cancelled || loadLocalManuscript()) return;
       const imported = createEmptyManuscript(result.roster.name);
       commit(
-        applyRoster(imported, {
-          ...result.roster,
-          id: imported.roster.id,
-        }),
+        { ...imported, id: result.roster.id, roster: result.roster },
       );
     });
+    return () => { cancelled = true; };
   }, []);
 
   useEffect(() => {
+    if (hasInvalidEdits || localError) return;
     let cancelled = false;
     const handle = window.setTimeout(() => {
-      void (async () => {
+      saveQueue.current = saveQueue.current.catch(() => undefined).then(async () => {
+        if (cancelled) return;
         const ping = await pingExtension();
         if (cancelled) return;
         if (ping.type !== 'PONG') {
@@ -178,16 +199,35 @@ export function Workspace() {
               ? saved.message
               : 'Could not save the roster to the extension.',
         });
-      })();
+      }).catch(() => {
+        if (!cancelled) setSync({ kind: 'error', detail: 'Could not connect. Try again; your local draft is unchanged.' });
+      });
     }, 280);
     return () => {
       cancelled = true;
       window.clearTimeout(handle);
     };
-  }, [manuscript]);
+  }, [manuscript, retry, hasInvalidEdits, localError]);
+
+  function attemptImport(action: () => void) {
+    try { action(); } catch {
+      setWarnings(['Could not import these authors. Check the name and email columns, then try again. Your current roster is unchanged.']);
+    }
+  }
+
+  function downloadBackup() {
+    const url = URL.createObjectURL(new Blob([serializeManuscript(manuscript)], { type: 'application/json' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'corresponding-manuscript.json';
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
 
   function replaceFromRoster(roster: Roster, nextWarnings: string[] = []) {
+    if (authors.length && !window.confirm('Replace the current author list with this import? Download a backup first if you want to keep both.')) return;
     commit(applyRoster(manuscript, roster));
+    setInvalidAuthors({});
     setWarnings(nextWarnings);
     setPendingTable(null);
     setPaste('');
@@ -239,15 +279,31 @@ export function Workspace() {
   }
 
   const status = syncLabel(sync);
-  const ready = sync.kind === 'synced' && authors.length > 0;
+  const ready = sync.kind === 'synced' && authors.length > 0 && !hasInvalidEdits && !localError;
 
   return (
     <main className="shell">
       <header className="topbar">
-        <a href="#/" className="wordmark">
+        <a href="#/" className="wordmark" onClick={(event) => {
+          if ((hasInvalidEdits || localError) && !window.confirm('Leave unfinished edits? Only the last saved version will be kept.')) event.preventDefault();
+        }}>
           Corresponding
         </a>
+        <span className="hint">Your manuscript workspace · Saved on this device</span>
       </header>
+      {localError && <p role="alert" className="sync err">{localError}</p>}
+      {listLocalManuscripts().length > 0 && <label className="field">
+        <span>Previous manuscripts</span>
+        <select value="" onChange={(event) => {
+          const previous = listLocalManuscripts().find((item) => item.id === event.target.value);
+          if (previous && (!hasInvalidEdits || window.confirm('Leave unfinished edits and open another manuscript?'))) {
+            setInvalidAuthors({}); commit(previous);
+          }
+        }}>
+          <option value="">Open a saved manuscript…</option>
+          {listLocalManuscripts().filter((item) => item.id !== manuscript.id).map((item) => <option key={item.id} value={item.id}>{item.title || 'Untitled manuscript'}</option>)}
+        </select>
+      </label>}
 
       <input
         className="title-input"
@@ -265,7 +321,7 @@ export function Workspace() {
           className="secondary"
           onClick={() => void fileRef.current?.click()}
         >
-          Import CSV
+          Import file
         </button>
         <button
           type="button"
@@ -279,15 +335,22 @@ export function Workspace() {
         <input
           ref={fileRef}
           type="file"
-          accept=".csv,text/csv,text/tab-separated-values,.tsv"
+          accept=".csv,text/csv,text/tab-separated-values,.tsv,.json,application/json"
           hidden
           onChange={(event) => {
             const file = event.target.files?.[0];
             event.target.value = '';
             if (!file) return;
-            void file.text().then((text) => importText(text, file.name));
+            void file.text().then((text) => attemptImport(() => {
+              if (file.name.toLowerCase().endsWith('.json')) {
+                const imported = parseManuscriptJson(JSON.parse(text));
+                if (authors.length && !window.confirm('Open this manuscript backup? Your current draft will be kept in manuscript history.')) return;
+                setInvalidAuthors({}); commit(imported);
+              } else importText(text, file.name);
+            })).catch(() => setWarnings(['Could not read that file. Please try again.']));
           }}
         />
+        <button type="button" className="ghost" onClick={downloadBackup}>{hasInvalidEdits ? 'Download last saved version' : 'Download backup'}</button>
       </div>
 
       <label className="field">
@@ -309,9 +372,9 @@ export function Workspace() {
           type="button"
           className="secondary"
           disabled={!paste.trim()}
-          onClick={() => importText(paste)}
+          onClick={() => attemptImport(() => importText(paste))}
         >
-          Parse authors
+          Import authors
         </button>
       </div>
 
@@ -353,24 +416,26 @@ export function Workspace() {
             type="button"
             className="primary"
             disabled={!mappingIsComplete(pendingTable.mapping.map)}
-            onClick={confirmTable}
+            onClick={() => attemptImport(confirmTable)}
           >
             Import columns
           </button>
         </div>
       )}
 
+      <div className="roster-heading"><h2>Manuscript authors</h2><p>{authors.length} authors · Listed in submission order</p></div>
       {authors.length === 0 ? (
         <p className="empty-roster">No authors yet.</p>
       ) : (
         <ol className="roster">
           {authors.map((author, index) => (
             <AuthorEditor
-              key={author.id}
+              key={`${manuscript.id}:${author.id}`}
               author={author}
               index={index}
               total={authors.length}
               onPatch={(patch) => patchAuthor(author.id, patch)}
+              onValidity={(invalid) => setInvalidAuthors((current) => current[author.id] === invalid ? current : { ...current, [author.id]: invalid })}
               onCorresponding={(value) =>
                 commit(
                   applyRoster(
@@ -391,14 +456,15 @@ export function Workspace() {
                   ),
                 )
               }
-              onRemove={() =>
+              onRemove={() => {
+                setInvalidAuthors((current) => ({ ...current, [author.id]: false }));
                 commit(
                   applyRoster(
                     manuscript,
                     removeAuthor(manuscript.roster, author.id),
                   ),
-                )
-              }
+                );
+              }}
             />
           ))}
         </ol>
@@ -419,14 +485,14 @@ export function Workspace() {
       <section className="ready" aria-live="polite">
         {ready ? (
           <>
-            <h2>Ready for submission</h2>
+            <h2>{readyCount === authors.length ? 'Roster synced — ready to review on your journal site' : 'Roster synced — a few details still need attention'}</h2>
             <p>
               {authors.length} {authors.length === 1 ? 'author' : 'authors'}
               {readyCount < authors.length
                 ? ` · ${readyCount} have email and institution`
                 : ''}
-              . Open a supported journal submission portal, then click the
-              Corresponding extension to fill.
+              . Open your journal’s author page and look for Corresponding, or
+              use the extension icon. Review the filled fields before continuing.
             </p>
             <p className="platforms">
               {supported.map((row) => row.platform).join(' · ')}
@@ -437,7 +503,7 @@ export function Workspace() {
             <h2>
               {authors.length === 0
                 ? 'Add authors to continue'
-                : 'Roster saved locally'}
+                : hasInvalidEdits ? 'Finish editing to sync' : localError ? 'Draft not saved' : 'Roster saved locally'}
             </h2>
             <p>
               {authors.length === 0
@@ -446,17 +512,20 @@ export function Workspace() {
             </p>
           </>
         )}
-        <p className={status.className}>{status.text}</p>
+        <p className={hasInvalidEdits ? 'sync warn' : status.className}>{hasInvalidEdits ? 'Correct the highlighted author details. Unfinished edits have not been saved or synced.' : status.text}</p>
+        {(sync.kind === 'not_installed' || sync.kind === 'error') && <button type="button" className="secondary" onClick={() => setRetry((value) => value + 1)}>Check connection again</button>}
+        <p className="hint">Journal requirements vary. Some also require a prefix, postal address, or contributor roles.</p>
       </section>
     </main>
   );
 }
 
 function AuthorEditor({
-  author,
+  author: savedAuthor,
   index,
   total,
-  onPatch,
+  onPatch: commitPatch,
+  onValidity,
   onCorresponding,
   onMove,
   onRemove,
@@ -465,10 +534,27 @@ function AuthorEditor({
   index: number;
   total: number;
   onPatch: (patch: Partial<Author>) => void;
+  onValidity: (invalid: boolean) => void;
   onCorresponding: (value: boolean) => void;
   onMove: (direction: -1 | 1) => void;
   onRemove: () => void;
 }) {
+  const [author, setAuthor] = useState(savedAuthor);
+  const [error, setError] = useState('');
+  useEffect(() => { if (!error) setAuthor(savedAuthor); }, [savedAuthor]);
+  function onPatch(patch: Partial<Author>) {
+    const next = { ...author, ...patch, sequence: savedAuthor.sequence };
+    setAuthor(next);
+    const parsed = AuthorSchema.safeParse(next);
+    const invalid = !parsed.success || !next.givenName.trim() || !next.familyName.trim();
+    onValidity(Boolean(invalid));
+    if (invalid) {
+      setError('Enter a given name, family name, and a valid email (or leave email blank). These edits are not saved yet.');
+      return;
+    }
+    setError('');
+    commitPatch(parsed.data);
+  }
   const affiliation = author.affiliations[0];
   const selectedRoles = new Set(author.creditRoles);
 
@@ -476,7 +562,7 @@ function AuthorEditor({
     field: 'institution' | 'department' | 'city' | 'country' | 'postalCode',
     value: string,
   ) {
-    const next = value.trim();
+    const next = value;
     const institution =
       field === 'institution' ? next : affiliation?.institution ?? '';
     const department =
@@ -485,20 +571,22 @@ function AuthorEditor({
     const country = field === 'country' ? next : affiliation?.country ?? '';
     const postalCode =
       field === 'postalCode' ? next : affiliation?.postalCode ?? '';
-    if (!institution) {
-      onPatch({ affiliations: [] });
+    if (!institution && !department && !city && !country && !postalCode) {
+      onPatch({ affiliations: author.affiliations.slice(1) });
       return;
     }
     onPatch({
       affiliations: [
         {
+          ...affiliation,
           institution,
           department: department || undefined,
           city: city || undefined,
           country: country || undefined,
           postalCode: postalCode || undefined,
-          isPrimary: true,
+          isPrimary: affiliation?.isPrimary ?? true,
         },
+        ...author.affiliations.slice(1),
       ],
     });
   }
@@ -514,13 +602,14 @@ function AuthorEditor({
     <li className="author">
       <div className="author-index">{author.sequence}</div>
       <div className="author-fields">
+        {error && <p role="alert" className="field-error">{error}</p>}
         <div className="name-row">
           <label className="field">
             <span>Given</span>
             <input
               value={author.givenName}
               onChange={(event) =>
-                onPatch({ givenName: event.target.value || 'Given' })
+                onPatch({ givenName: event.target.value })
               }
             />
           </label>
@@ -538,11 +627,12 @@ function AuthorEditor({
             <input
               value={author.familyName}
               onChange={(event) =>
-                onPatch({ familyName: event.target.value || 'Family' })
+                onPatch({ familyName: event.target.value })
               }
             />
           </label>
         </div>
+        <label className="field"><span>Prefix (if your journal requires it)</span><input value={author.namePrefix ?? ''} placeholder="e.g. Dr." onChange={(event) => onPatch({ namePrefix: event.target.value || undefined })} /></label>
         <div className="meta-row">
           <label className="field">
             <span>Email</span>

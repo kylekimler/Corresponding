@@ -1,5 +1,6 @@
 import type { Roster } from '@/schema/author';
 import type { WebsiteRequest, WebsiteResponse } from '@/messaging/website';
+import { WebsiteResponseSchema } from './response';
 import {
   createWebsiteHandshakeRequest,
   isWebsiteHandshakeReady,
@@ -53,7 +54,6 @@ export function discoverExtensionId(
   } = {},
 ): Promise<string> {
   const configured = configuredExtensionId();
-  if (configured) return Promise.resolve(configured);
   if (cachedExtensionId) return Promise.resolve(cachedExtensionId);
 
   const addListener = options.addListener ?? window.addEventListener.bind(window);
@@ -66,7 +66,7 @@ export function discoverExtensionId(
   return new Promise((resolve) => {
     const timer = window.setTimeout(() => {
       removeListener('message', onMessage);
-      resolve('');
+      resolve(configured);
     }, options.timeoutMs ?? 1200);
 
     function onMessage(event: MessageEvent) {
@@ -129,6 +129,7 @@ export function sendToExtension(
           settled = true;
           clearTimeout(timer);
           if (runtime.lastError) {
+            cachedExtensionId = '';
             resolve({
               type: 'ERROR',
               code: 'NOT_INSTALLED',
@@ -136,11 +137,8 @@ export function sendToExtension(
             });
             return;
           }
-          if (
-            !response ||
-            typeof response !== 'object' ||
-            !('type' in response)
-          ) {
+          const parsed = WebsiteResponseSchema.safeParse(response);
+          if (!parsed.success) {
             resolve({
               type: 'ERROR',
               code: 'UNAVAILABLE',
@@ -148,7 +146,7 @@ export function sendToExtension(
             });
             return;
           }
-          resolve(response as WebsiteResponse);
+          resolve(parsed.data);
         });
       } catch {
         if (settled) return;

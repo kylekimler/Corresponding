@@ -4,7 +4,9 @@
 
 ### `activeTab`
 
-Used only when the user opens the extension on a manuscript submission page. Enables inspecting and filling author fields in the active tab without broad host access.
+Used when the user opens the extension on a page that is not already covered
+by the contextual autofill content script. Enables inspecting and filling
+author fields in the active tab without broad host access.
 
 ### `storage`
 
@@ -12,19 +14,30 @@ Stores saved author rosters and settings locally on the user’s device. Author 
 
 ### `scripting`
 
-Injects the content script on demand into the active tab after the user invokes the extension, so form detect/preview/fill/validate can run. Not used for remote code.
+Injects the content script on demand into the active tab after the user invokes the extension, so form detect/preview/fill/validate can run on pages without a registered journal match. Not used for remote code.
 
 ## Host permissions
 
-None required for Nature MTS filling (activeTab model).
+No separate `host_permissions` array is requested. Registered content scripts
+do grant access to their matched sites and can produce Chrome site-access
+warnings at installation or update. This is an intentional expansion from the
+previous activeTab-only journal workflow; include it in the store review.
+See [Chrome permission declarations](https://developer.chrome.com/docs/extensions/develop/concepts/declare-permissions).
 
 `externally_connectable` is not a permission. It lets `https://corresponding.app`
 save a roster into local extension storage. It does not grant access to journal
 sites, and website messages cannot trigger fill.
 
-A content script runs only on corresponding.app (and local Vite ports in
-development). It announces that the extension is installed. It does not read
-author fields or journal pages.
+Content scripts:
+
+- corresponding.app (and local Vite ports, including unpacked production builds) — announces that
+  the extension is installed. Does not read author fields or journal pages.
+- Known submission hosts already backed by a fill adapter (Editorial Manager,
+  ScholarOne / Manuscript Central, bioRxiv / medRxiv submit hosts) plus local
+  fixtures — detect author-entry pages and show a small fill control. The
+  script does not run on `<all_urls>`, does not store page HTML, and does not
+  fill until the user clicks. Live Nature / eJournalPress hosts are not
+  guessed; those pages still use the popup + activeTab path.
 
 Optional future Google Sheets import may add OAuth (`identity`) and Google API host access limited to Sheets read-only endpoints — only when credentials are configured and the feature is enabled. Sheets write access will not be requested.
 

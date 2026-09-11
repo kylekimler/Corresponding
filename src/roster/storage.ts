@@ -5,7 +5,7 @@ import {
 } from '@/schema/author';
 import { toCsv } from '@/import/csv';
 
-const STORAGE_KEY = 'journal_autofill_rosters_v1';
+export const STORAGE_KEY = 'journal_autofill_rosters_v1';
 const QUARANTINE_KEY = 'journal_autofill_rosters_quarantine_v1';
 
 export interface RosterStore {
