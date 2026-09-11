@@ -7,6 +7,7 @@ import {
 } from '@/schema/author';
 import { parseCreditRoles, type CreditRole } from '@/schema/credit';
 import { getInput, identitiesConflict, readValue, setValue } from '../dom';
+import { matchEditorialManagerCountry } from './country';
 import { evaluatePortalRequirements } from '../requirements';
 import { assertSafeMutationTarget, listDangerousControls } from '../safety';
 import type {
@@ -149,7 +150,7 @@ function buildAuthorPlans(
 
   return specs.map((spec) => {
     const current = readValue(form, spec.id);
-    return {
+    const plan: FieldPlan = {
       fieldId: spec.id,
       label: spec.label,
       authorSequence: author.sequence,
@@ -160,6 +161,16 @@ function buildAuthorPlans(
         ? 'Existing author identity conflicts with the roster'
         : undefined,
     };
+    if (spec.id === AUTHOR_FIELD_IDS.country && spec.value &&
+        (plan.action === 'fill' || plan.action === 'overwrite')) {
+      const country = getInput(form, spec.id);
+      if (country?.tagName.toLowerCase() === 'select' &&
+          matchEditorialManagerCountry(country as HTMLSelectElement, spec.value) === null) {
+        plan.action = 'unmapped';
+        plan.reason = 'Country could not be matched safely. Select Country or Region in the journal form.';
+      }
+    }
+    return plan;
   });
 }
 
@@ -171,10 +182,19 @@ function applyTextPlan(
   if (options.dryRun) return;
   if (plan.action !== 'fill' && plan.action !== 'overwrite') return;
   if (plan.proposedValue === undefined) return;
-  setValue(form, plan.fieldId, plan.proposedValue, {
+  const input = getInput(form, plan.fieldId);
+  const value = plan.fieldId === AUTHOR_FIELD_IDS.country && input?.tagName.toLowerCase() === 'select'
+    ? matchEditorialManagerCountry(input as HTMLSelectElement, plan.proposedValue)
+    : plan.proposedValue;
+  const result = value === null ? 'missing_element' : setValue(form, plan.fieldId, value, {
     overwrite: true,
     dryRun: false,
   });
+  if (result === 'missing_element' || result === 'skipped_disabled') {
+    plan.action = 'unmapped';
+    plan.reason = `${plan.label} could not be written safely. Review it in the journal form.`;
+    return;
+  }
   // Institution is written separately: a blur here can pick the first
   // Ringgold hit. Zipcode (and other Knockout fields) update on blur.
   if (plan.fieldId === AUTHOR_FIELD_IDS.institution) return;
@@ -238,7 +258,7 @@ function applyInstitutionFreeText(
  * Ringgold typing can clear City/Department. Write them again after the
  * institution box is done so Save This Author is not missing required fields.
  */
-function refillAffiliationDetails(form: Document, author: Author): void {
+function refillAffiliationDetails(form: Document, author: Author, plans: FieldPlan[]): void {
   const aff = primaryAffiliation(author);
   if (!aff) return;
   const writes: Array<[string, string | undefined]> = [
@@ -246,13 +266,16 @@ function refillAffiliationDetails(form: Document, author: Author): void {
     [AUTHOR_FIELD_IDS.city, aff.city],
     [AUTHOR_FIELD_IDS.state, aff.state],
     [AUTHOR_FIELD_IDS.zipcode, aff.postalCode],
-    [AUTHOR_FIELD_IDS.country, aff.country],
   ];
   for (const [id, value] of writes) {
     if (!value?.trim()) continue;
     setValue(form, id, value, { overwrite: true, dryRun: false });
     getInput(form, id)?.dispatchEvent(new Event('blur', { bubbles: true }));
   }
+  // Reuse the country plan so alias resolution and preserve/disabled rules
+  // also apply after institution typeahead clears dependent fields.
+  const countryPlan = plans.find((plan) => plan.fieldId === AUTHOR_FIELD_IDS.country);
+  if (countryPlan) applyTextPlan(form, countryPlan, { overwrite: true, dryRun: false });
 }
 
 function applyCorresponding(
@@ -392,6 +415,20 @@ function isVisible(el: Element): boolean {
   return true;
 }
 
+function visibleText(node: Element): string {
+  // A visible modal may contain hidden validation templates. textContent
+  // includes those templates even though the scientist never saw a warning.
+  const walker = node.ownerDocument.createTreeWalker(node, 4 /* SHOW_TEXT */);
+  const parts: string[] = [];
+  let textNode: Node | null;
+  while ((textNode = walker.nextNode())) {
+    if (textNode.parentElement && isVisible(textNode.parentElement)) {
+      parts.push(textNode.textContent ?? '');
+    }
+  }
+  return parts.join(' ').replace(/\s+/g, ' ').trim();
+}
+
 function rolesWarningText(root: Document): string {
   const docs = collectReadableDocuments(root).documents.map((f) => f.doc);
   if (!docs.includes(root)) docs.unshift(root);
@@ -410,7 +447,7 @@ function rolesWarningText(root: Document): string {
     ];
     for (const node of candidates) {
       if (!isVisible(node)) continue;
-      const text = (node.textContent ?? '').replace(/\s+/g, ' ').trim();
+      const text = visibleText(node);
       if (!ROLES_WARNING_RE.test(text)) continue;
       const match = text.match(
         /please select at least one contributor role[^.!]*/i,
@@ -491,6 +528,7 @@ async function saveAuthorAndProceed(
   root: Document,
   form: Document,
   givenBefore: string,
+  warnings: string[],
 ): Promise<
   'closed' | 'cleared' | 'warning' | 'issues' | 'timeout' | 'missing'
 > {
@@ -503,12 +541,13 @@ async function saveAuthorAndProceed(
 
   for (let attempt = 1; attempt <= SAVE_ATTEMPTS; attempt += 1) {
     if (saveDialogVisible(root)) {
-      await dismissSaveDialogsWithRetries(root);
+      await dismissSaveDialogsWithRetries(root, warnings);
       const afterOk = await waitAfterAuthorSave(
         root,
         form,
         givenBefore,
         SAVE_ATTEMPT_MS,
+        warnings,
       );
       if (afterOk !== 'timeout') return afterOk;
       continue;
@@ -521,11 +560,12 @@ async function saveAuthorAndProceed(
       form,
       givenBefore,
       SAVE_ATTEMPT_MS,
+      warnings,
     );
     if (outcome !== 'timeout') return outcome;
   }
-  await dismissSaveDialogsWithRetries(root);
-  return waitAfterAuthorSave(root, form, givenBefore);
+  await dismissSaveDialogsWithRetries(root, warnings);
+  return waitAfterAuthorSave(root, form, givenBefore, SAVE_WATCH_MS, warnings);
 }
 
 async function openAuthorFormFromList(
@@ -586,11 +626,20 @@ function dismissRequiredMissing(root: Document): boolean {
 }
 
 /** Click through the save-state dialogs; never Cancel. */
-function dismissSaveDialogs(root: Document): boolean {
+function dismissSaveDialogs(root: Document, warnings?: string[]): boolean {
   const validation = dismissValidationIssues(root);
   const required = dismissRequiredMissing(root);
   const institution = dismissInstitutionWarning(root);
   const format = dismissWrongFormat(root);
+  const notices: Array<[boolean, string]> = [
+    [validation, 'The journal reported validation issues. Review the highlighted author fields.'],
+    [required, 'The journal reported missing required author information. Review the highlighted fields.'],
+    [institution, 'Institution was entered as free text. Review the journal’s institution verification.'],
+    [format, 'The journal reported an author format problem. Review the author list before continuing.'],
+  ];
+  for (const [shown, message] of notices) {
+    if (shown && warnings && !warnings.includes(message)) warnings.push(message);
+  }
   return validation || required || institution || format;
 }
 
@@ -608,11 +657,11 @@ function saveDialogVisible(root: Document): boolean {
  * click often only focuses the button. Hammer OK (never Cancel) up to three
  * times, re-finding it each time so a replaced node is still hit.
  */
-async function dismissSaveDialogsWithRetries(root: Document): Promise<boolean> {
+async function dismissSaveDialogsWithRetries(root: Document, warnings?: string[]): Promise<boolean> {
   let clicked = false;
   for (let attempt = 1; attempt <= DIALOG_OK_ATTEMPTS; attempt += 1) {
     if (!saveDialogVisible(root)) return clicked;
-    if (dismissSaveDialogs(root)) clicked = true;
+    if (dismissSaveDialogs(root, warnings)) clicked = true;
     await delay(DIALOG_OK_GAP_MS);
   }
   return clicked;
@@ -695,7 +744,7 @@ function writeAuthorIntoForm(
   }
   if (!conflict) {
     applyInstitutionFreeText(form, primaryAffiliation(author)?.institution);
-    refillAffiliationDetails(form, author);
+    refillAffiliationDetails(form, author, authorPlans);
   }
   return authorPlans;
 }
@@ -759,12 +808,13 @@ async function waitAfterAuthorSave(
   form: Document,
   givenNameBefore: string,
   timeoutMs = SAVE_WATCH_MS,
+  warnings?: string[],
 ): Promise<'closed' | 'cleared' | 'warning' | 'issues' | 'timeout'> {
   const started = Date.now();
-  const dismissed = await dismissSaveDialogsWithRetries(root);
+  const dismissed = await dismissSaveDialogsWithRetries(root, warnings);
   while (Date.now() - started < timeoutMs) {
     if (rolesWarningText(root) || rolesWarningText(form)) return 'warning';
-    const dismissedAgain = dismissSaveDialogs(root);
+    const dismissedAgain = dismissSaveDialogs(root, warnings);
     if (!authorFormVisible(root)) return 'closed';
     const given = givenNameValue(root);
     if (givenNameBefore && given !== givenNameBefore) return 'cleared';
@@ -1033,7 +1083,7 @@ export const editorialManagerAdapter: PlatformAdapter = {
             currentForm,
             primaryAffiliation(author)?.institution,
           );
-          refillAffiliationDetails(currentForm, author);
+          refillAffiliationDetails(currentForm, author, authorPlans);
         }
         if (!conflict) {
           tickCreditRoles(currentForm, author);
@@ -1047,9 +1097,9 @@ export const editorialManagerAdapter: PlatformAdapter = {
         }
         hideInstitutionTypeahead(doc);
         const saved = clickAuthorSave(doc);
-        dismissSaveDialogs(doc);
+        dismissSaveDialogs(doc, warnings);
         if (authorFormVisible(doc)) clickAuthorSave(doc);
-        dismissSaveDialogs(doc);
+        dismissSaveDialogs(doc, warnings);
         if (!saved) {
           warnings.push(
             'Author Save control was not found. Values were written into the open form only.',
@@ -1185,6 +1235,7 @@ export const editorialManagerAdapter: PlatformAdapter = {
         doc,
         currentForm,
         givenBefore,
+        warnings,
       );
       if (afterSave === 'missing') {
         warnings.push(

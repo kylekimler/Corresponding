@@ -3,6 +3,7 @@ import {
   createAutofillUi,
   FIELD_CARD_ATTR,
   PAGE_CHIP_ATTR,
+  REVIEW_NOTICE_ATTR,
 } from '@/autofill/ui';
 import { makeAuthor } from '../helpers/roster';
 
@@ -65,6 +66,27 @@ describe('autofill UI lifecycle and position', () => {
     expect(ui.shadow.querySelector('[role="dialog"]')).toBeNull();
     ui.hidePageChip();
     expect(ui.shadow.querySelector(`[${PAGE_CHIP_ATTR}]`)).toBeNull();
+    ui.destroy();
+  });
+
+  it('keeps review details readable across refreshes, escapes text, and only offers dismissal', () => {
+    const ui = createAutofillUi(document);
+    let dismissed = false;
+    const options = { messages: ['Country needs review', '<img src=x onerror=alert(1)>'],
+      onDismiss: () => { dismissed = true; ui.hideReviewNotice(); } };
+    ui.showReviewNotice(options);
+    const notice = ui.shadow.querySelector(`[${REVIEW_NOTICE_ATTR}]`)!;
+    expect(notice.textContent).toContain('Country needs review');
+    expect(notice.querySelector('img')).toBeNull();
+    const details = notice.querySelector('details')!;
+    details.open = true;
+    ui.showReviewNotice(options);
+    expect(details.open).toBe(true);
+    expect(notice.querySelectorAll('button')).toHaveLength(1);
+    expect(notice.textContent).not.toContain('Fill authors');
+    notice.querySelector('button')!.click();
+    expect(dismissed).toBe(true);
+    expect(ui.shadow.querySelector(`[${REVIEW_NOTICE_ATTR}]`)).toBeNull();
     ui.destroy();
   });
 });

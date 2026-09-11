@@ -34,6 +34,9 @@ Status key: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked (exte
 
 ## Local remaining (not blocked)
 
+- [ ] Fix CSV export/import preservation of apostrophe-prefixed formula-like text
+  without weakening spreadsheet injection protection. Repro: input `"'+"`
+  round-trips as `"''+"`; randomized invariant seed `-1081049180` (2026-09-11).
 - [x] Declarative `sites/*.json` adapters (Nature proven; S1/EM detect-only)
 - [x] Public compatibility scoreboard (honest ✅ / ⬜, issue CTA, unlock releases)
 - [x] MIT license + no-account / no-trial fill (README hook, locked FREE_ACCESS)

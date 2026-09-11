@@ -38,3 +38,39 @@ test('website edits, syncs, and offers contextual fill without opening the popup
   await expect(journal.locator('#contrib_auth_1_email')).toHaveValue('ada.updated@example.org');
   expect(errors).toEqual([]);
 });
+
+test('Editorial Manager matches the observed country labels and retains review warnings after contextual fill', async ({ context, extensionId }, testInfo) => {
+  expect(extensionId).toBeTruthy();
+  const page = await context.newPage();
+  await page.goto('http://localhost:4173/');
+  await page.getByRole('button', { name: 'Create manuscript' }).click();
+  await page.getByLabel('Paste authors').fill(
+    'First name\tLast name\tEmail\tInstitution\tDepartment\tCity\tPostal Code\tCountry\tCRediT roles\n' +
+    'Maya\tChen\tmaya@example.org\tExample Institute\tBiology\tCambridge\t02142\tUnited States\tConceptualization',
+  );
+  await page.getByRole('button', { name: 'Import authors', exact: true }).click();
+  await expect(page.getByText('Saved to the Corresponding extension', { exact: true })).toBeVisible();
+
+  const fixtureUrl = 'http://localhost:3000/fixtures/em-popup-validation.html';
+  const html = await readFile('fixtures/em-popup-validation.html', 'utf8');
+  // Live-observed labels, deliberately synthetic values; production selectors
+  // and the existing fixture's delayed save/validation behavior are unchanged.
+  const body = html.replace('<option value="United States">United States</option>',
+    '<option value="test-us">UNITED STATES OF AMERICA</option>' +
+    '<option value="test-islands">UNITED STATES MINOR OUTLYING ISLANDS</option>');
+  await context.route(fixtureUrl, (route) => route.fulfill({ contentType: 'text/html', body }));
+  const journal = await context.newPage();
+  await journal.goto(fixtureUrl);
+  await journal.getByRole('button', { name: 'Fill authors', exact: true }).click();
+  await expect(journal.locator('#committed-authors')).toHaveText('Maya Chen');
+  await expect(journal.locator('#CountryCode')).toHaveValue('test-us');
+  const review = journal.locator('[data-corresponding-review]');
+  await expect(review).toBeVisible();
+  await review.locator('summary').click();
+  await expect(review).toContainText('The journal reported validation issues.');
+  await expect(journal.getByRole('button', { name: 'Fill authors', exact: true })).toHaveCount(0);
+  await journal.screenshot({ path: testInfo.outputPath('editorial-manager-review.png'), fullPage: true });
+  await journal.getByRole('button', { name: 'Dismiss Corresponding review notice' }).click();
+  await expect(review).toHaveCount(0);
+  await expect(journal.getByRole('button', { name: 'Fill authors', exact: true })).toHaveCount(0);
+});

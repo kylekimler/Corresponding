@@ -4,6 +4,7 @@ import type { Author } from '@/schema/author';
 export const AUTOFILL_HOST_ID = 'corresponding-autofill-root';
 export const PAGE_CHIP_ATTR = 'data-corresponding-chip';
 export const FIELD_CARD_ATTR = 'data-corresponding-field';
+export const REVIEW_NOTICE_ATTR = 'data-corresponding-review';
 
 const HOST_STYLE = [
   'all: initial',
@@ -95,6 +96,12 @@ const SHADOW_CSS = `
   color: #0d6b56;
 }
 .c-error { color: #8b1e1e; }
+.c-review { align-items: flex-start; border-radius: 8px; box-sizing: border-box; }
+.c-review strong { display: block; font-weight: 600; }
+.c-review details { margin-top: 4px; }
+.c-review summary { cursor: pointer; color: #0d6b56; }
+.c-review ul { padding-left: 16px; margin: 6px 0 0; max-height: 180px; overflow: auto; }
+.c-review li + li { margin-top: 6px; }
 `;
 
 export type AutofillUi = {
@@ -107,6 +114,8 @@ export type AutofillUi = {
     onFillAll: () => void;
   }): void;
   hidePageChip(): void;
+  showReviewNotice(options: { messages: string[]; onDismiss: () => void }): void;
+  hideReviewNotice(): void;
   showFieldCard(options: {
     author: Author;
     anchor: Element;
@@ -155,6 +164,8 @@ export function createAutofillUi(doc: Document): AutofillUi {
   shadow.innerHTML = `<style>${SHADOW_CSS}</style><div class="c-root"></div>`;
   const root = shadow.querySelector('.c-root') as HTMLElement;
   let chip: HTMLElement | null = null;
+  let review: HTMLElement | null = null;
+  let reviewStamp = '';
   let card: HTMLElement | null = null;
   let positionedOn: Element | null = null;
 
@@ -207,6 +218,54 @@ export function createAutofillUi(doc: Document): AutofillUi {
     hidePageChip() {
       chip?.remove();
       chip = null;
+    },
+    showReviewNotice({ messages, onDismiss }) {
+      // DOM refreshes must not collapse the details the scientist is reading.
+      const stamp = JSON.stringify(messages);
+      if (review && stamp === reviewStamp) return;
+      review?.remove();
+      reviewStamp = stamp;
+      review = doc.createElement('div');
+      review.className = 'c-chip c-review';
+      review.setAttribute(REVIEW_NOTICE_ATTR, 'true');
+      const mark = doc.createElement('span');
+      mark.className = 'c-mark';
+      mark.textContent = 'C';
+      mark.setAttribute('aria-hidden', 'true');
+      const copy = doc.createElement('div');
+      copy.className = 'c-copy';
+      const heading = doc.createElement('strong');
+      heading.textContent = 'Corresponding: review author details';
+      heading.setAttribute('role', 'status');
+      const explanation = doc.createElement('div');
+      explanation.textContent = 'Check the journal fields before continuing.';
+      const details = doc.createElement('details');
+      const summary = doc.createElement('summary');
+      summary.textContent = `Details (${messages.length})`;
+      const list = doc.createElement('ul');
+      for (const message of messages) {
+        const item = doc.createElement('li');
+        item.textContent = message;
+        list.appendChild(item);
+      }
+      details.append(summary, list);
+      copy.append(heading, explanation, details);
+      const dismiss = doc.createElement('button');
+      dismiss.type = 'button';
+      dismiss.className = 'c-btn c-btn-ghost';
+      dismiss.textContent = 'Dismiss';
+      dismiss.setAttribute('aria-label', 'Dismiss Corresponding review notice');
+      dismiss.addEventListener('click', (event) => {
+        event.stopPropagation();
+        onDismiss();
+      });
+      review.append(mark, copy, dismiss);
+      root.appendChild(review);
+    },
+    hideReviewNotice() {
+      review?.remove();
+      review = null;
+      reviewStamp = '';
     },
     showFieldCard({ author, anchor, busy, error, onFillOne }) {
       if (!card) {

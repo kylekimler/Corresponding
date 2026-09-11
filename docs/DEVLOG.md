@@ -4,6 +4,42 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-09-11 — Editorial Manager country and post-fill review
+- Live PLOS Genetics diagnosis: `United States` ambiguously matched the labels
+  `UNITED STATES OF AMERICA` and `UNITED STATES MINOR OUTLYING ISLANDS`.
+  Manually selecting the former cleared one synthetic author's required-field
+  warning; institutional verification remained separate.
+- Added an EM-only exact U.S. alias resolver using the actual option value.
+  No portal option values or selectors were guessed. Missing/disabled/ambiguous
+  selections remain unwritten and are reported as unmapped, not filled.
+- The country refill after institution typing now reuses the original plan,
+  including its preserve-existing decision. The shared select matcher is unchanged.
+- Retained acknowledged journal/institution warnings even when author Save
+  immediately closes the dialog. Contextual fills now keep a compact review
+  notice with expandable details and Dismiss, without a whole-roster retry button.
+  Roster updates/navigation clear stale notices; late results are not attached to
+  a different active roster. Popup filling and permissions remain unchanged.
+- Added regression coverage for country aliases, ambiguity, preservation, dry run,
+  failed writes, ordering, warning lifecycle, safe text rendering, and a compiled
+  web-to-extension-to-EM Chromium fixture journey.
+- Verification: 396 unit/integration tests and eight Chromium journeys passed;
+  typecheck, security lint and both production builds passed.
+- First live patched PLOS pass saved all three synthetic coauthors in order,
+  without the prior required-information flags. Reopened each record and
+  confirmed its U.S. country, postal code, and intended CRediT role. The original
+  corresponding author stayed unchanged; no manuscript continuation was clicked.
+- That pass exposed a false contribution-role warning from hidden validation
+  text inside visible modal containers. Warning extraction now reads only visible
+  descendant text; regression coverage retains real visible warnings. The final
+  live PLOS rerun saved all three in order with no missing-required-information
+  flags and no false role warnings. The persistent notice retained the legitimate
+  free-text institution/journal-validation marks. No final submission occurred.
+- A randomized run independently exposed an existing CSV escaping round-trip
+  defect: `denatureCsvFormula(neutralizeCsvFormula("'+"))` returns `"''+"`.
+  Failing fast-check seed: `-1081049180`. These CSV functions and their property
+  test are unchanged from main; direct reproduction confirms the defect. A later
+  randomized full run passed, which does not resolve this recorded counterexample.
+
 ### 2026-09-11 — Live ScholarOne walkthrough
 - Recorded the website → local extension sync → contextual Fill workflow using
   three synthetic coauthors and user-approved disposable live portal drafts.

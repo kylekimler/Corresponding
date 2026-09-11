@@ -1,7 +1,7 @@
 import type { DetectResult } from '@/adapters/types';
 import type { Author, Roster } from '@/schema/author';
 import { recognizeAuthorField } from './fields';
-import { runContextualFill } from './fill';
+import { contextualReviewMessages, runContextualFill } from './fill';
 import {
   detectContextualPage,
   pageSupportsContextualAutofill,
@@ -53,9 +53,11 @@ export function startContextualAutofill(
   let blurTimer: ReturnType<typeof setTimeout> | undefined;
   let busy: 'one' | 'all' | null = null;
   let error: string | undefined;
+  let reviewMessages: string[] = [];
   let completedAll = false;
   let rosterStamp: string | undefined;
   let refreshVersion = 0;
+  let lastPageUrl: string | undefined;
 
   const pageUrl = () =>
     options.pageUrl ?? doc.defaultView?.location.href ?? '';
@@ -70,6 +72,20 @@ export function startContextualAutofill(
     if (destroyed) return;
     const authorCount = roster?.authors.length ?? 0;
     const pageOk = detect ? pageSupportsContextualAutofill(detect) : false;
+
+    if (reviewMessages.length > 0 && pageOk && authorCount > 0 && !busy) {
+      ui.hidePageChip();
+      ui.hideFieldCard();
+      ui.showReviewNotice({
+        messages: reviewMessages,
+        onDismiss: () => {
+          reviewMessages = [];
+          render();
+        },
+      });
+      return;
+    }
+    ui.hideReviewNotice();
 
     if (
       !completedAll &&
@@ -131,26 +147,42 @@ export function startContextualAutofill(
     busy = mode;
     render();
     const author = mode === 'one' ? focusedAuthor : undefined;
+    const startedStamp = rosterStamp;
+    const startedUrl = pageUrl();
     let result;
     try {
       result = await fill(doc, roster, {
-      mode,
-      author,
-      pageUrl: pageUrl(),
-      overwrite: false,
+        mode,
+        author,
+        pageUrl: startedUrl,
+        overwrite: false,
       });
     } catch {
       result = { ok: false as const, reason: 'Fill was interrupted. Review the journal fields, then use the extension to continue.' };
     }
     busy = null;
     if (destroyed) return;
+    if (startedStamp !== rosterStamp || startedUrl !== pageUrl()) {
+      render();
+      return;
+    }
     if (result.ok) {
       error = undefined;
+      reviewMessages = contextualReviewMessages(result.report);
       hideField();
       if (mode === 'all') {
         completedAll = true;
-        ui.hidePageChip();
       }
+      render();
+      return;
+    }
+    if (result.report && !result.report.dryRun) {
+      // A failed run may already have saved some modal authors. Do not offer
+      // an immediate whole-roster retry that could duplicate those people.
+      reviewMessages = [result.reason, ...contextualReviewMessages(result.report)];
+      if (mode === 'all') completedAll = true;
+      hideField();
+      render();
       return;
     }
     error = result.reason;
@@ -165,9 +197,12 @@ export function startContextualAutofill(
     if (destroyed || version !== refreshVersion) return;
     roster = nextRoster;
     const stamp = roster ? `${roster.id}:${roster.updatedAt}:${roster.authors.length}` : '';
-    if (stamp !== rosterStamp) {
+    if (stamp !== rosterStamp || lastPageUrl !== pageUrl()) {
       completedAll = false;
+      reviewMessages = [];
+      error = undefined;
       rosterStamp = stamp;
+      lastPageUrl = pageUrl();
     }
     detect = detectContextualPage(doc, pageUrl());
     render();
@@ -210,10 +245,13 @@ export function startContextualAutofill(
   const onPageHide = () => {
     hideField();
     ui.hidePageChip();
+    ui.hideReviewNotice();
   };
   const onNavigate = () => {
     onPageHide();
     completedAll = false;
+    reviewMessages = [];
+    error = undefined;
     scheduleRefresh();
   };
 

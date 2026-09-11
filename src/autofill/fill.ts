@@ -11,6 +11,19 @@ export type ContextualFillResult =
   | { ok: true; report: FillReport }
   | { ok: false; reason: string; report?: FillReport };
 
+/** Keep adapter warnings intact; successful writes do not mean submission-ready. */
+export function contextualReviewMessages(report: FillReport): string[] {
+  return [...new Set([
+    ...report.warnings,
+    ...(report.requirements ?? []).map((issue) =>
+      `${issue.field}: missing for author ${issue.authorSequences.join(', ')}. ${issue.explanation}`),
+    ...report.plans.filter((plan) => plan.action === 'unmapped').map((plan) =>
+      `${plan.authorSequence ? `Author ${plan.authorSequence}: ` : ''}${plan.reason ?? `${plan.label} was not mapped. Review it in the journal form.`}`),
+    ...(report.unmapped > 0 && !report.plans.some((plan) => plan.action === 'unmapped')
+      ? ['Some fields were not mapped. Review them in the journal form.'] : []),
+  ])];
+}
+
 /**
  * Reuses the existing adapter fill path. Never mutates until the page
  * still matches a fillable adapter with fill-threshold confidence.

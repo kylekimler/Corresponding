@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { mountNatureMtsFixture } from '@/adapters/nature-mts/fixture';
-import { runContextualFill } from '@/autofill/fill';
+import { contextualReviewMessages, runContextualFill } from '@/autofill/fill';
 import { rosterForOneAuthor } from '@/autofill/suggest';
 import { makeAuthor, makeNAuthors, makeRoster } from '../helpers/roster';
 
@@ -33,6 +33,24 @@ function kyleRoster() {
 }
 
 describe('runContextualFill', () => {
+  it('preserves warnings, missing requirements, and unmapped fields for post-fill review', async () => {
+    mountNatureMtsFixture({ slots: 2 });
+    const result = await runContextualFill(document, kyleRoster(), { mode: 'all' });
+    if (!result.ok) throw new Error('expected fixture fill to succeed');
+    const report = result.report;
+    report.warnings = ['Institution needs verification', 'Institution needs verification'];
+    report.requirements = [{ code: 'country', field: 'Country', explanation: 'Select a country.',
+      authorSequences: [1, 2], blocksFill: true }];
+    report.plans.push({ fieldId: 'CountryCode', label: 'Country', action: 'unmapped',
+      authorSequence: 1, reason: 'Country could not be matched safely.' });
+    report.unmapped = 1;
+    expect(contextualReviewMessages(report)).toEqual([
+      'Institution needs verification',
+      'Country: missing for author 1, 2. Select a country.',
+      'Author 1: Country could not be matched safely.',
+    ]);
+  });
+
   it('fills one author into the matching Nature slot and leaves others empty', async () => {
     mountNatureMtsFixture({ slots: 2 });
     const roster = kyleRoster();
