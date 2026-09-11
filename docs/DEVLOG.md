@@ -31,7 +31,9 @@ Chronological overnight / autonomous iteration log.
 - That pass exposed a false contribution-role warning from hidden validation
   text inside visible modal containers. Warning extraction now reads only visible
   descendant text; regression coverage retains real visible warnings. The final
-  live check of this warning-filter correction is still pending.
+  live PLOS rerun saved all three in order with no missing-required-information
+  flags and no false role warnings. The persistent notice retained the legitimate
+  free-text institution/journal-validation marks. No final submission occurred.
 - A randomized run independently exposed an existing CSV escaping round-trip
   defect: `denatureCsvFormula(neutralizeCsvFormula("'+"))` returns `"''+"`.
   Failing fast-check seed: `-1081049180`. These CSV functions and their property
