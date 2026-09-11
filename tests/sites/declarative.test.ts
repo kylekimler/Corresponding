@@ -120,9 +120,9 @@ describe('declarative sites', () => {
     ).toThrow(/element IDs/i);
   });
 
-  it('shows a small declarative adapter example in the README', () => {
-    const readme = readRepo('README.md');
-    expect(readme).toContain('"id": "example-society"');
+  it('links the README to the guide containing the declarative example', () => {
+    expect(readRepo('README.md')).toContain('(docs/ADDING_AN_ADAPTER.md)');
+    expect(readRepo('docs/ADDING_AN_ADAPTER.md')).toContain('"id": "example-society"');
     const example = readRepo('sites/_example-society.json').trim().split('\n');
     expect(example.length).toBeLessThanOrEqual(16);
   });

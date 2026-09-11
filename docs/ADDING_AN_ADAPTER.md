@@ -2,6 +2,25 @@
 
 Most journals do not need a TypeScript adapter. Add a file under `sites/`.
 
+For example (illustrative IDs only—replace with fixture-backed IDs):
+
+```json
+{
+  "id": "example-society",
+  "label": "Example Society Journal",
+  "autofill": true,
+  "detect": { "ids": ["author_1_first"] },
+  "authors": {
+    "slot": "author_{n}_first",
+    "fields": {
+      "givenName": "author_{n}_first",
+      "familyName": "author_{n}_last",
+      "email": "author_{n}_email"
+    }
+  }
+}
+```
+
 ## Tiny declarative site (preferred)
 
 1. Capture a redacted author-form screenshot or fixture. Do not guess IDs.
@@ -9,8 +28,8 @@ Most journals do not need a TypeScript adapter. Add a file under `sites/`.
 3. Put the real element IDs in `detect` and `authors.fields`. `{n}` is the
    1-based author slot.
 4. Set `"autofill": true` only after those IDs exist on a fixture.
-5. If this publisher is on the README scoreboard, move the row to ✅ in
-   `src/compatibility/catalog.ts` (the catalog test fails if they drift).
+5. Update `src/compatibility/catalog.ts` and the README compatibility section.
+   State the fixture evidence, available workflow, and any live-validation gaps.
 6. Run `npm test`, `npm run typecheck`, `npm run build`.
 
 Site files may only name element IDs. No CSS selectors, XPath, or click

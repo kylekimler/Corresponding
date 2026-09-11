@@ -22,11 +22,13 @@ describe('radically free product', () => {
   it('leads the README with the hated-form hook', () => {
     const readme = readRepo('README.md');
     expect(readme).toMatch(
-      /Stop entering author information into journal submission forms by hand/,
+      /Never enter your coauthors manually again/,
     );
     expect(readme).toMatch(
-      /Corresponding does not collect your information/,
+      /Corresponding does not upload names, emails, affiliations, or manuscript rosters to its backend/,
     );
+    expect(readme).toContain('author-count-only ping');
+    expect(readme).toContain('No account.');
     expect(readme).toMatch(/\[MIT\]/);
     expect(readme).not.toMatch(/Proprietary/);
     expect(readme).not.toMatch(/all rights reserved/i);
