@@ -20,3 +20,5 @@ docs/media/*
 !docs/media/README.md
 !docs/media/*.gif
 !docs/media/scholarone-workflow.mp4
+!docs/media/plos-genetics-workflow.mp4
+!docs/media/biorxiv-workflow.mp4

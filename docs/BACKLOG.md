@@ -34,6 +34,11 @@ Status key: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked (exte
 
 ## Local remaining (not blocked)
 
+- [ ] Investigate bioRxiv's transient author-lookup warnings and required-field
+  flashes in the September 11 continuous demo. The final three-author list is
+  correct, but that alone does not prove intermediate state is safe for all
+  identities. Reproduce with a fresh/reused dialog and native Chrome suggestions;
+  retain warnings and never substitute lookup results for the canonical roster.
 - [ ] Fix CSV export/import preservation of apostrophe-prefixed formula-like text
   without weakening spreadsheet injection protection. Repro: input `"'+"`
   round-trips as `"''+"`; randomized invariant seed `-1081049180` (2026-09-11).
@@ -56,8 +61,8 @@ Status key: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked (exte
 
 - [!] Google OAuth client ID for Sheets read-only
 - [!] Real Nature MTS HTML capture to validate synthetic IDs
-- [x] Editorial Manager author-form IDs from PLOS ONE 2026-08-15 console probe (`FirstName` / `LastName` / `Email` in `RequiredRegistrationQuestions.aspx`). Live multi-author Save smoke still pending.
-- [x] Real ScholarOne fixture — Bioinformatics Manuscript Central capture (2026-08-14); live smoke still pending.
+- [x] Editorial Manager author-form IDs from PLOS ONE 2026-08-15 console probe (`FirstName` / `LastName` / `Email` in `RequiredRegistrationQuestions.aspx`). September 11 PLOS Genetics live three-coauthor Save smoke passed; institution verification remains manual.
+- [x] Real ScholarOne fixture — Bioinformatics Manuscript Central capture (2026-08-14); September 11 live three-coauthor smoke passed, with institution verification and CRediT still requiring manual review.
 
 ## Security / quality (post PR #1)
 
@@ -92,7 +97,7 @@ Status key: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked (exte
 - [ ] eLife public workflow research + redacted compatibility capture plan.
 - [!] Implement eLife only after a real anonymized fixture exists.
 - [!] Validate and broaden Nature/eJournalPress only from real captured HTML.
-- [!] Authenticated live smoke for ScholarOne / Manuscript Central (Bioinformatics).
+- [x] Authenticated three-coauthor live smoke for ScholarOne / Manuscript Central (Bioinformatics), September 11; broader configurations still need validation.
 - [ ] Expand adversarial coverage for popup bridges, provenance, migration, redaction, and 1/75/500/1000-author flows.
 - [x] Local DOCX structured author-table extraction with mapping preview and no prose retention.
 - [!] Paragraph/superscript DOCX and PDF extraction require anonymized manuscript fixtures.

@@ -4,6 +4,33 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-09-11 — PLOS Genetics and bioRxiv README demos
+- Added two compact, source-recorded GIFs and silent H.264 MP4 alternatives.
+  PLOS is an 8.5-second edited walkthrough; bioRxiv has 7.5-second highlights
+  and a 14.2-second continuous MP4 retaining every fill cycle and lookup warning.
+  Both GIFs are 960 × 640 and under 600 KB. No speed changes or fabricated UI.
+- Kept the ScholarOne lead demo; replaced expandable older walkthroughs with
+  the new recordings, descriptive alt text, and explicit review limitations.
+  PLOS preserves the original corresponding author and institution warnings.
+  bioRxiv shows three correct list rows, not continuation/persistence: no
+  corresponding author was designated and Save / Continue was untouched.
+- Masked private account/draft data and native Chrome contact suggestions;
+  raw recordings stay outside Git. Added a reproducible source-specific FFmpeg
+  edit script, with source dimension/duration guards and documented cuts/masks.
+- Recorded the observed bioRxiv transient lookup/required-field flashes for
+  follow-up, including a fresh-tab check. Updated stale live-smoke backlog
+  entries for the observed ScholarOne and patched PLOS three-author runs.
+- Added four media/documentation regressions checking GIF headers, dimensions,
+  linked MP4 files, size budgets, and important demo limitations. Updated the
+  compatibility copy test to include PLOS Genetics without widening adapter claims.
+- Verification: all 400 unit/integration tests and eight Chromium fixture
+  journeys passed; typecheck, security lint, extension build, and web build passed.
+  All four new media files fully decode. Stream/duration/size checks confirm
+  silent outputs. Contact sheets and full-frame-rate cut/privacy-boundary review,
+  plus OCR of every continuous-video frame, found no residual known account or
+  contact strings. Original recordings and older published assets are unchanged.
+- No runtime, adapter, selector, permission, or storage changes in this update.
+
 ### 2026-09-11 — Editorial Manager country and post-fill review
 - Live PLOS Genetics diagnosis: `United States` ambiguously matched the labels
   `UNITED STATES OF AMERICA` and `UNITED STATES MINOR OUTLYING ISLANDS`.
