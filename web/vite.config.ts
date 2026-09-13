@@ -15,6 +15,9 @@ export default defineConfig({
     strictPort: true,
   },
   preview: {
+    // Linux may resolve localhost to IPv6 only. Serve both documented browser
+    // URLs via IPv4 loopback without exposing the preview to the network.
+    host: '127.0.0.1',
     port: 4173,
     strictPort: true,
   },

@@ -32,6 +32,9 @@ Chronological overnight / autonomous iteration log.
 - Remaining launch gates: hosting/domain owner access, historical-media cleanup
   decision, public download/store distribution, final policy/store screenshots,
   and actual fresh-Chrome-profile public installation plus fresh-user trials.
+- CI follow-up: Linux Vite bound localhost to IPv6, so the 127.0.0.1 rehearsal
+  failed with connection refused while nine browser journeys passed. Pin preview
+  to IPv4 loopback; both documented hostnames remain covered without LAN exposure.
 
 ### 2026-09-13 — Launch rehearsal and pre-publication gates
 - Added `docs/LAUNCH_STATUS.md`, linked from the release checklist, with explicit
