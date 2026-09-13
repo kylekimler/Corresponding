@@ -8,8 +8,8 @@ try/install path passes.** This is preparation, not authorization to post.
 1. **Owner: clear public-source exposure.** Resolve the historical account/draft
    media and GitHub-hosted-content review in [LAUNCH_STATUS.md](LAUNCH_STATUS.md).
    Do not make the current history public or assume deleting today's files clears it.
-2. **Owner: hosting and domain.** Sign into the intended Netlify account and
-   identify the domain owner. Follow [WEB_APP.md](WEB_APP.md#netlify-handoff).
+2. **Hosting.** Use the deployed free Cloudflare Pages project.
+   Follow [WEB_APP.md](WEB_APP.md#cloudflare-pages-launch-hosting).
    Publish only `web/dist`; verify HTTPS at the canonical corresponding.pages.dev address.
 3. **Distribution.** Publish reviewed source and a versioned extension ZIP with
    checksum, or finish Chrome Web Store review. Current installation is explicitly
