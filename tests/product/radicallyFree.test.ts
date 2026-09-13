@@ -27,7 +27,7 @@ describe('radically free product', () => {
     expect(readme).toMatch(
       /Corresponding does not upload names, emails, affiliations, or manuscript rosters to its backend/,
     );
-    expect(readme).toMatch(/payload only contains Corr version and author count/i);
+    expect(readme).toMatch(/request body only contains a protocol version and author count/i);
     expect(readme).toContain('](docs/PRIVACY.md)');
     expect(readRepo('docs/PRIVACY.md')).toContain('no names, emails, ORCID, roster identifiers, page URLs, or manuscript text');
     expect(readme).toMatch(/no account(?: needed)?[.,]/i);

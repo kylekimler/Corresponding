@@ -4,6 +4,72 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-09-13 — Show HN launch checklist follow-through
+- Rechecked anonymous access: corresponding.app cannot resolve; GitHub returns
+  404. Authenticated repository remains PRIVATE with no published releases.
+  Store search found no matching listing; owner dashboard remains unverified.
+- Added homepage six-author sample practice using canonical sample provenance,
+  draft-history preservation, downloadable synthetic CSV, the refreshed local MP4,
+  support email, compatibility caveats, review/recovery and permissions copy.
+  Preserved the approved introduction and closing line.
+- Found and fixed a missing sample guard in popup FILL handling. Samples are now
+  refused outside local fixture URLs, matching the contextual-fill intent; tests
+  cover live hosts, hostname spoofing, non-fixture paths and file URLs.
+- Added launch-day runbook and store/reviewer handoff. Corrected count-ping
+  protocol-version wording and explained ordinary connection metadata. No HN
+  prose, social post, store certification or visibility change was generated/sent.
+- Verified 411 tests, typecheck, security lint, both builds, ZIP and ten isolated
+  Chromium journeys. First sandbox run hit localhost EPERM; approved rerun passed.
+  Updated the prior literal README disclosure assertion to the accurate wording.
+- Browser trial without extension verified video seek, CSV download, six-author
+  editing and refresh persistence; checked mobile rendering visually. Synthetic
+  popup Preview/validation screenshots retained in .output/launch for review;
+  these are QA candidates, not an approved store listing set.
+- Package: .output/corresponding-0.1.0-chrome.zip (238.81 KB), SHA-256
+  faaa50e065024371e11f8c55981e37bb31859c0e023533d675175cdf693049a4.
+  Manifest review: activeTab/storage/scripting and existing narrow content-script
+  matches; no added permissions, host permissions or OAuth configuration.
+- Remaining launch gates: hosting/domain owner access, historical-media cleanup
+  decision, public download/store distribution, final policy/store screenshots,
+  and actual fresh-Chrome-profile public installation plus fresh-user trials.
+- CI follow-up: Linux Vite bound localhost to IPv6, so the 127.0.0.1 rehearsal
+  failed with connection refused while nine browser journeys passed. Pin preview
+  to IPv4 loopback; both documented hostnames remain covered without LAN exposure.
+
+### 2026-09-13 — Launch rehearsal and pre-publication gates
+- Added `docs/LAUNCH_STATUS.md`, linked from the release checklist, with explicit
+  Verified / Ready / Blocked / Pending user action states. Preserved README prose.
+  Expanded existing web deployment instructions rather than changing providers;
+  documented root build/output, no required environment variables, canonical apex
+  DNS/TLS, editor-only preview hosts and the post-deploy extension handshake.
+- Started the actual app at http://127.0.0.1:4173/ and verified a synthetic roster
+  imports and survives refresh in the in-app browser. This is local, not public.
+  Added an isolated Chromium journey on that exact origin alongside localhost,
+  plus deployment/origin tests rejecting Netlify preview and www origins.
+- Replaced the privacy-policy contact placeholder with the approved support
+  email. No runtime, adapter, storage, permission or manifest changes.
+- Rechecked: GitHub PRIVATE; corresponding.app NXDOMAIN; no published releases.
+  Netlify is signed out in Chrome. GitHub's Change to public menu is available
+  but was not selected. No visibility change, purchase, account creation,
+  deployment, social post, media deletion or history rewrite occurred.
+- Gitleaks 8.30.1 reported no credential findings in all-ref Git history or the
+  exported tracked tree plus historical media. Historical screenshots in 5338bb6
+  expose account/draft context; deleted raw MOVs remain in history. Recorded paths
+  and remaining media/GitHub-hosted-content review as a publication gate without
+  reproducing sensitive values. This is not an exhaustive privacy certification.
+- Verification: 405 tests, nine Chromium journeys, typecheck, security lint and
+  both builds passed. A clean source export passed npm ci and both builds.
+  Production npm audit: zero findings. Full audit: ten development-tool findings
+  (six high, four moderate); documented for scoped follow-up, no forced updates.
+- External handoff: owner hosting login/domain details and historical-material
+  disclosure or cleanup decision. Stop before public confirmation.
+- Follow-up at the user's request: homepage introduction now uses the exact
+  README sentence beginning “Paste your manuscript authors once”; the closing
+  line uses their exact grant/publication motivation. README and styling remain
+  unchanged, with no grant-form support claim added. Rebuilt the running preview;
+  verified actual rendered text and desktop/390px screenshots. Seven targeted
+  component/deployment tests, typecheck, and three website browser journeys pass.
+
 ### 2026-09-12 — Public launch accessibility check
 - Preserved the user's README edits from `9b20be2` and added the requested
   support email, corresponding.app@gmail.com, without rewriting other copy.

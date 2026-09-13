@@ -292,6 +292,7 @@ export function Workspace() {
         <span className="hint">Your manuscript workspace · Saved on this device</span>
       </header>
       {localError && <p role="alert" className="sync err">{localError}</p>}
+      {manuscript.roster.source === 'sample' && <p className="sync warn">Sample roster: these authors are examples. Edit and explore here; this roster cannot fill live journal pages. Create a new manuscript for your own authors.</p>}
       {listLocalManuscripts().length > 0 && <label className="field">
         <span>Previous manuscripts</span>
         <select value="" onChange={(event) => {

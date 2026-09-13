@@ -60,6 +60,14 @@ export async function handleExtensionRequest(
         };
       }
       case 'FILL': {
+        if (msg.roster.source === 'sample') {
+          const url = new URL(pageUrl);
+          if (!['http:', 'https:'].includes(url.protocol) ||
+              !['localhost', '127.0.0.1'].includes(url.hostname) ||
+              !url.pathname.startsWith('/fixtures/')) {
+            return { type: 'ERROR', message: 'Example authors are for local practice only. Choose your manuscript roster in the extension.' };
+          }
+        }
         const detected = defaultRegistry.detect(doc, pageUrl);
         if (detected.platformId === 'unknown') {
           return {

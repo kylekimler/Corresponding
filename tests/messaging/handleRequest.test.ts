@@ -4,6 +4,21 @@ import { handleExtensionRequest } from '@/messaging/handleRequest';
 import { createSampleRoster } from '@/roster/sample';
 
 describe('content message handler', () => {
+  it.each([
+    'https://mts-nature.nature.com/fixtures/nature-mts-sample.html',
+    'https://localhost.attacker.example/fixtures/nature-mts-sample.html',
+    'http://localhost:3000/author-form',
+    'file://localhost/fixtures/nature-mts-sample.html',
+  ])('refuses sample Fill outside local fixtures: %s', async (url) => {
+    mountNatureMtsFixture({ slots: 3 });
+    const before = [...document.querySelectorAll('input')].map((el) => el.value);
+    const response = await handleExtensionRequest(
+      { type: 'FILL', roster: createSampleRoster(), overwrite: true }, document, url,
+    );
+    expect(response).toEqual({ type: 'ERROR', message: expect.stringContaining('local practice only') });
+    expect([...document.querySelectorAll('input')].map((el) => el.value)).toEqual(before);
+  });
+
   it('detects Editorial Manager from the tab URL, not ScholarOne', async () => {
     document.body.innerHTML =
       '<select id="RoleDropdown"><option>Author</option></select>';

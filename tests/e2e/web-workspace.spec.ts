@@ -1,13 +1,46 @@
 import { readFile } from 'node:fs/promises';
 import { expect, test } from './extension.fixture';
 
-test('website edits, syncs, and offers contextual fill without opening the popup', async ({ context, extensionId }, testInfo) => {
+test('visitor without extension can play the demo and edit a persistent sample', async ({ playwright }, testInfo) => {
+  const browser = await playwright.chromium.launch();
+  try {
+    const page = await browser.newPage();
+    await page.goto('http://localhost:4173/');
+    await expect(page.getByText('The Chrome extension is not connected', { exact: false })).toBeVisible();
+    const video = page.locator('video');
+    await expect.poll(() => video.evaluate((el: HTMLVideoElement) => el.readyState)).toBeGreaterThan(0);
+    await video.evaluate((el: HTMLVideoElement) => { el.currentTime = 2; });
+    await expect.poll(() => video.evaluate((el: HTMLVideoElement) => el.currentTime)).toBeGreaterThan(1);
+    const download = page.waitForEvent('download');
+    await page.getByRole('link', { name: 'Download a sample author table' }).click();
+    expect((await download).suggestedFilename()).toBe('sample-authors.csv');
+    await page.screenshot({ path: testInfo.outputPath('launch-home.png'), fullPage: true });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await page.screenshot({ path: testInfo.outputPath('launch-home-mobile.png'), fullPage: true });
+    await page.getByRole('button', { name: 'Try a sample roster' }).click();
+    await expect(page.getByLabel('Email', { exact: true })).toHaveCount(6);
+    await page.getByLabel('Email', { exact: true }).first().fill('practice@example.org');
+    await page.reload();
+    await expect(page.getByLabel('Email', { exact: true }).first()).toHaveValue('practice@example.org');
+    await expect(page.getByText('Sample roster:', { exact: false })).toBeVisible();
+  } finally { await browser.close(); }
+});
+
+for (const hostname of ['localhost', '127.0.0.1']) {
+test(`website on ${hostname}:4173 edits, syncs, and offers contextual fill without opening the popup`, async ({ context, extensionId }, testInfo) => {
   expect(extensionId).toBeTruthy();
   const page = await context.newPage();
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
-  await page.goto('http://localhost:4173/');
+  await page.goto(`http://${hostname}:4173/`);
+  await expect(page.locator('.intro')).toHaveText('Paste your manuscript authors once into the web app, then use the Chrome extension to fill supported journal submission forms.');
+  await expect(page.locator('.site-footer p')).toHaveText("Because filling out grant and publication forms shouldn't be a scientist's full time job");
   await page.screenshot({ path: testInfo.outputPath('home-desktop.png'), fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: testInfo.outputPath('home-mobile.png'), fullPage: true });
+  await page.setViewportSize({ width: 1280, height: 720 });
   await page.getByRole('button', { name: 'Create manuscript' }).click();
   await page.getByRole('textbox', { name: 'Manuscript title' }).fill('An atlas of collaboration');
   await page.getByLabel('Paste authors').fill('First name\tLast name\tEmail\tInstitution\nAda\tLovelace\tada@example.org\tUniversity of London\nAlan\tTuring\talan@example.org\tCambridge');
@@ -38,6 +71,7 @@ test('website edits, syncs, and offers contextual fill without opening the popup
   await expect(journal.locator('#contrib_auth_1_email')).toHaveValue('ada.updated@example.org');
   expect(errors).toEqual([]);
 });
+}
 
 test('Editorial Manager matches the observed country labels and retains review warnings after contextual fill', async ({ context, extensionId }, testInfo) => {
   expect(extensionId).toBeTruthy();

@@ -389,6 +389,9 @@ summary:focus-visible {
 .how-it-works p { margin: 0; color: var(--c-muted); line-height: 1.5; }
 .site-footer { margin-top: 48px; border-top: 1px solid var(--c-border); padding-top: 20px; }
 .site-footer p { color: var(--c-muted); font-size: 0.875rem; margin: 0 auto 0 0; }
+.launch-demo { margin-top: 48px; }
+.launch-demo video { display: block; width: 100%; max-width: 800px; border-radius: 12px; }
+.launch-demo p { max-width: 48rem; line-height: 1.6; }
 .field-error { color: var(--c-status-conflict); font-size: 0.875rem; }
 .roster-heading { display: flex; align-items: baseline; justify-content: space-between; margin-top: 28px; }
 .roster-heading h2 { font-family: var(--c-font-display); font-size: 1.35rem; font-weight: 500; }
