@@ -104,4 +104,6 @@ Our [public CI checks](https://github.com/kylekimler/Corresponding/actions/workf
 
 ## License and support
 
+Questions or feedback? Email [corresponding.app@gmail.com](mailto:corresponding.app@gmail.com). Please leave out private author or submission information.
+
 [MIT](LICENSE). If Corresponding saves you time, [support its development](https://github.com/sponsors/kylekimler).

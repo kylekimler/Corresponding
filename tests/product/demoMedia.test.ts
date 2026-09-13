@@ -60,9 +60,15 @@ describe('README publisher demos', () => {
 
   it('distinguishes edited highlights from complete submission readiness', () => {
     const readme = read('README.md').toString();
-    expect(readme).toContain('continuous MP4 retains the transient portal lookup warnings');
-    expect(readme).toContain('Save / Continue was not clicked');
-    expect(readme).toContain('Institution-verification warnings remain visible');
+    // The concise README links the detailed recording limitations rather than
+    // duplicating them beneath every preview.
+    expect(readme).toContain('](docs/media/README.md#biorxiv)');
+    expect(readme).toContain('](docs/media/README.md#editorial-manager--plos-genetics)');
+    const notes = read('docs/media/README.md').toString().replace(/\s+/g, ' ');
+    expect(notes).toContain("including the portal's transient lookup warnings");
+    expect(notes).toContain('Save / Continue was not clicked');
+    expect(notes).toContain('persistent review notice remain visible');
+    expect(notes).toContain('Institutional verification remains manual');
     expect(readme).not.toMatch(/docs\/media\/[^\s"()]+\.mov/);
   });
 });
