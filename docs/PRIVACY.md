@@ -2,7 +2,7 @@
 
 **Product:** Corresponding
 **Status:** Draft for development and Chrome Web Store preparation  
-**Last updated:** 2026-08-25
+**Last updated:** 2026-09-13
 
 ## Summary
 
@@ -85,7 +85,8 @@ The extension never clicks final submission, certification, copyright acceptance
 
 ## Contact
 
-For privacy questions, contact the maintainer listed in the Chrome Web Store listing (to be filled before publication).
+For privacy questions, email [corresponding.app@gmail.com](mailto:corresponding.app@gmail.com).
+Please do not include private author or submission information.
 
 ## Changes
 

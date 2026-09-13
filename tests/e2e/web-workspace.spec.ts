@@ -1,12 +1,13 @@
 import { readFile } from 'node:fs/promises';
 import { expect, test } from './extension.fixture';
 
-test('website edits, syncs, and offers contextual fill without opening the popup', async ({ context, extensionId }, testInfo) => {
+for (const hostname of ['localhost', '127.0.0.1']) {
+test(`website on ${hostname}:4173 edits, syncs, and offers contextual fill without opening the popup`, async ({ context, extensionId }, testInfo) => {
   expect(extensionId).toBeTruthy();
   const page = await context.newPage();
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
-  await page.goto('http://localhost:4173/');
+  await page.goto(`http://${hostname}:4173/`);
   await page.screenshot({ path: testInfo.outputPath('home-desktop.png'), fullPage: true });
   await page.getByRole('button', { name: 'Create manuscript' }).click();
   await page.getByRole('textbox', { name: 'Manuscript title' }).fill('An atlas of collaboration');
@@ -38,6 +39,7 @@ test('website edits, syncs, and offers contextual fill without opening the popup
   await expect(journal.locator('#contrib_auth_1_email')).toHaveValue('ada.updated@example.org');
   expect(errors).toEqual([]);
 });
+}
 
 test('Editorial Manager matches the observed country labels and retains review warnings after contextual fill', async ({ context, extensionId }, testInfo) => {
   expect(extensionId).toBeTruthy();

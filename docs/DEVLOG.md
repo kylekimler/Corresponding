@@ -4,6 +4,34 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-09-13 — Launch rehearsal and pre-publication gates
+- Added `docs/LAUNCH_STATUS.md`, linked from the release checklist, with explicit
+  Verified / Ready / Blocked / Pending user action states. Preserved README prose.
+  Expanded existing web deployment instructions rather than changing providers;
+  documented root build/output, no required environment variables, canonical apex
+  DNS/TLS, editor-only preview hosts and the post-deploy extension handshake.
+- Started the actual app at http://127.0.0.1:4173/ and verified a synthetic roster
+  imports and survives refresh in the in-app browser. This is local, not public.
+  Added an isolated Chromium journey on that exact origin alongside localhost,
+  plus deployment/origin tests rejecting Netlify preview and www origins.
+- Replaced the privacy-policy contact placeholder with the approved support
+  email. No runtime, adapter, storage, permission or manifest changes.
+- Rechecked: GitHub PRIVATE; corresponding.app NXDOMAIN; no published releases.
+  Netlify is signed out in Chrome. GitHub's Change to public menu is available
+  but was not selected. No visibility change, purchase, account creation,
+  deployment, social post, media deletion or history rewrite occurred.
+- Gitleaks 8.30.1 reported no credential findings in all-ref Git history or the
+  exported tracked tree plus historical media. Historical screenshots in 5338bb6
+  expose account/draft context; deleted raw MOVs remain in history. Recorded paths
+  and remaining media/GitHub-hosted-content review as a publication gate without
+  reproducing sensitive values. This is not an exhaustive privacy certification.
+- Verification: 405 tests, nine Chromium journeys, typecheck, security lint and
+  both builds passed. A clean source export passed npm ci and both builds.
+  Production npm audit: zero findings. Full audit: ten development-tool findings
+  (six high, four moderate); documented for scoped follow-up, no forced updates.
+- External handoff: owner hosting login/domain details and historical-material
+  disclosure or cleanup decision. Stop before public confirmation.
+
 ### 2026-09-12 — Public launch accessibility check
 - Preserved the user's README edits from `9b20be2` and added the requested
   support email, corresponding.app@gmail.com, without rewriting other copy.

@@ -1,5 +1,9 @@
 # Release Checklist
 
+Current owner-facing launch gates and rehearsal URL:
+[Launch status — September 13](LAUNCH_STATUS.md). “Ready” there does not mean
+published; stop before the final GitHub visibility confirmation.
+
 ## Versioning
 
 - Follow semver: `MAJOR.MINOR.PATCH`
