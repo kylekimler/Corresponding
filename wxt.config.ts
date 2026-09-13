@@ -40,7 +40,7 @@ export default defineConfig({
       name: 'Corresponding',
       description:
         'Stop retyping authors into journal forms. Import a spreadsheet, fill locally. You still submit. Free. No account.',
-      version: '0.1.0',
+      version: '0.1.1',
       permissions: [
         'activeTab',
         'storage',
