@@ -4,6 +4,18 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-09-13 — Free Cloudflare launch address
+- Owner chose minimum spending: use https://corresponding.pages.dev, with no
+  domain purchase or paid hosting service. Existing Pages project uses direct uploads.
+- Extension 0.1.1 replaces the unowned corresponding.app origin in all three
+  connection gates and the popup link. Updated README, privacy and launch docs.
+  Other Pages tenants, preview subdomains, HTTP and the old domain remain refused.
+- Validation: 410 tests passed in full run; outdated documentation assertion
+  corrected and all three launch-contract tests passed on rerun. Typecheck,
+  security lint, both builds, ZIP and all ten Chromium journeys passed.
+- Permissions remain activeTab/storage/scripting, with no broad host permissions.
+  Production website storage remains local; no new backend or billing.
+
 ### 2026-09-13 — Show HN launch checklist follow-through
 - Rechecked anonymous access: corresponding.app cannot resolve; GitHub returns
   404. Authenticated repository remains PRIVATE with no published releases.

@@ -40,7 +40,7 @@ export default defineConfig({
       name: 'Corresponding',
       description:
         'Stop retyping authors into journal forms. Import a spreadsheet, fill locally. You still submit. Free. No account.',
-      version: '0.1.0',
+      version: '0.1.1',
       permissions: [
         'activeTab',
         'storage',
@@ -79,7 +79,7 @@ export default defineConfig({
       // content script. Journal pages still use activeTab injection.
       externally_connectable: {
         matches: [
-          'https://corresponding.app/*',
+          'https://corresponding.pages.dev/*',
           'http://localhost/*',
           'http://127.0.0.1/*',
         ],

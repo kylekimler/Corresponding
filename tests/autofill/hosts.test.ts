@@ -28,7 +28,7 @@ describe('contextual autofill host allowlist', () => {
     expect(
       isAllowedManifestContentScriptMatch('https://*.editorialmanager.com/*'),
     ).toBe(true);
-    expect(isAllowedManifestContentScriptMatch('https://corresponding.app/*')).toBe(
+    expect(isAllowedManifestContentScriptMatch('https://corresponding.pages.dev/*')).toBe(
       true,
     );
     expect(isAllowedManifestContentScriptMatch('<all_urls>')).toBe(false);

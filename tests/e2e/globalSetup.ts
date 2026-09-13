@@ -37,7 +37,7 @@ export default async function globalSetup(): Promise<void> {
   const websiteScripts = manifest.content_scripts ?? [];
   if (websiteScripts.length === 0) {
     throw new Error(
-      'Production manifest must include the corresponding.app handshake content script',
+      'Production manifest must include the corresponding.pages.dev handshake content script',
     );
   }
   const hasWebsiteHandshake = websiteScripts.some((script) =>
@@ -45,7 +45,7 @@ export default async function globalSetup(): Promise<void> {
   );
   if (!hasWebsiteHandshake) {
     throw new Error(
-      'Production manifest must include the corresponding.app handshake content script',
+      'Production manifest must include the corresponding.pages.dev handshake content script',
     );
   }
   for (const script of websiteScripts) {
@@ -55,7 +55,7 @@ export default async function globalSetup(): Promise<void> {
       matches.some((match) => !isAllowedManifestContentScriptMatch(match))
     ) {
       throw new Error(
-        'Production content scripts may only match corresponding.app, local Vite ports, or known journal autofill hosts',
+        'Production content scripts may only match corresponding.pages.dev, local Vite ports, or known journal autofill hosts',
       );
     }
   }

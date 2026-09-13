@@ -10,8 +10,8 @@ describe('launch deployment contract', () => {
       expect(WEBSITE_CONTENT_SCRIPT_MATCHES).toContain(`${origin}/*`);
       expect(isAllowedWebsiteOrigin(origin, 'production')).toBe(true);
     }
-    expect(isAllowedWebsiteOrigin('https://corresponding.app', 'production')).toBe(true);
-    for (const origin of ['https://preview.netlify.app', 'https://www.corresponding.app', 'https://corresponding.app.attacker.example']) {
+    expect(isAllowedWebsiteOrigin('https://corresponding.pages.dev', 'production')).toBe(true);
+    for (const origin of ['https://corresponding.app', 'https://other.pages.dev', 'https://preview.corresponding.pages.dev', 'http://corresponding.pages.dev', 'https://preview.netlify.app', 'https://www.corresponding.app', 'https://corresponding.pages.dev.attacker.example']) {
       expect(isAllowedWebsiteOrigin(origin, 'production')).toBe(false);
       expect(WEBSITE_CONTENT_SCRIPT_MATCHES).not.toContain(`${origin}/*`);
     }
@@ -24,7 +24,7 @@ describe('launch deployment contract', () => {
     expect(config).toContain('NODE_VERSION = "22"');
     const docs = readFileSync('docs/WEB_APP.md', 'utf8');
     expect(docs).toContain('http://127.0.0.1:4173/');
-    expect(docs).toContain('cannot synchronize with the extension');
+    expect(docs).toContain('Canonical URL: https://corresponding.pages.dev/');
   });
 
   it('has a usable privacy contact before store publication', () => {

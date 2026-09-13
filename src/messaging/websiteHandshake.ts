@@ -2,7 +2,7 @@ export const WEBSITE_HANDSHAKE_SOURCE = 'corresponding-extension';
 export const WEBSITE_HANDSHAKE_REQUEST = 'corresponding-web';
 
 export const WEBSITE_CONTENT_SCRIPT_MATCHES = [
-  'https://corresponding.app/*',
+  'https://corresponding.pages.dev/*',
   'http://localhost:5173/*',
   'http://localhost:4173/*',
   'http://127.0.0.1:5173/*',

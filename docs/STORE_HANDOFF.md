@@ -38,7 +38,7 @@ Use [CWS_PERMISSIONS.md](CWS_PERMISSIONS.md) for exact rationale and
   institution/CRediT/manual-review caveats; no universal accuracy or measured
   time-saving promise. Google Sheets OAuth is not configured in the default build.
 - Support: corresponding.app@gmail.com and public GitHub issues, once accessible.
-- Homepage: https://corresponding.app (must resolve before submission).
+- Homepage: https://corresponding.pages.dev (must resolve before submission).
 - Privacy URL: public docs/PRIVACY.md URL after visibility/privacy gate clears,
   or a reviewed publicly hosted policy. Remove draft status only after review.
 - Data disclosures: author/contact/affiliation data is processed and stored on
