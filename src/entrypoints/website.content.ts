@@ -5,7 +5,7 @@ import {
 } from '@/messaging/websiteHandshake';
 
 /**
- * Announce this install to corresponding.app (and local Vite ports).
+ * Announce this install to corresponding.pages.dev (and local Vite ports).
  * Journal pages are not matched. No author data is posted.
  */
 export default defineContentScript({

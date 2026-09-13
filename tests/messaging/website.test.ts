@@ -19,10 +19,10 @@ function deps() {
 
 describe('website origin validation', () => {
   it('allows the first-party site in every mode', () => {
-    expect(isAllowedWebsiteOrigin('https://corresponding.app', 'production')).toBe(
+    expect(isAllowedWebsiteOrigin('https://corresponding.pages.dev', 'production')).toBe(
       true,
     );
-    expect(isAllowedWebsiteOrigin('https://corresponding.app', 'development')).toBe(
+    expect(isAllowedWebsiteOrigin('https://corresponding.pages.dev', 'development')).toBe(
       true,
     );
   });
@@ -46,7 +46,7 @@ describe('website origin validation', () => {
       false,
     );
     expect(
-      isAllowedWebsiteOrigin('https://corresponding.app.evil.example', 'production'),
+      isAllowedWebsiteOrigin('https://corresponding.pages.dev.evil.example', 'production'),
     ).toBe(false);
     expect(
       isAllowedWebsiteOrigin('https://pages.dev', 'production'),
@@ -119,7 +119,7 @@ describe('website-to-extension protocol', () => {
   it('answers PING without exposing roster data', async () => {
     const response = await handleWebsiteRequest(
       { type: 'PING' },
-      'https://corresponding.app',
+      'https://corresponding.pages.dev',
       { ...deps(), mode: 'production' },
     );
     expect(response).toEqual({ type: 'PONG', version: '0.1.0-test' });

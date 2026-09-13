@@ -79,7 +79,7 @@ export default defineConfig({
       // content script. Journal pages still use activeTab injection.
       externally_connectable: {
         matches: [
-          'https://corresponding.app/*',
+          'https://corresponding.pages.dev/*',
           'http://localhost/*',
           'http://127.0.0.1/*',
         ],

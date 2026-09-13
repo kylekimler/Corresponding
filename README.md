@@ -10,7 +10,7 @@ Autofill for scientific publishing. Paste your manuscript authors once into the 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Status: pre-release](https://img.shields.io/badge/status-pre--release-grey)](#install)
 
-[Web app](https://corresponding.app) · [Install](#install) · [Supported platforms](#supported-platforms) · [Report an issue](https://github.com/kylekimler/Corresponding/issues)
+[Web app](https://corresponding.pages.dev) · [Install](#install) · [Supported platforms](#supported-platforms) · [Report an issue](https://github.com/kylekimler/Corresponding/issues)
 
 Free and open source, no account needed, author and manuscript information never leaves your computer. 
 
@@ -52,7 +52,7 @@ Rosters remain editable and reusable. You can download a JSON backup if you need
 
 ## Install
 
-**Pre-release:** there is no Chrome Web Store listing yet. Installation currently requires building and loading the extension locally; the web app alone cannot fill journal pages.
+**Pre-release:** the Chrome Web Store listing is awaiting review. Installation currently requires building and loading the extension locally; the web app alone cannot fill journal pages.
 
 With the latest Node.js 22 LTS installed (22.13 or newer):
 
@@ -69,7 +69,7 @@ npm run build
 
 ## Try without a journal account
 
-Open the [web app](https://corresponding.app) and choose **Try a sample roster** to edit six example authors and test local saving. No extension is needed for this preparation step; sample rosters cannot fill live journal pages. A [sample CSV](fixtures/sample-authors.csv) is also available for import practice.
+Open the [web app](https://corresponding.pages.dev) and choose **Try a sample roster** to edit six example authors and test local saving. No extension is needed for this preparation step; sample rosters cannot fill live journal pages. A [sample CSV](fixtures/sample-authors.csv) is also available for import practice.
 
 After installing locally, you can use a synthetic author form for Preview → Fill → validation; see the [practice instructions](docs/STORE_HANDOFF.md#reviewer-test-instructions). This is fixture testing, not a live journal submission.
 

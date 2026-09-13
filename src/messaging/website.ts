@@ -6,7 +6,7 @@ import {
 import { createRosterStore, type RosterStore } from '@/roster/storage';
 import { z } from 'zod';
 
-export const PRODUCTION_WEBSITE_ORIGIN = 'https://corresponding.app';
+export const PRODUCTION_WEBSITE_ORIGIN = 'https://corresponding.pages.dev';
 
 export type WebsiteBuildMode = 'development' | 'production';
 
@@ -84,8 +84,8 @@ export function isAllowedWebsiteOrigin(
   if (parsed.origin === PRODUCTION_WEBSITE_ORIGIN) return true;
   const localHost =
     parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1';
-  // Local Vite is how the site is developed before corresponding.app is live.
-  // Remote pages are never allowed, regardless of build mode.
+  // Local Vite supports development and unpacked-install practice.
+  // Other remote origins are never allowed, regardless of build mode.
   void mode;
   return localHost && (parsed.protocol === 'http:' || parsed.protocol === 'https:');
 }

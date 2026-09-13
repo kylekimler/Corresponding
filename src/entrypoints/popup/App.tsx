@@ -815,11 +815,11 @@ export function App({ surface = 'popup' }: { surface?: 'popup' | 'page' } = {}) 
                 <p className="muted tight">
                   Or prepare the roster at{' '}
                   <a
-                    href="https://corresponding.app"
+                    href="https://corresponding.pages.dev"
                     target="_blank"
                     rel="noreferrer"
                   >
-                    corresponding.app
+                    corresponding.pages.dev
                   </a>
                   .
                 </p>

@@ -26,7 +26,7 @@ On your device, the extension may store:
 
 Storage uses Chrome extension local storage APIs.
 
-The optional corresponding.app website keeps a manuscript draft in the
+The optional corresponding.pages.dev website keeps a manuscript draft in the
 browser (`localStorage`) and may send that roster only to the installed
 Corresponding extension on the same device. It does not create an account
 and does not upload author information to a Corresponding server. On that
@@ -67,7 +67,7 @@ Typical permissions:
 - `scripting` — inject the fill/inspect logic into the active tab on demand
 
 No broad host permissions. A content script is registered only for
-corresponding.app, local development ports, and known submission-host
+corresponding.pages.dev, local development ports, and known submission-host
 families that already have a fill adapter.
 
 ## Human-in-the-loop safety

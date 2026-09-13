@@ -24,13 +24,13 @@ warnings at installation or update. This is an intentional expansion from the
 previous activeTab-only journal workflow; include it in the store review.
 See [Chrome permission declarations](https://developer.chrome.com/docs/extensions/develop/concepts/declare-permissions).
 
-`externally_connectable` is not a permission. It lets `https://corresponding.app`
+`externally_connectable` is not a permission. It lets `https://corresponding.pages.dev`
 save a roster into local extension storage. It does not grant access to journal
 sites, and website messages cannot trigger fill.
 
 Content scripts:
 
-- corresponding.app (and local Vite ports, including unpacked production builds) — announces that
+- corresponding.pages.dev (and local Vite ports, including unpacked production builds) — announces that
   the extension is installed. Does not read author fields or journal pages.
 - Known submission hosts already backed by a fill adapter (Editorial Manager,
   ScholarOne / Manuscript Central, bioRxiv / medRxiv submit hosts) plus local
