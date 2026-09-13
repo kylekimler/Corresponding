@@ -27,11 +27,19 @@ describe('radically free product', () => {
     expect(readme).toMatch(
       /Corresponding does not upload names, emails, affiliations, or manuscript rosters to its backend/,
     );
-    expect(readme).toContain('author-count-only ping');
-    expect(readme).toContain('No account.');
+    expect(readme).toMatch(/payload only contains Corr version and author count/i);
+    expect(readme).toContain('](docs/PRIVACY.md)');
+    expect(readRepo('docs/PRIVACY.md')).toContain('no names, emails, ORCID, roster identifiers, page URLs, or manuscript text');
+    expect(readme).toMatch(/no account(?: needed)?[.,]/i);
     expect(readme).toMatch(/\[MIT\]/);
     expect(readme).not.toMatch(/Proprietary/);
     expect(readme).not.toMatch(/all rights reserved/i);
+  });
+
+  it('provides a direct support contact without requesting private submission data', () => {
+    const readme = readRepo('README.md');
+    expect(readme).toContain('[corresponding.app@gmail.com](mailto:corresponding.app@gmail.com)');
+    expect(readme).toContain('Please leave out private author or submission information.');
   });
 
   it('ships an MIT license and package metadata', () => {

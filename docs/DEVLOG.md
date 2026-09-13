@@ -4,6 +4,28 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-09-12 — Public launch accessibility check
+- Preserved the user's README edits from `9b20be2` and added the requested
+  support email, corresponding.app@gmail.com, without rewriting other copy.
+- Anonymous checks: corresponding.app fails resolution; Google public DNS
+  returns NXDOMAIN. The GitHub repository returns HTTP 404 anonymously;
+  authenticated repository metadata confirms it is private. No visibility,
+  domain, hosting, or publication settings were changed.
+- Existing Netlify build configuration points to `web/dist`; no linked hosting
+  project was found in repository configuration. Hosting/domain ownership and
+  public repository authorization are needed before the public first-use check.
+- `git diff --check` passed. Product tests: six passed, two failed because the
+  prior README edit removed literal copy expected by the existing tests (the
+  count-only ping wording and demo limitations). Updated those assertions to
+  verify the revised wording and the existing linked privacy/recording details;
+  no disclosures or user wording were removed. Added a support-contact regression.
+- Revised product checks: all nine pass. Full suite: 402 tests pass after
+  aligning one additional compatibility-table assertion with the user's labels
+  and allowing the fixture server to bind localhost. Eight isolated Chromium
+  journeys, typecheck, security lint, extension build and web build pass.
+- Fresh public installation, production extension synchronization, and browser
+  website QA remain unverified. No runtime or permissions changes.
+
 ### 2026-09-11 — Smoother ScholarOne demo from the new capture
 - Replaced the lead demo's old portal shots with the user's 12:49 PM
   Bioinformatics recording, retaining clean portions of the original website
