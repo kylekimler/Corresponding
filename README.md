@@ -4,7 +4,7 @@
 
 **Never enter your coauthors manually again.**
 
-Autofill for scientific publishing. Prepare your manuscript authors once in the web app; use the Chrome extension to fill supported journal submission forms.
+Autofill for scientific publishing. Paste your manuscript authors once into the web app, then use the Chrome extension to fill supported journal submission forms.
 
 [![CI](https://github.com/kylekimler/Corresponding/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/kylekimler/Corresponding/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
@@ -12,7 +12,7 @@ Autofill for scientific publishing. Prepare your manuscript authors once in the 
 
 [Web app](https://corresponding.app) · [Install](#install) · [Supported platforms](#supported-platforms) · [Report an issue](https://github.com/kylekimler/Corresponding/issues)
 
-Free and open source. No account. Author information stays local.
+Free and open source, no account needed, author and manuscript information never leaves your computer. 
 
 ## See it work
 
@@ -20,16 +20,12 @@ Free and open source. No account. Author information stays local.
 
 <img src="docs/media/scholarone-workflow.gif" width="800" alt="Prepare three coauthors in Corresponding, confirm local extension sync, and click Corresponding to fill the live Bioinformatics author form">
 
-One roster, no retyping: the local web app syncs three synthetic coauthors to the extension, which adds them to a Bioinformatics test draft in order. The website opening is paired with a fresh September 11 Bioinformatics recording; idle time and repeated dialogs are cut, and private account details are redacted. No manuscript was submitted.
-
-Institutional verification and ScholarOne CRediT roles still require manual review. [Watch the smoother 60 fps MP4](docs/media/scholarone-workflow.mp4) · [Recording notes](docs/media/README.md)
+Institutional verification and CRediT roles still require manual review. [Watch the smoother 60 fps MP4](docs/media/scholarone-workflow.mp4) · [Recording notes](docs/media/README.md)
 
 <details>
 <summary>Editorial Manager / PLOS Genetics — fill three coauthors</summary>
 
 <img src="docs/media/plos-genetics-workflow.gif" width="800" alt="Click Corresponding to add Maya Chen, Leo Rivera, and Priya Shah to PLOS Genetics, ending with the ordered roster and institution-review notice">
-
-Three synthetic coauthors added in order; the existing corresponding author is preserved. Institution-verification warnings remain visible and need review. Recorded September 11, 2026; condensed, privacy-redacted footage at original speed. Nothing was submitted.
 
 [Watch the edited MP4](docs/media/plos-genetics-workflow.mp4) · [Recording notes](docs/media/README.md#editorial-manager--plos-genetics)
 
@@ -40,7 +36,7 @@ Three synthetic coauthors added in order; the existing corresponding author is p
 
 <img src="docs/media/biorxiv-workflow.gif" width="800" alt="Click Corresponding on an empty bioRxiv author list, fill the first author, and see all three synthetic authors in order with emails and affiliations">
 
-Three synthetic authors appear in order, with emails and affiliations. This condensed GIF skips repeated dialog cycles; the continuous MP4 retains the transient portal lookup warnings. No corresponding author was designated, and **Save / Continue was not clicked**. Recorded September 11, 2026; private browser suggestions are redacted.
+When you use the app you may notice flickering on Biorxiv and other portals that create popups for author filling, see the full mp4 for examples. 
 
 [Watch the continuous MP4](docs/media/biorxiv-workflow.mp4) · [Recording notes](docs/media/README.md#biorxiv)
 
@@ -48,11 +44,11 @@ Three synthetic authors appear in order, with emails and affiliations. This cond
 
 ## How it works
 
-1. **Prepare your authors.** Paste an author block, import a roster, or add authors manually. Check order, affiliations, emails, ORCIDs, and contributions.
+1. **Prepare your authors.** Paste an author block from your manuscript or google sheet, import a roster from a file, or add authors manually. Check their order, affiliations, emails, ORCIDs, and contributions.
 2. **Open your journal.** Once the roster is synced, navigate to a supported submission portal. Click **Fill authors** when Corresponding offers it, or use the extension popup to preview and fill.
 3. **Review and submit yourself.** Check the filled information against your manuscript. Corresponding never performs final submission or accepts declarations for you.
 
-Your roster remains editable and reusable. Download a JSON backup before switching browsers or clearing local storage.
+Rosters remain editable and reusable. You can download a JSON backup if you need to clear your cache.
 
 ## Install
 
@@ -71,16 +67,12 @@ npm run build
 2. Select the `.output/chrome-mv3` folder in this repository.
 3. Run `npm run dev:web` and open `http://localhost:5173` to prepare your roster. Check that the workspace reports successful extension synchronization before filling.
 
-The website discovers the installed extension automatically—no extension ID or account setup. After rebuilding, reload the extension and refresh any open journal tabs.
-
 ## Supported platforms
-
-Support is specific to tested author forms, not every journal using a platform.
 
 | Platform | Evidence and current workflow |
 | --- | --- |
-| Editorial Manager / PLOS ONE and PLOS Genetics | Capture-backed, automated tests; contextual fill and popup |
-| ScholarOne / Manuscript Central | Bioinformatics capture-backed, automated tests; contextual fill and popup |
+| Editorial Manager (PLOS ONE/Genetics) | Capture-backed, automated tests; contextual fill and popup |
+| ScholarOne / Manuscript Central (Bioinformatics) | Capture-backed, automated tests; contextual fill and popup |
 | bioRxiv / medRxiv | Capture-backed, automated tests; contextual fill and popup |
 | Nature Portfolio | Experimental, synthetic-fixture tests; live sites use the popup |
 | Cell Press | Not yet |
@@ -88,21 +80,21 @@ Support is specific to tested author forms, not every journal using a platform.
 | Frontiers | Not yet |
 | eLife | Not yet |
 
-“Capture-backed” means tests use redacted portal HTML. It does **not** mean every live journal configuration has been verified. The recordings above show three-author entry runs in Bioinformatics, PLOS Genetics, and bioRxiv—not completion of every journal requirement. See each clip's review and persistence limitations. Broader live checks remain necessary; automated CI cannot replace them.
+“Capture-backed” means local tests that use portal HTML are functioning. 
 
-Portal layouts and required fields vary. Existing non-empty fields are preserved by default; review skipped fields, identity conflicts, author order, and affiliations. If no contextual suggestion appears, try the extension popup's preview. Unsupported forms are not filled automatically.
+Portal layouts and required fields vary across platforms. Existing non-empty fields are preserved by default; review skipped fields, identity conflicts, author order, and affiliations. If no contextual suggestion appears, try the extension popup's preview. Unsupported forms are not filled automatically.
 
 Missing your journal? [Request support](https://github.com/kylekimler/Corresponding/issues/new?template=add-journal.yml). Please do not attach unredacted author data or private submission pages.
 
 ## Privacy and safety
 
-**Where are my authors stored?** Locally in your browser and the extension. Corresponding does not upload names, emails, affiliations, or manuscript rosters to its backend. Clearing browser data or removing the extension can remove local data; keep JSON backups.
+**Where are my authors stored?** Locally in your browser and the extension. Corresponding does not upload names, emails, affiliations, or manuscript rosters to its backend. 
 
 **Does it use AI?** No AI service is used to parse or fill your author information.
 
-**Does anything leave the browser?** Some fill flows send an author-count-only ping to estimate community time saved. The payload contains a version and count—not names, emails, manuscript content, or page URLs. See the [privacy policy](docs/PRIVACY.md) for details, including Google Sheets import.
+**Does anything leave the browser?** The only information Corresponding tracks is an author-count which we use to estimate community time saved. The payload only contains Corr version and author count. See the [privacy policy](docs/PRIVACY.md) for details, including Google Sheets import.
 
-**Can it submit for me?** No. Filling requires your action. Corresponding does not perform final submission, certification, copyright acceptance, payment, or signatures.
+**Can it submit for me?** No. Filling requires your action. Corresponding does not perform final submission, certification, copyright acceptance, payment, or signatures. 
 
 ## Contributing
 
