@@ -37,8 +37,7 @@ export function Home({ hasDraft }: { hasDraft: boolean }) {
       <h1 className="home-title">Never enter your<br className="desktop-break" /> coauthors manually again.</h1>
       <p className="lede">Autofill for scientific publishing.</p>
       <p className="intro">
-        One author list. Every submission. Paste your coauthors, check the details,
-        and let Corresponding fill supported journal forms. You review and submit.
+        Paste your manuscript authors once into the web app, then use the Chrome extension to fill supported journal submission forms.
       </p>
       <div className="actions">
         {hasDraft ? (
@@ -86,7 +85,7 @@ export function Home({ hasDraft }: { hasDraft: boolean }) {
         <div><span>03</span><h2>Skip the retyping</h2><p>Open your submission portal and click Corresponding to fill.</p></div>
       </section>
       <footer className="site-footer">
-        <p>Built for the part of publishing nobody enjoys.</p>
+        <p>Because filling out grant and publication forms shouldn't be a scientist's full time job</p>
         <a href="https://github.com/kylekimler/Corresponding#supported-platforms" target="_blank" rel="noreferrer">Supported platforms</a>
         <a href="https://github.com/kylekimler/Corresponding/blob/main/docs/PRIVACY.md" target="_blank" rel="noreferrer">Privacy</a>
         <a href="https://github.com/kylekimler/Corresponding/issues" target="_blank" rel="noreferrer">Feedback</a>

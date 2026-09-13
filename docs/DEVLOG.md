@@ -31,6 +31,12 @@ Chronological overnight / autonomous iteration log.
   (six high, four moderate); documented for scoped follow-up, no forced updates.
 - External handoff: owner hosting login/domain details and historical-material
   disclosure or cleanup decision. Stop before public confirmation.
+- Follow-up at the user's request: homepage introduction now uses the exact
+  README sentence beginning “Paste your manuscript authors once”; the closing
+  line uses their exact grant/publication motivation. README and styling remain
+  unchanged, with no grant-form support claim added. Rebuilt the running preview;
+  verified actual rendered text and desktop/390px screenshots. Seven targeted
+  component/deployment tests, typecheck, and three website browser journeys pass.
 
 ### 2026-09-12 — Public launch accessibility check
 - Preserved the user's README edits from `9b20be2` and added the requested

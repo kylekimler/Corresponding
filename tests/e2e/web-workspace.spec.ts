@@ -8,7 +8,13 @@ test(`website on ${hostname}:4173 edits, syncs, and offers contextual fill witho
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto(`http://${hostname}:4173/`);
+  await expect(page.locator('.intro')).toHaveText('Paste your manuscript authors once into the web app, then use the Chrome extension to fill supported journal submission forms.');
+  await expect(page.locator('.site-footer p')).toHaveText("Because filling out grant and publication forms shouldn't be a scientist's full time job");
   await page.screenshot({ path: testInfo.outputPath('home-desktop.png'), fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: testInfo.outputPath('home-mobile.png'), fullPage: true });
+  await page.setViewportSize({ width: 1280, height: 720 });
   await page.getByRole('button', { name: 'Create manuscript' }).click();
   await page.getByRole('textbox', { name: 'Manuscript title' }).fill('An atlas of collaboration');
   await page.getByLabel('Paste authors').fill('First name\tLast name\tEmail\tInstitution\nAda\tLovelace\tada@example.org\tUniversity of London\nAlan\tTuring\talan@example.org\tCambridge');

@@ -2,6 +2,7 @@ import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import { Workspace } from '../../web/src/pages/Workspace';
+import { Home } from '../../web/src/pages/Home';
 import { createEmptyManuscript } from '@/schema/manuscript';
 import { makeNAuthors } from '../helpers/roster';
 import { loadLocalManuscript, saveLocalManuscript, listLocalManuscripts } from '../../web/src/storage/localManuscript';
@@ -44,6 +45,18 @@ async function type(label: string, value: string) {
 }
 
 describe('release workspace regressions', () => {
+  it('uses the approved README introduction and motivational closing line', async () => {
+    await act(async () => { root.render(<Home hasDraft={false} />); });
+    expect(document.querySelector('.intro')?.textContent?.trim()).toBe(
+      'Paste your manuscript authors once into the web app, then use the Chrome extension to fill supported journal submission forms.',
+    );
+    expect(document.querySelector('.site-footer p')?.textContent).toBe(
+      "Because filling out grant and publication forms shouldn't be a scientist's full time job",
+    );
+    expect(document.body.textContent).not.toContain('Every submission.');
+    expect(document.body.textContent).toContain('The Chrome extension is not connected');
+  });
+
   it('lets the user finish typing an email without crashing or saving a partial address', async () => {
     await mount();
     const original = loadLocalManuscript()!.roster.authors[0]!.email;
