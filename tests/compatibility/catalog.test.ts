@@ -18,8 +18,8 @@ describe('compatibility scoreboard', () => {
   it('lists working and planned platforms in the README', () => {
     const readme = readRepo('README.md');
     expect(readme).toContain('| Nature Portfolio | Experimental, synthetic-fixture tests; live sites use the popup |');
-    expect(readme).toContain('| ScholarOne / Manuscript Central | Bioinformatics capture-backed, automated tests; contextual fill and popup |');
-    expect(readme).toContain('| Editorial Manager / PLOS ONE and PLOS Genetics | Capture-backed, automated tests; contextual fill and popup |');
+    expect(readme).toContain('| ScholarOne / Manuscript Central (Bioinformatics) | Capture-backed, automated tests; contextual fill and popup |');
+    expect(readme).toContain('| Editorial Manager (PLOS ONE/Genetics) | Capture-backed, automated tests; contextual fill and popup |');
     expect(readme).toContain('| bioRxiv / medRxiv | Capture-backed, automated tests; contextual fill and popup |');
     expect(readme).not.toContain('Supported!');
     expect(readme).toContain('| Cell Press | Not yet |');

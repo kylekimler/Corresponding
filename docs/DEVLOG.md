@@ -19,8 +19,10 @@ Chronological overnight / autonomous iteration log.
   count-only ping wording and demo limitations). Updated those assertions to
   verify the revised wording and the existing linked privacy/recording details;
   no disclosures or user wording were removed. Added a support-contact regression.
-- Revised product checks: all nine pass; typecheck, security lint, extension
-  build and web build pass. Full-suite verification continues separately.
+- Revised product checks: all nine pass. Full suite: 402 tests pass after
+  aligning one additional compatibility-table assertion with the user's labels
+  and allowing the fixture server to bind localhost. Eight isolated Chromium
+  journeys, typecheck, security lint, extension build and web build pass.
 - Fresh public installation, production extension synchronization, and browser
   website QA remain unverified. No runtime or permissions changes.
 
