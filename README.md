@@ -67,6 +67,12 @@ npm run build
 2. Select the `.output/chrome-mv3` folder in this repository.
 3. Run `npm run dev:web` and open `http://localhost:5173` to prepare your roster. Check that the workspace reports successful extension synchronization before filling.
 
+## Try without a journal account
+
+Open the [web app](https://corresponding.app) and choose **Try a sample roster** to edit six example authors and test local saving. No extension is needed for this preparation step; sample rosters cannot fill live journal pages. A [sample CSV](fixtures/sample-authors.csv) is also available for import practice.
+
+After installing locally, you can use a synthetic author form for Preview → Fill → validation; see the [practice instructions](docs/STORE_HANDOFF.md#reviewer-test-instructions). This is fixture testing, not a live journal submission.
+
 ## Supported platforms
 
 | Platform | Evidence and current workflow |
@@ -92,7 +98,7 @@ Missing your journal? [Request support](https://github.com/kylekimler/Correspond
 
 **Does it use AI?** No AI service is used to parse or fill your author information.
 
-**Does anything leave the browser?** The only information Corresponding tracks is an author-count which we use to estimate community time saved. The payload only contains Corr version and author count. See the [privacy policy](docs/PRIVACY.md) for details, including Google Sheets import.
+**Does anything leave the browser?** The only information Corresponding tracks is an author-count which we use to estimate community time saved. The request body only contains a protocol version and author count. See the [privacy policy](docs/PRIVACY.md) for details, including Google Sheets import.
 
 **Can it submit for me?** No. Filling requires your action. Corresponding does not perform final submission, certification, copyright acceptance, payment, or signatures. 
 

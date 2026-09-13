@@ -5,6 +5,19 @@ is public**. No Show HN post, social announcement, or visibility change has been
 made. Status meanings: Verified = observed; Ready = prepared but not externally
 completed; Blocked = a concrete dependency; Pending user action = owner decision.
 
+## Checklist follow-up
+
+[Launch-day runbook](LAUNCH_DAY.md) and [store handoff](STORE_HANDOFF.md) now
+cover the Show HN sequence, acceptance script, support triage, rollback, package
+and reviewer instructions. The local homepage includes the refreshed MP4, sample
+CSV download, six-author practice roster, review caveats and email support.
+The public site remains unavailable. No announcement has been sent.
+
+Current anonymous recheck: corresponding.app cannot resolve; GitHub returns 404.
+Authenticated recheck: repository PRIVATE, release list empty. Main CI run
+34736029284 succeeded; launch PR #71 run 34737804748 was pending at inspection.
+These are distinct from local verification of the changes in this follow-up.
+
 ## Public-release gate
 
 - **Verified:** latest remote `main` at the start of this review was `a8cb898`;
@@ -90,11 +103,20 @@ completed; Blocked = a concrete dependency; Pending user action = owner decision
   and the post-deploy verification route.
 - **Blocked:** anonymous clone/download and GitHub-hosted docs/demo access remain
   unavailable while private. Do not claim a fresh anonymous install passed.
-- **Pending:** Chrome Web Store publication and its final install URL. No new
-  store listing, release asset, or practice-form feature was created.
+- **Pending:** Chrome Web Store publication and its final install URL. No store listing or public release asset was created. A local ZIP and website
+  sample-roster trial are prepared; a public practice author form is not included.
 - **Pending:** broader live portal checks; Nature remains experimental. Known
   CSV apostrophe round-trip edge case and bioRxiv transient lookup warnings
   remain in [BACKLOG.md](BACKLOG.md); a launch preview does not resolve them.
+
+## Latest checklist verification
+
+411 tests, typecheck, security lint, both builds, ZIP and ten isolated Chromium
+journeys pass. The no-extension trial covers MP4 seek, CSV download, sample
+editing and reload persistence; mobile layout was visually reviewed.
+Package and screenshot candidates are in `.output/` and `.output/launch/`.
+The new popup guard refuses sample Fill outside local fixtures. No new browser
+permissions. These checks do not certify a public manual Chrome installation.
 
 ## Verification record
 

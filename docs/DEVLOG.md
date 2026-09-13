@@ -4,6 +4,35 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-09-13 — Show HN launch checklist follow-through
+- Rechecked anonymous access: corresponding.app cannot resolve; GitHub returns
+  404. Authenticated repository remains PRIVATE with no published releases.
+  Store search found no matching listing; owner dashboard remains unverified.
+- Added homepage six-author sample practice using canonical sample provenance,
+  draft-history preservation, downloadable synthetic CSV, the refreshed local MP4,
+  support email, compatibility caveats, review/recovery and permissions copy.
+  Preserved the approved introduction and closing line.
+- Found and fixed a missing sample guard in popup FILL handling. Samples are now
+  refused outside local fixture URLs, matching the contextual-fill intent; tests
+  cover live hosts, hostname spoofing, non-fixture paths and file URLs.
+- Added launch-day runbook and store/reviewer handoff. Corrected count-ping
+  protocol-version wording and explained ordinary connection metadata. No HN
+  prose, social post, store certification or visibility change was generated/sent.
+- Verified 411 tests, typecheck, security lint, both builds, ZIP and ten isolated
+  Chromium journeys. First sandbox run hit localhost EPERM; approved rerun passed.
+  Updated the prior literal README disclosure assertion to the accurate wording.
+- Browser trial without extension verified video seek, CSV download, six-author
+  editing and refresh persistence; checked mobile rendering visually. Synthetic
+  popup Preview/validation screenshots retained in .output/launch for review;
+  these are QA candidates, not an approved store listing set.
+- Package: .output/corresponding-0.1.0-chrome.zip (238.81 KB), SHA-256
+  faaa50e065024371e11f8c55981e37bb31859c0e023533d675175cdf693049a4.
+  Manifest review: activeTab/storage/scripting and existing narrow content-script
+  matches; no added permissions, host permissions or OAuth configuration.
+- Remaining launch gates: hosting/domain owner access, historical-media cleanup
+  decision, public download/store distribution, final policy/store screenshots,
+  and actual fresh-Chrome-profile public installation plus fresh-user trials.
+
 ### 2026-09-13 — Launch rehearsal and pre-publication gates
 - Added `docs/LAUNCH_STATUS.md`, linked from the release checklist, with explicit
   Verified / Ready / Blocked / Pending user action states. Preserved README prose.

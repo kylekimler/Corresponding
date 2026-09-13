@@ -1,6 +1,32 @@
 import { readFile } from 'node:fs/promises';
 import { expect, test } from './extension.fixture';
 
+test('visitor without extension can play the demo and edit a persistent sample', async ({ playwright }, testInfo) => {
+  const browser = await playwright.chromium.launch();
+  try {
+    const page = await browser.newPage();
+    await page.goto('http://localhost:4173/');
+    await expect(page.getByText('The Chrome extension is not connected', { exact: false })).toBeVisible();
+    const video = page.locator('video');
+    await expect.poll(() => video.evaluate((el: HTMLVideoElement) => el.readyState)).toBeGreaterThan(0);
+    await video.evaluate((el: HTMLVideoElement) => { el.currentTime = 2; });
+    await expect.poll(() => video.evaluate((el: HTMLVideoElement) => el.currentTime)).toBeGreaterThan(1);
+    const download = page.waitForEvent('download');
+    await page.getByRole('link', { name: 'Download a sample author table' }).click();
+    expect((await download).suggestedFilename()).toBe('sample-authors.csv');
+    await page.screenshot({ path: testInfo.outputPath('launch-home.png'), fullPage: true });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await page.screenshot({ path: testInfo.outputPath('launch-home-mobile.png'), fullPage: true });
+    await page.getByRole('button', { name: 'Try a sample roster' }).click();
+    await expect(page.getByLabel('Email', { exact: true })).toHaveCount(6);
+    await page.getByLabel('Email', { exact: true }).first().fill('practice@example.org');
+    await page.reload();
+    await expect(page.getByLabel('Email', { exact: true }).first()).toHaveValue('practice@example.org');
+    await expect(page.getByText('Sample roster:', { exact: false })).toBeVisible();
+  } finally { await browser.close(); }
+});
+
 for (const hostname of ['localhost', '127.0.0.1']) {
 test(`website on ${hostname}:4173 edits, syncs, and offers contextual fill without opening the popup`, async ({ context, extensionId }, testInfo) => {
   expect(extensionId).toBeTruthy();

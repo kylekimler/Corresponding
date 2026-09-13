@@ -52,7 +52,7 @@ The extension does **not** intentionally read, store, or transmit:
   still requires a click. On other pages it uses on-demand scripting
   (`activeTab`) after the user opens the popup. Author names, emails,
   affiliations, and manuscript text are not sent to a Corresponding server.
-- After an eligible Fill (not sample authors, not development fixtures), the extension may POST `{ "v": 1, "authors": N }` to the Corresponding hours counter so we can estimate community hours saved for marketing. That request contains no names, emails, ORCID, roster identifiers, page URLs, or manuscript text. It cannot break Fill if it fails.
+- After an eligible Fill (not sample authors, not development fixtures), the extension may POST `{ "v": 1, "authors": N }` to the Corresponding hours counter so we can estimate community hours saved for marketing. That request contains no names, emails, ORCID, roster identifiers, page URLs, or manuscript text. It cannot break Fill if it fails. The `v` field is the request protocol version. As with other network requests, the receiving service can see connection metadata such as the source IP address; a count-only body does not mean network anonymity.
 - DOCX parsing runs locally in the extension. The selected file is not uploaded
   to Corresponding.
 - Optional Google Sheets import (when configured) uses Chrome Identity OAuth with the minimum Google Sheets **read-only** scope to fetch sheet rows you explicitly select. Those rows are normalized locally into the author schema. No write access to Google Sheets is requested.

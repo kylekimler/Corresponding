@@ -4,6 +4,9 @@ Current owner-facing launch gates and rehearsal URL:
 [Launch status — September 13](LAUNCH_STATUS.md). “Ready” there does not mean
 published; stop before the final GitHub visibility confirmation.
 
+Launch-day execution: [LAUNCH_DAY.md](LAUNCH_DAY.md).
+Store/download packet: [STORE_HANDOFF.md](STORE_HANDOFF.md).
+
 ## Versioning
 
 - Follow semver: `MAJOR.MINOR.PATCH`
@@ -34,7 +37,8 @@ published; stop before the final GitHub visibility confirmation.
 
 - [ ] Set the real Chrome Web Store install URL once the listing is available;
   the current website link honestly points to local setup instructions.
-- [ ] Replace the privacy contact placeholder and review the final policy date.
+- [x] Replace the privacy contact placeholder.
+- [ ] Owner review of final policy and disclosures before store publication.
 - [ ] Confirm HTTPS corresponding.app can discover the published extension and
   save/select a roster. Preview-host origins are intentionally not allowed.
 - [ ] Run a live author-page smoke on PLOS/Editorial Manager, ScholarOne, and

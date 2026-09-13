@@ -69,8 +69,9 @@ async function openFixtureAndPopup(
 test('production popup previews, fills, validates, and preserves protected controls', async ({
   context,
   extensionId,
-}) => {
+}, testInfo) => {
   const { fixture, popup } = await openFixtureAndPopup(context, extensionId);
+  await popup.setViewportSize({ width: 1280, height: 800 });
   await fixture.evaluate((controlIds) => {
     const trackedWindow = window as typeof window & {
       correspondingProtectedClicks: string[];
@@ -111,6 +112,7 @@ test('production popup previews, fills, validates, and preserves protected contr
     popup.getByText(/selector confidence and completeness/i),
   ).toBeVisible();
   await expect(popup.getByText('Needs attention').first()).toBeVisible();
+  await popup.screenshot({ path: testInfo.outputPath('store-preview.png') });
 
   expect(
     await fixture
@@ -137,6 +139,7 @@ test('production popup previews, fills, validates, and preserves protected contr
   ).toBeVisible();
   await expect(popup.getByText('3 authors look filled')).toBeVisible();
   await expect(popup.getByText('0 conflicts')).toBeVisible();
+  await popup.screenshot({ path: testInfo.outputPath('store-validation.png') });
   await expect(
     popup.getByText('Lifetime researcher hours saved: 0'),
   ).toBeVisible();
