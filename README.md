@@ -8,9 +8,9 @@ Autofill for scientific publishing. Paste your manuscript authors once into the 
 
 [![CI](https://github.com/kylekimler/Corresponding/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/kylekimler/Corresponding/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
-[![Status: pre-release](https://img.shields.io/badge/status-pre--release-grey)](#install)
+[![Chrome Web Store](https://img.shields.io/badge/Chrome_Web_Store-Install_free-4285F4?logo=googlechrome&logoColor=white)](https://chromewebstore.google.com/detail/corresponding/mfmmaemphgopfcdilgopnahnpiplogbo)
 
-[Web app](https://corresponding.pages.dev) · [Install](#install) · [Supported platforms](#supported-platforms) · [Report an issue](https://github.com/kylekimler/Corresponding/issues)
+[Web app](https://corresponding.pages.dev) · [Get the Chrome extension](https://chromewebstore.google.com/detail/corresponding/mfmmaemphgopfcdilgopnahnpiplogbo) · [Supported platforms](#supported-platforms) · [Report an issue](https://github.com/kylekimler/Corresponding/issues)
 
 Free and open source, no account needed, author and manuscript information never leaves your computer. 
 
@@ -52,7 +52,16 @@ Rosters remain editable and reusable. You can download a JSON backup if you need
 
 ## Install
 
-**Pre-release:** the Chrome Web Store listing is awaiting review. Installation currently requires building and loading the extension locally; the web app alone cannot fill journal pages.
+**[Install Corresponding from the Chrome Web Store →](https://chromewebstore.google.com/detail/corresponding/mfmmaemphgopfcdilgopnahnpiplogbo)**
+
+1. Open the store listing in Chrome and click **Add to Chrome**.
+2. Open the [web app](https://corresponding.pages.dev/) and prepare your author roster. If it was already open, refresh it after installing.
+3. Check that the workspace reports **Saved to the Corresponding extension**, then open a supported journal submission page to preview and fill.
+
+Free, no account required. The extension is needed to fill journal pages; the web app alone prepares and saves your roster.
+
+<details>
+<summary>For developers: build and install locally</summary>
 
 With the latest Node.js 22 LTS installed (22.13 or newer):
 
@@ -66,6 +75,8 @@ npm run build
 1. Open `chrome://extensions`, enable **Developer mode**, and choose **Load unpacked**.
 2. Select the `.output/chrome-mv3` folder in this repository.
 3. Run `npm run dev:web` and open `http://localhost:5173` to prepare your roster. Check that the workspace reports successful extension synchronization before filling.
+
+</details>
 
 ## Try without a journal account
 
