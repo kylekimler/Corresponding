@@ -4,6 +4,13 @@ Chronological overnight / autonomous iteration log.
 
 ---
 
+### 2026-09-23 — Chrome Web Store README installation
+- Added a linked Chrome Web Store badge and direct installation link near the top.
+- Replaced pending-review instructions with the published install workflow;
+  preserved developer setup in a collapsible section.
+- Validation: reviewed Markdown, destination extension ID and whitespace diff.
+  Documentation-only change; no runtime behavior or permissions changed.
+
 ### 2026-09-13 — Free Cloudflare launch address
 - Owner chose minimum spending: use https://corresponding.pages.dev, with no
   domain purchase or paid hosting service. Existing Pages project uses direct uploads.
